@@ -45,7 +45,8 @@ const int NewValue2Id = 12;
 
 void createColumnCacheTestDb(pqxx::work &tx)
 {
-    tx.exec("CREATE TEMP TABLE " + TableName + " (" + IdCol + " serial, " + ReferenceCol + " text, " + "PRIMARY KEY (" + IdCol + ")) ON COMMIT PRESERVE ROWS;");
+    tx.exec("CREATE TEMP TABLE " + TableName + " (" + IdCol + " serial, " + ReferenceCol + " text, " + "PRIMARY KEY (" + IdCol +
+        ")) ON COMMIT PRESERVE ROWS;");
 
     tx.exec("INSERT INTO " + TableName + "(" + ReferenceCol + ") VALUES (" + tx.quote(Ref1) + ");");
     tx.exec("INSERT INTO " + TableName + "(" + ReferenceCol + ") VALUES (" + tx.quote(Ref2) + ");");

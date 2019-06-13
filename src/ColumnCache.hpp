@@ -37,7 +37,10 @@ namespace pqxx_conn
     class ColumnCache
     {
     public:
-        ColumnCache(std::shared_ptr<pqxx::connection> conn, const std::string &table_name, const std::string &column_name, const std::string &reference);
+        ColumnCache(std::shared_ptr<pqxx::connection> conn,
+            const std::string &table_name,
+            const std::string &column_name,
+            const std::string &reference);
 
         // query if the reference has a cached value
         bool valueExists(const TRef &reference);
@@ -82,7 +85,10 @@ namespace pqxx_conn
     //=============================================================================
     //=============================================================================
     template<typename TValue, typename TRef>
-    ColumnCache<TValue, TRef>::ColumnCache(std::shared_ptr<pqxx::connection> conn, const std::string &table_name, const std::string &column_name, const std::string &reference) :
+    ColumnCache<TValue, TRef>::ColumnCache(std::shared_ptr<pqxx::connection> conn,
+        const std::string &table_name,
+        const std::string &column_name,
+        const std::string &reference) :
         _conn(conn),
         _table_name(table_name),
         _column_name(column_name),
@@ -138,7 +144,8 @@ namespace pqxx_conn
         }
         catch (const pqxx::pqxx_exception &ex)
         {
-            string msg {"The database transaction failed. Unable to fetchAll for column: " + _column_name + " in table: " + _table_name + ". Error: " + ex.base().what()};
+            string msg {"The database transaction failed. Unable to fetchAll for column: " + _column_name + " in table: " + _table_name +
+                ". Error: " + ex.base().what()};
 
             _logger->error("Error: An unexpected error occurred when trying to run the database query");
             _logger->error("Caught error: \"{}\"", ex.base().what());
@@ -208,7 +215,8 @@ namespace pqxx_conn
             }
             catch (const pqxx::pqxx_exception &ex)
             {
-                string msg {"The database transaction failed. Unable to query column: " + _column_name + " in table: " + _table_name + ". Error: " + ex.base().what()};
+                string msg {"The database transaction failed. Unable to query column: " + _column_name + " in table: " + _table_name +
+                    ". Error: " + ex.base().what()};
 
                 _logger->error("Error: An unexpected error occurred when trying to run the database query");
                 _logger->error("Caught error: \"{}\"", ex.base().what());

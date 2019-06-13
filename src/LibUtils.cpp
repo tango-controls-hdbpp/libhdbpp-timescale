@@ -106,7 +106,8 @@ void LogConfigurator::initLogging(bool enable_file, bool enable_console)
         if (sinks.empty())
             sinks.push_back(make_shared<spdlog::sinks::null_sink_mt>());
 
-        auto logger = make_shared<spdlog::async_logger>(LibLoggerName, sinks.begin(), sinks.end(), spdlog::thread_pool(), spdlog::async_overflow_policy::overrun_oldest);
+        auto logger = make_shared<spdlog::async_logger>(
+            LibLoggerName, sinks.begin(), sinks.end(), spdlog::thread_pool(), spdlog::async_overflow_policy::overrun_oldest);
 
         spdlog::register_logger(logger);
         spdlog::flush_every(std::chrono::seconds(1));

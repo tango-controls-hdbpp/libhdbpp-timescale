@@ -73,7 +73,10 @@ public:
     AttributeTraits &operator=(const AttributeTraits &) = default;
     AttributeTraits &operator=(AttributeTraits &&) = default;
 
-    bool operator==(const AttributeTraits &other) const { return _attr_write_type == other.writeType() && _attr_format == other.formatType() && _attr_type == other.type(); }
+    bool operator==(const AttributeTraits &other) const
+    {
+        return _attr_write_type == other.writeType() && _attr_format == other.formatType() && _attr_type == other.type();
+    }
 
     /// @brief Print the AttributeTraits object to the stream
     void print(std::ostream &os) const;

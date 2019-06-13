@@ -49,7 +49,10 @@ SCENARIO("HdbppTvBase can construct a valid attribute name for storage", "[hdbpp
 
         WHEN("Requesting the name for storage")
         {
-            THEN("The name is valid and as expected") { REQUIRE(hdbpp_base_test::TestHdbppTxBase::testAttrNameForStorage(attr_name) == TestAttrFinalName); }
+            THEN("The name is valid and as expected")
+            {
+                REQUIRE(hdbpp_base_test::TestHdbppTxBase::testAttrNameForStorage(attr_name) == TestAttrFinalName);
+            }
         }
     }
 }

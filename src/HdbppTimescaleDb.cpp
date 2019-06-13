@@ -139,7 +139,9 @@ void HdbppTimescaleDb::insert_Attr(Tango::EventData *event_data, HdbEventDataTyp
     {
         conn->createTx<HdbppTxDataEvent>()
             .withName(event_data->attr_name)
-            .withTraits(static_cast<Tango::AttrWriteType>(event_data_type.write_type), static_cast<Tango::AttrDataFormat>(event_data_type.data_format), event_data_type.data_type)
+            .withTraits(static_cast<Tango::AttrWriteType>(event_data_type.write_type),
+                static_cast<Tango::AttrDataFormat>(event_data_type.data_format),
+                event_data_type.data_type)
             .withError(string(event_data->errors[0].desc))
             .withEventTime(event_data->attr_value->get_date())
             .withQuality(static_cast<int>(event_data->attr_value->get_quality()))
@@ -151,7 +153,9 @@ void HdbppTimescaleDb::insert_Attr(Tango::EventData *event_data, HdbEventDataTyp
         // pending on type, format and quality
         conn->createTx<HdbppTxDataEvent>()
             .withName(event_data->attr_name)
-            .withTraits(static_cast<Tango::AttrWriteType>(event_data_type.write_type), static_cast<Tango::AttrDataFormat>(event_data_type.data_format), event_data_type.data_type)
+            .withTraits(static_cast<Tango::AttrWriteType>(event_data_type.write_type),
+                static_cast<Tango::AttrDataFormat>(event_data_type.data_format),
+                event_data_type.data_type)
             .withAttribute(event_data->attr_value)
             .withEventTime(event_data->attr_value->get_date())
             .withQuality(static_cast<int>(event_data->attr_value->get_quality()))
@@ -166,7 +170,11 @@ void HdbppTimescaleDb::insert_param_Attr(Tango::AttrConfEventData *conf_event_da
     assert(conf_event_data);
     spdlog::trace("Insert parameter event request for attribute: {}", conf_event_data->attr_name);
 
-    conn->createTx<HdbppTxParameterEvent>().withName(conf_event_data->attr_name).withEventTime(conf_event_data->get_date()).withAttrInfo(*(conf_event_data->attr_conf)).store();
+    conn->createTx<HdbppTxParameterEvent>()
+        .withName(conf_event_data->attr_name)
+        .withEventTime(conf_event_data->get_date())
+        .withAttrInfo(*(conf_event_data->attr_conf))
+        .store();
 }
 
 //=============================================================================

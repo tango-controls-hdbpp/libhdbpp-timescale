@@ -47,7 +47,10 @@ SCENARIO("AttributeName supports fully qualified attribute name", "[attribute-na
         }
         WHEN("Tango host with domain is requested")
         {
-            THEN("Valid tango host with domain is returned") { REQUIRE(attribute_name.tangoHostWithDomain() == TestAttrTangoHostWithDomain); }
+            THEN("Valid tango host with domain is returned")
+            {
+                REQUIRE(attribute_name.tangoHostWithDomain() == TestAttrTangoHostWithDomain);
+            }
         }
         WHEN("Domain is requested")
         {
@@ -88,7 +91,10 @@ SCENARIO("AttributeName supports fully qualified attribute name missing tango pr
         }
         WHEN("Tango host with domain is requested")
         {
-            THEN("Valid tango host with domain is returned") { REQUIRE(attribute_name.tangoHostWithDomain() == TestAttrTangoHostWithDomain); }
+            THEN("Valid tango host with domain is returned")
+            {
+                REQUIRE(attribute_name.tangoHostWithDomain() == TestAttrTangoHostWithDomain);
+            }
         }
         WHEN("Domain is requested")
         {
@@ -143,7 +149,8 @@ SCENARIO("AttributeName supports fully qualified attribute name but no network d
             REQUIRE(status == 0);
 
             for (rp = result; rp != NULL; rp = rp->ai_next)
-                server_name_with_domain = string(rp->ai_canonname) + attribute_name.tangoHost().substr(attribute_name.tangoHost().find(':', 0));
+                server_name_with_domain = string(rp->ai_canonname) +
+                    attribute_name.tangoHost().substr(attribute_name.tangoHost().find(':', 0));
 
             freeaddrinfo(result);
 

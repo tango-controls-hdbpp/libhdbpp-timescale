@@ -29,8 +29,12 @@ namespace pqxx_conn
     //=============================================================================
     //=============================================================================
     template<typename T>
-    void DbConnection::storeDataEvent(
-        const std::string &full_attr_name, double event_time, int quality, std::unique_ptr<vector<T>> value_r, std::unique_ptr<vector<T>> value_w, const AttributeTraits &traits)
+    void DbConnection::storeDataEvent(const std::string &full_attr_name,
+        double event_time,
+        int quality,
+        std::unique_ptr<vector<T>> value_r,
+        std::unique_ptr<vector<T>> value_w,
+        const AttributeTraits &traits)
     {
         assert(!full_attr_name.empty());
 
@@ -101,7 +105,10 @@ namespace pqxx_conn
         }
         catch (const pqxx::pqxx_exception &ex)
         {
-            handlePqxxError("The attribute [" + full_attr_name + "] data event was not saved.", ex.base().what(), _query_builder.storeDataEventQuery<T>(traits), LOCATION_INFO);
+            handlePqxxError("The attribute [" + full_attr_name + "] data event was not saved.",
+                ex.base().what(),
+                _query_builder.storeDataEventQuery<T>(traits),
+                LOCATION_INFO);
         }
     }
 

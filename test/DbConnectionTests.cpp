@@ -55,7 +55,8 @@ void clearTable(pqxx::connection &conn, const string &table_name)
 // wrapper to store an attribute
 void storeTestAttribute(DbConnection &conn, const AttributeTraits &traits)
 {
-    REQUIRE_NOTHROW(conn.storeAttribute(TestAttrFinalName, TestAttrCs, TestAttrDomain, TestAttrFamily, TestAttrMember, TestAttrName, traits));
+    REQUIRE_NOTHROW(
+        conn.storeAttribute(TestAttrFinalName, TestAttrCs, TestAttrDomain, TestAttrFamily, TestAttrMember, TestAttrName, traits));
 }
 
 // wrapper to store some event data, and return the data for comparison
@@ -220,15 +221,24 @@ SCENARIO("The DbConnection class handles a bad connection attempt with an except
 
         WHEN("Requesting a connection with an invalid host")
         {
-            THEN("A connection_error is thrown") { REQUIRE_THROWS_AS(conn.connect("user=postgres password=password host=unknown"), Tango::DevFailed); }
+            THEN("A connection_error is thrown")
+            {
+                REQUIRE_THROWS_AS(conn.connect("user=postgres password=password host=unknown"), Tango::DevFailed);
+            }
         }
         WHEN("Requesting a connection with an invalid user")
         {
-            THEN("A connection_error is thrown") { REQUIRE_THROWS_AS(conn.connect("user=invalid password=password host=hdb1"), Tango::DevFailed); }
+            THEN("A connection_error is thrown")
+            {
+                REQUIRE_THROWS_AS(conn.connect("user=invalid password=password host=hdb1"), Tango::DevFailed);
+            }
         }
         WHEN("Requesting a connection with an invalid password")
         {
-            THEN("A connection_error is thrown") { REQUIRE_THROWS_AS(conn.connect("user=postgres password=invalid host=hdb1"), Tango::DevFailed); }
+            THEN("A connection_error is thrown")
+            {
+                REQUIRE_THROWS_AS(conn.connect("user=postgres password=invalid host=hdb1"), Tango::DevFailed);
+            }
         }
     }
 }
@@ -269,7 +279,10 @@ SCENARIO("Storing Attributes in the database", "[db-access][hdbpp-db-access][db-
             {
                 THEN("An exception is throw as the entry already exists in the database")
                 {
-                    REQUIRE_THROWS_AS(conn.storeAttribute(TestAttrFinalName, TestAttrCs, TestAttrDomain, TestAttrFamily, TestAttrMember, TestAttrName, traits), Tango::DevFailed);
+                    REQUIRE_THROWS_AS(
+                        conn.storeAttribute(
+                            TestAttrFinalName, TestAttrCs, TestAttrDomain, TestAttrFamily, TestAttrMember, TestAttrName, traits),
+                        Tango::DevFailed);
                 }
             }
         }
@@ -301,7 +314,9 @@ SCENARIO("Storing Attributes in a disconnected state", "[db-access][hdbpp-db-acc
 
             THEN("An exception is throw as the database connection is down")
             {
-                REQUIRE_THROWS_AS(conn.storeAttribute(TestAttrFinalName, TestAttrCs, TestAttrDomain, TestAttrFamily, TestAttrMember, TestAttrName, traits), Tango::DevFailed);
+                REQUIRE_THROWS_AS(conn.storeAttribute(
+                                      TestAttrFinalName, TestAttrCs, TestAttrDomain, TestAttrFamily, TestAttrMember, TestAttrName, traits),
+                    Tango::DevFailed);
             }
         }
     }
@@ -427,7 +442,10 @@ SCENARIO("Storing History Events unrelated to any known Attribute", "[db-access]
 
         WHEN("Storing a new history event in the database")
         {
-            THEN("An exception is raised") { REQUIRE_THROWS_AS(conn.storeHistoryEvent(TestAttrFQDName, events::PauseEvent), Tango::DevFailed); }
+            THEN("An exception is raised")
+            {
+                REQUIRE_THROWS_AS(conn.storeHistoryEvent(TestAttrFQDName, events::PauseEvent), Tango::DevFailed);
+            }
         }
     }
 
@@ -459,7 +477,10 @@ SCENARIO("Storing History Events in a disconnected state", "[db-access][hdbpp-db
         {
             REQUIRE_NOTHROW(conn.disconnect());
 
-            THEN("An exception is throw as the database connection is down") { REQUIRE_THROWS_AS(conn.storeHistoryEvent(TestAttrFQDName, events::PauseEvent), Tango::DevFailed); }
+            THEN("An exception is throw as the database connection is down")
+            {
+                REQUIRE_THROWS_AS(conn.storeHistoryEvent(TestAttrFQDName, events::PauseEvent), Tango::DevFailed);
+            }
         }
     }
 
@@ -634,14 +655,19 @@ SCENARIO("Storing event data which is invalid", "[db-access][hdbpp-db-access][db
             AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE};
             psql_conn_test::storeTestAttribute(conn, traits);
 
-            REQUIRE_NOTHROW(
-                conn.storeDataEvent(TestAttrFinalName, event_time, Tango::ATTR_VALID, move(make_unique<std::vector<double>>()), move(make_unique<std::vector<double>>()), traits));
+            REQUIRE_NOTHROW(conn.storeDataEvent(TestAttrFinalName,
+                event_time,
+                Tango::ATTR_VALID,
+                move(make_unique<std::vector<double>>()),
+                move(make_unique<std::vector<double>>()),
+                traits));
 
             THEN("The event is stored, with no data, and can be read back")
             {
                 {
                     pqxx::work tx {test_conn};
-                    auto data_row(tx.exec1("SELECT * FROM " + psql_conn_test::query_builder.tableName(traits) + " ORDER BY " + DAT_COL_DATA_TIME + " LIMIT 1"));
+                    auto data_row(tx.exec1("SELECT * FROM " + psql_conn_test::query_builder.tableName(traits) + " ORDER BY " +
+                        DAT_COL_DATA_TIME + " LIMIT 1"));
                     auto attr_row(tx.exec1("SELECT * FROM " + CONF_TABLE_NAME));
                     tx.commit();
 
@@ -655,14 +681,19 @@ SCENARIO("Storing event data which is invalid", "[db-access][hdbpp-db-access][db
             AttributeTraits traits {Tango::READ_WRITE, Tango::SPECTRUM, Tango::DEV_DOUBLE};
             psql_conn_test::storeTestAttribute(conn, traits);
 
-            REQUIRE_NOTHROW(
-                conn.storeDataEvent(TestAttrFinalName, event_time, Tango::ATTR_VALID, move(make_unique<std::vector<double>>()), move(make_unique<std::vector<double>>()), traits));
+            REQUIRE_NOTHROW(conn.storeDataEvent(TestAttrFinalName,
+                event_time,
+                Tango::ATTR_VALID,
+                move(make_unique<std::vector<double>>()),
+                move(make_unique<std::vector<double>>()),
+                traits));
 
             THEN("The event is stored, with no data, and can be read back")
             {
                 {
                     pqxx::work tx {test_conn};
-                    auto data_row(tx.exec1("SELECT * FROM " + psql_conn_test::query_builder.tableName(traits) + " ORDER BY " + DAT_COL_DATA_TIME + " LIMIT 1"));
+                    auto data_row(tx.exec1("SELECT * FROM " + psql_conn_test::query_builder.tableName(traits) + " ORDER BY " +
+                        DAT_COL_DATA_TIME + " LIMIT 1"));
                     auto attr_row(tx.exec1("SELECT * FROM " + CONF_TABLE_NAME));
                     tx.commit();
 
@@ -732,54 +763,67 @@ TEST_CASE("Storing event data of all Tango type combinations in the database", "
                             //break;
 
                         case Tango::DEV_SHORT:
-                            psql_conn_test::checkStoreTestEventData(test_conn, traits, psql_conn_test::storeTestEventData<Tango::DEV_SHORT>(conn, traits));
+                            psql_conn_test::checkStoreTestEventData(
+                                test_conn, traits, psql_conn_test::storeTestEventData<Tango::DEV_SHORT>(conn, traits));
 
                             break;
 
-                        case Tango::DEV_LONG: psql_conn_test::checkStoreTestEventData(test_conn, traits, psql_conn_test::storeTestEventData<Tango::DEV_LONG>(conn, traits)); break;
+                        case Tango::DEV_LONG:
+                            psql_conn_test::checkStoreTestEventData(
+                                test_conn, traits, psql_conn_test::storeTestEventData<Tango::DEV_LONG>(conn, traits));
+                            break;
 
                         case Tango::DEV_LONG64:
-                            psql_conn_test::checkStoreTestEventData(test_conn, traits, psql_conn_test::storeTestEventData<Tango::DEV_LONG64>(conn, traits));
+                            psql_conn_test::checkStoreTestEventData(
+                                test_conn, traits, psql_conn_test::storeTestEventData<Tango::DEV_LONG64>(conn, traits));
 
                             break;
 
                         case Tango::DEV_FLOAT:
-                            psql_conn_test::checkStoreTestEventData(test_conn, traits, psql_conn_test::storeTestEventData<Tango::DEV_FLOAT>(conn, traits));
+                            psql_conn_test::checkStoreTestEventData(
+                                test_conn, traits, psql_conn_test::storeTestEventData<Tango::DEV_FLOAT>(conn, traits));
 
                             break;
 
                         case Tango::DEV_DOUBLE:
-                            psql_conn_test::checkStoreTestEventData(test_conn, traits, psql_conn_test::storeTestEventData<Tango::DEV_DOUBLE>(conn, traits));
+                            psql_conn_test::checkStoreTestEventData(
+                                test_conn, traits, psql_conn_test::storeTestEventData<Tango::DEV_DOUBLE>(conn, traits));
 
                             break;
 
                         case Tango::DEV_UCHAR:
-                            psql_conn_test::checkStoreTestEventData(test_conn, traits, psql_conn_test::storeTestEventData<Tango::DEV_UCHAR>(conn, traits));
+                            psql_conn_test::checkStoreTestEventData(
+                                test_conn, traits, psql_conn_test::storeTestEventData<Tango::DEV_UCHAR>(conn, traits));
 
                             break;
 
                         case Tango::DEV_USHORT:
-                            psql_conn_test::checkStoreTestEventData(test_conn, traits, psql_conn_test::storeTestEventData<Tango::DEV_USHORT>(conn, traits));
+                            psql_conn_test::checkStoreTestEventData(
+                                test_conn, traits, psql_conn_test::storeTestEventData<Tango::DEV_USHORT>(conn, traits));
 
                             break;
 
                         case Tango::DEV_ULONG:
-                            psql_conn_test::checkStoreTestEventData(test_conn, traits, psql_conn_test::storeTestEventData<Tango::DEV_ULONG>(conn, traits));
+                            psql_conn_test::checkStoreTestEventData(
+                                test_conn, traits, psql_conn_test::storeTestEventData<Tango::DEV_ULONG>(conn, traits));
 
                             break;
 
                         case Tango::DEV_ULONG64:
-                            psql_conn_test::checkStoreTestEventData(test_conn, traits, psql_conn_test::storeTestEventData<Tango::DEV_ULONG64>(conn, traits));
+                            psql_conn_test::checkStoreTestEventData(
+                                test_conn, traits, psql_conn_test::storeTestEventData<Tango::DEV_ULONG64>(conn, traits));
 
                             break;
 
                         case Tango::DEV_STRING:
-                            psql_conn_test::checkStoreTestEventData(test_conn, traits, psql_conn_test::storeTestEventData<Tango::DEV_STRING>(conn, traits));
+                            psql_conn_test::checkStoreTestEventData(
+                                test_conn, traits, psql_conn_test::storeTestEventData<Tango::DEV_STRING>(conn, traits));
 
                             break;
 
                         case Tango::DEV_STATE:
-                            psql_conn_test::checkStoreTestEventData(test_conn, traits, psql_conn_test::storeTestEventData<Tango::DEV_STATE>(conn, traits));
+                            psql_conn_test::checkStoreTestEventData(
+                                test_conn, traits, psql_conn_test::storeTestEventData<Tango::DEV_STATE>(conn, traits));
 
                             break;
 
@@ -831,8 +875,12 @@ SCENARIO("Storing data events in a disconnected state", "[db-access][hdbpp-db-ac
 
             THEN("An exception is throw as the database connection is down")
             {
-                REQUIRE_THROWS_AS(conn.storeDataEvent(
-                                      TestAttrFinalName, event_time, Tango::ATTR_VALID, move(make_unique<std::vector<double>>()), move(make_unique<std::vector<double>>()), traits),
+                REQUIRE_THROWS_AS(conn.storeDataEvent(TestAttrFinalName,
+                                      event_time,
+                                      Tango::ATTR_VALID,
+                                      move(make_unique<std::vector<double>>()),
+                                      move(make_unique<std::vector<double>>()),
+                                      traits),
                     Tango::DevFailed);
             }
         }
@@ -876,7 +924,8 @@ SCENARIO("Storing data events as errors", "[db-access][hdbpp-db-access][db-conne
                 {
                     pqxx::work tx {test_conn};
 
-                    auto data_row(tx.exec1("SELECT * FROM " + psql_conn_test::query_builder.tableName(traits) + " ORDER BY " + DAT_COL_DATA_TIME + " LIMIT 1"));
+                    auto data_row(tx.exec1("SELECT * FROM " + psql_conn_test::query_builder.tableName(traits) + " ORDER BY " +
+                        DAT_COL_DATA_TIME + " LIMIT 1"));
 
                     auto attr_row(tx.exec1("SELECT * FROM " + CONF_TABLE_NAME));
                     auto error_row(tx.exec1("SELECT * FROM " + ERR_TABLE_NAME));
@@ -897,7 +946,8 @@ SCENARIO("Storing data events as errors", "[db-access][hdbpp-db-access][db-conne
                     {
                         pqxx::work tx {test_conn};
 
-                        auto data_row(tx.exec1("SELECT * FROM " + psql_conn_test::query_builder.tableName(traits) + " ORDER BY " + DAT_COL_DATA_TIME + " LIMIT 1"));
+                        auto data_row(tx.exec1("SELECT * FROM " + psql_conn_test::query_builder.tableName(traits) + " ORDER BY " +
+                            DAT_COL_DATA_TIME + " LIMIT 1"));
 
                         auto attr_row(tx.exec1("SELECT * FROM " + CONF_TABLE_NAME));
                         auto error_row(tx.exec1("SELECT * FROM " + ERR_TABLE_NAME));

@@ -57,7 +57,10 @@ protected:
 
     // small helper to generate the attribute name for the db consistently
     // across all the different tx classes
-    static std::string attrNameForStorage(AttributeName &attr_name) { return "tango://" + attr_name.tangoHostWithDomain() + "/" + attr_name.fullAttributeName(); }
+    static std::string attrNameForStorage(AttributeName &attr_name)
+    {
+        return "tango://" + attr_name.tangoHostWithDomain() + "/" + attr_name.fullAttributeName();
+    }
 
 private:
     // instance of the template type, this is the connection to

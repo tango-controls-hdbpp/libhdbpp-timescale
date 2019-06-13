@@ -110,9 +110,11 @@ namespace pqxx_conn
 
         // these query strings are built each call, so are cached in the class
         // that requests them
-        static const std::string fetchValueQuery(const std::string &column_name, const std::string &table_name, const std::string &reference);
+        static const std::string fetchValueQuery(
+            const std::string &column_name, const std::string &table_name, const std::string &reference);
 
-        static const std::string fetchAllValuesQuery(const std::string &column_name, const std::string &table_name, const std::string &reference);
+        static const std::string fetchAllValuesQuery(
+            const std::string &column_name, const std::string &table_name, const std::string &reference);
 
     private:
         // generic function to handle caching items into the cache maps

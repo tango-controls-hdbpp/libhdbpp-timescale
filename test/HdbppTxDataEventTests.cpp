@@ -65,8 +65,12 @@ public:
     bool isClosed() const noexcept { return !isOpen(); }
 
     template<typename U>
-    void storeDataEvent(
-        const std::string &full_attr_name, double event_time, int quality, std::unique_ptr<vector<T>> value_r, std::unique_ptr<vector<T>> value_w, const AttributeTraits &traits)
+    void storeDataEvent(const std::string &full_attr_name,
+        double event_time,
+        int quality,
+        std::unique_ptr<vector<T>> value_r,
+        std::unique_ptr<vector<T>> value_w,
+        const AttributeTraits &traits)
     {
         att_name = full_attr_name;
         att_event_time = event_time;
@@ -76,7 +80,8 @@ public:
         attr_value_w = *value_w;
     }
 
-    void storeDataEventError(const std::string &full_attr_name, double event_time, int quality, const std::string &error_msg, const AttributeTraits &traits);
+    void storeDataEventError(
+        const std::string &full_attr_name, double event_time, int quality, const std::string &error_msg, const AttributeTraits &traits);
     {
         att_name = full_attr_name;
         att_event_time = event_time;

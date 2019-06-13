@@ -247,7 +247,10 @@ SCENARIO("HdbppTxParameterEvent Simulated exception received", "[hdbpp-tx][hdbpp
 
     GIVEN("An HdbppTxParameterEvent object with name and traits set")
     {
-        auto tx = conn.createTx<HdbppTxParameterEvent>().withName(TestAttrFQDName).withAttrInfo(hdbpp_param_test::createAttributeInfoEx()).withEventTime(tango_tv);
+        auto tx = conn.createTx<HdbppTxParameterEvent>()
+                      .withName(TestAttrFQDName)
+                      .withAttrInfo(hdbpp_param_test::createAttributeInfoEx())
+                      .withEventTime(tango_tv);
 
         WHEN("Storing the transaction with a triggered exception set")
         {

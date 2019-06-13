@@ -195,7 +195,10 @@ public:
         //}
     }
 
-    static std::string to_string(const std::vector<std::string> &value) { return "{" + separated_list(",", value.begin(), value.end()) + "}"; }
+    static std::string to_string(const std::vector<std::string> &value)
+    {
+        return "{" + separated_list(",", value.begin(), value.end()) + "}";
+    }
 };
 
 /*template<>

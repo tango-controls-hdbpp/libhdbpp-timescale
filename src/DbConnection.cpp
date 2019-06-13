@@ -72,7 +72,8 @@ namespace pqxx_conn
 
         _error_desc_id_cache = make_unique<ColumnCache<int, std::string>>(_conn, ERR_TABLE_NAME, ERR_COL_ID, ERR_COL_ERROR_DESC);
 
-        _event_id_cache = make_unique<ColumnCache<int, std::string>>(_conn, HISTORY_EVENT_TABLE_NAME, HISTORY_EVENT_COL_EVENT_ID, HISTORY_EVENT_COL_EVENT);
+        _event_id_cache = make_unique<ColumnCache<int, std::string>>(
+            _conn, HISTORY_EVENT_TABLE_NAME, HISTORY_EVENT_COL_EVENT_ID, HISTORY_EVENT_COL_EVENT);
     }
 
     //=============================================================================
@@ -140,7 +141,14 @@ namespace pqxx_conn
                     _logger->trace("Created prepared statement for: {}", StoreAttribute);
                 }
 
-                auto row = tx.exec_prepared1(StoreAttribute, full_attr_name, control_system, att_domain, att_family, att_member, att_name, _query_builder.tableName(traits));
+                auto row = tx.exec_prepared1(StoreAttribute,
+                    full_attr_name,
+                    control_system,
+                    att_domain,
+                    att_family,
+                    att_member,
+                    att_name,
+                    _query_builder.tableName(traits));
 
                 tx.commit();
 
@@ -156,7 +164,10 @@ namespace pqxx_conn
         }
         catch (const pqxx::pqxx_exception &ex)
         {
-            handlePqxxError("The attribute [" + full_attr_name + "] was not saved.", ex.base().what(), QueryBuilder::storeAttributeQuery(), LOCATION_INFO);
+            handlePqxxError("The attribute [" + full_attr_name + "] was not saved.",
+                ex.base().what(),
+                QueryBuilder::storeAttributeQuery(),
+                LOCATION_INFO);
         }
     }
 
@@ -209,7 +220,10 @@ namespace pqxx_conn
         }
         catch (const pqxx::pqxx_exception &ex)
         {
-            handlePqxxError("The attribute [" + full_attr_name + "] event [" + event + "] was not saved.", ex.base().what(), QueryBuilder::storeHistoryEventQuery(), LOCATION_INFO);
+            handlePqxxError("The attribute [" + full_attr_name + "] event [" + event + "] was not saved.",
+                ex.base().what(),
+                QueryBuilder::storeHistoryEventQuery(),
+                LOCATION_INFO);
         }
     }
 
@@ -284,13 +298,17 @@ namespace pqxx_conn
         }
         catch (const pqxx::pqxx_exception &ex)
         {
-            handlePqxxError("The attribute [" + full_attr_name + "] parameter event was not saved.", ex.base().what(), QueryBuilder::storeParameterEventQuery(), LOCATION_INFO);
+            handlePqxxError("The attribute [" + full_attr_name + "] parameter event was not saved.",
+                ex.base().what(),
+                QueryBuilder::storeParameterEventQuery(),
+                LOCATION_INFO);
         }
     }
 
     //=============================================================================
     //=============================================================================
-    void DbConnection::storeDataEventError(const std::string &full_attr_name, double event_time, int quality, const std::string &error_msg, const AttributeTraits &traits)
+    void DbConnection::storeDataEventError(
+        const std::string &full_attr_name, double event_time, int quality, const std::string &error_msg, const AttributeTraits &traits)
     {
         assert(!full_attr_name.empty());
         assert(!error_msg.empty());
@@ -314,7 +332,8 @@ namespace pqxx_conn
         {
             string msg {"The error message [" + error_msg + "] is missing in both the cache and database, this is an unrecoverable error."};
 
-            _logger->error("Error message found missing, this occurred when storing msg: \"{}\" for attribute: {}", error_msg, full_attr_name);
+            _logger->error(
+                "Error message found missing, this occurred when storing msg: \"{}\" for attribute: {}", error_msg, full_attr_name);
             _logger->error("Throwing consistency error with message: \"{}\"", msg);
             Tango::Except::throw_exception("Consistency Error", msg, LOCATION_INFO);
         }
@@ -334,8 +353,11 @@ namespace pqxx_conn
                 _logger->warn("{}", _error_desc_id_cache->value(error_msg));
 
                 // no result expected
-                tx.exec_prepared0(
-                    _query_builder.storeDataEventErrorName(traits), _conf_id_cache->value(full_attr_name), event_time, quality, _error_desc_id_cache->value(error_msg));
+                tx.exec_prepared0(_query_builder.storeDataEventErrorName(traits),
+                    _conf_id_cache->value(full_attr_name),
+                    event_time,
+                    quality,
+                    _error_desc_id_cache->value(error_msg));
 
                 tx.commit();
             });
@@ -384,7 +406,10 @@ namespace pqxx_conn
         }
         catch (const pqxx::pqxx_exception &ex)
         {
-            handlePqxxError("Can not return last event for attribute [" + full_attr_name + "].", ex.base().what(), QueryBuilder::fetchLastHistoryEventQuery(), LOCATION_INFO);
+            handlePqxxError("Can not return last event for attribute [" + full_attr_name + "].",
+                ex.base().what(),
+                QueryBuilder::fetchLastHistoryEventQuery(),
+                LOCATION_INFO);
         }
 
         return last_event;
@@ -423,8 +448,10 @@ namespace pqxx_conn
         }
         catch (const pqxx::pqxx_exception &ex)
         {
-            handlePqxxError(
-                "The event [" + event + "] for attribute [" + full_attr_name + "] was not saved.", ex.base().what(), QueryBuilder::storeHistoryStringQuery(), LOCATION_INFO);
+            handlePqxxError("The event [" + event + "] for attribute [" + full_attr_name + "] was not saved.",
+                ex.base().what(),
+                QueryBuilder::storeHistoryStringQuery(),
+                LOCATION_INFO);
         }
     }
 
@@ -453,15 +480,18 @@ namespace pqxx_conn
                 return row.at(0).as<int>();
             });
 
-            _logger->debug("Stored error message \"{}\" for attribute {} and got database id for it: {}", error_msg, full_attr_name, error_id);
+            _logger->debug(
+                "Stored error message \"{}\" for attribute {} and got database id for it: {}", error_msg, full_attr_name, error_id);
 
             // cache the new error id for future use
             _error_desc_id_cache->cacheValue(error_id, error_msg);
         }
         catch (const pqxx::pqxx_exception &ex)
         {
-            handlePqxxError(
-                "The error string [" + error_msg + "] for attribute [" + full_attr_name + "] was not saved", ex.base().what(), QueryBuilder::storeErrorQuery(), LOCATION_INFO);
+            handlePqxxError("The error string [" + error_msg + "] for attribute [" + full_attr_name + "] was not saved",
+                ex.base().what(),
+                QueryBuilder::storeErrorQuery(),
+                LOCATION_INFO);
         }
     }
 
@@ -473,7 +503,8 @@ namespace pqxx_conn
         // if it has not then we can not use it for operations
         if (!_conf_id_cache->valueExists(full_attr_name))
         {
-            string msg {"This attribute [" + full_attr_name + "] does nit exists in the database. Unable to work with this attribute until its added."};
+            string msg {"This attribute [" + full_attr_name +
+                "] does nit exists in the database. Unable to work with this attribute until its added."};
 
             _logger->error("Error: The attribute does not exist in the database, add it first.");
             _logger->error("Attribute details. Name: {} traits: {}", full_attr_name);

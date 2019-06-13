@@ -84,7 +84,8 @@ namespace pqxx_conn
             std::unique_ptr<vector<T>> value_w,
             const AttributeTraits &traits);
 
-        void storeDataEventError(const std::string &full_attr_name, double event_time, int quality, const std::string &error_msg, const AttributeTraits &traits);
+        void storeDataEventError(
+            const std::string &full_attr_name, double event_time, int quality, const std::string &error_msg, const AttributeTraits &traits);
 
         // fetch API
         std::string fetchLastHistoryEvent(const std::string &full_attr_name);

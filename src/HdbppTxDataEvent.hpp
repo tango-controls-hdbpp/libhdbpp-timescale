@@ -203,8 +203,8 @@ void HdbppTxDataEvent<Conn>::doStore()
             // the unique_ptr as a signal to following functions there is no data
             if (!extractor(*value))
             {
-                std::string msg {
-                    "Failed to extract the attribute data for attribute: [" + _attr_name.fullAttributeName() + "] and off type: [" + std::to_string(_traits.type()) + "]"};
+                std::string msg {"Failed to extract the attribute data for attribute: [" + _attr_name.fullAttributeName() +
+                    "] and off type: [" + std::to_string(_traits.type()) + "]"};
 
                 spdlog::error("Error: {}", msg);
                 Tango::Except::throw_exception("Runtime Error", msg, LOCATION_INFO);
@@ -232,7 +232,8 @@ void HdbppTxDataEvent<Conn>::doStoreError()
 {
     // attempt to store the error in the database, any exceptions are left to
     // propergate to the caller
-    HdbppTxBase<Conn>::connection().storeDataEventError(HdbppTxBase<Conn>::attrNameForStorage(_attr_name), _event_time, _quality, _error_msg, _traits);
+    HdbppTxBase<Conn>::connection().storeDataEventError(
+        HdbppTxBase<Conn>::attrNameForStorage(_attr_name), _event_time, _quality, _error_msg, _traits);
 }
 
 //=============================================================================

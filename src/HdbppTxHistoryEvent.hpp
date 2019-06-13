@@ -125,7 +125,11 @@ HdbppTxHistoryEvent<Conn> &HdbppTxHistoryEvent<Conn>::store()
         if (last_event == events::StartEvent)
         {
             // insert the crash event
-            HdbppTxBase<Conn>::connection().template createTx<HdbppTxHistoryEvent>().withName(_attr_name.fqdnAttributeName()).withEvent(events::CrashEvent).store();
+            HdbppTxBase<Conn>::connection()
+                .template createTx<HdbppTxHistoryEvent>()
+                .withName(_attr_name.fqdnAttributeName())
+                .withEvent(events::CrashEvent)
+                .store();
         }
     }
 
