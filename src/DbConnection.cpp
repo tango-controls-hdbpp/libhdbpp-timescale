@@ -397,11 +397,16 @@ namespace pqxx_conn
                 if (!tx.prepared(FetchLastHistoryEvent).exists())
                     tx.conn().prepare(FetchLastHistoryEvent, QueryBuilder::fetchLastHistoryEventQuery());
 
-                // expect a single row back from this query
-                auto row = tx.exec_prepared1(FetchLastHistoryEvent, _conf_id_cache->value(full_attr_name));
+                // unless this is the first time this attribute event history has
+                // been queried, then we expect something back
+                auto result = tx.exec_prepared(FetchLastHistoryEvent, _conf_id_cache->value(full_attr_name));
 
-                // we should have a single row with a single result, so return it
-                return row.at(0).as<string>();
+                // if there is a result, there should be a single result to look at
+                if (result.size() == 1)
+                    return result.at(0).at(0).as<string>();
+
+                // return a blank string, no event
+                return string();
             });
         }
         catch (const pqxx::pqxx_exception &ex)

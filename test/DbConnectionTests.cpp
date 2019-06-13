@@ -1013,3 +1013,26 @@ SCENARIO("Fetching the last event after it has just been stored", "[db-access][h
     if (test_conn.is_open())
         test_conn.disconnect();
 }
+
+SCENARIO("When no exevts have been stored, no error is thrown requesting the last event", "[hdbpp-tx][hdbpp-tx-history-event]")
+{
+    DbConnection conn;
+    REQUIRE_NOTHROW(conn.connect(postgres_db::HdbppConnectionString));
+
+    // used for verification
+    pqxx::connection test_conn(postgres_db::HdbppConnectionString);
+
+    GIVEN("A valid DbConnection connected to a hdbpp database with no attribute nor history event stored in it")
+    {
+        WHEN("Requesting the last event")
+        {
+            string event;
+
+            THEN("No error occurs, and no event is returned")
+            {
+                REQUIRE_NOTHROW(event = conn.fetchLastHistoryEvent(TestAttrFQDName));
+                REQUIRE(event == "");
+            }
+        }
+    }
+}

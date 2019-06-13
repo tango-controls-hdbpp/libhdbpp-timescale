@@ -84,12 +84,11 @@ ostream &operator<<(ostream &os, Tango::AttributeDataType type)
     return os;
 }
 
-const string DefaultLogName = "log.txt";
 const int LoggerThreadCount = 1;
 
 //=============================================================================
 //=============================================================================
-void LogConfigurator::initLogging(bool enable_file, bool enable_console)
+void LogConfigurator::initLogging(bool enable_file, bool enable_console, const string &log_file_name)
 {
     try
     {
@@ -97,8 +96,8 @@ void LogConfigurator::initLogging(bool enable_file, bool enable_console)
 
         vector<spdlog::sink_ptr> sinks;
 
-        if (enable_file)
-            sinks.push_back(make_shared<spdlog::sinks::rotating_file_sink_mt>(DefaultLogName, 1024 * 1024 * 10, 3));
+        if (enable_file && !log_file_name.empty())
+            sinks.push_back(make_shared<spdlog::sinks::rotating_file_sink_mt>(log_file_name, 1024 * 1024 * 10, 3));
 
         if (enable_console)
             sinks.push_back(make_shared<spdlog::sinks::stdout_color_sink_mt>());
@@ -115,6 +114,12 @@ void LogConfigurator::initLogging(bool enable_file, bool enable_console)
         spdlog::set_default_logger(logger);
 
         spdlog::debug("Initialised the logging system...");
+
+        if (enable_file && !log_file_name.empty())
+            spdlog::debug("File logging enabled. Log file at: {}", log_file_name);
+
+        if (enable_console)
+            spdlog::debug("Console logging enabled.");
     }
     catch (const spdlog::spdlog_ex &ex)
     {

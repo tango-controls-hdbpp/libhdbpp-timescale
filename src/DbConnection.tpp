@@ -38,7 +38,8 @@ namespace pqxx_conn
     {
         assert(!full_attr_name.empty());
 
-        _logger->trace("Storing data event for attribute {} with traits {}", full_attr_name, traits);
+        _logger->trace("Storing data event for attribute {} with traits {}, value_r valid: {}, value_w valid: {}", 
+            full_attr_name, traits, value_r->size() > 0, value_w->size() > 0);
 
         checkConnection(LOCATION_INFO);
         checkAttributeExists(full_attr_name, LOCATION_INFO);

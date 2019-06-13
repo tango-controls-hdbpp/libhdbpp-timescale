@@ -57,7 +57,7 @@ const string LibLoggerName = "hdbpp";
 struct LogConfigurator
 {
     // TODO this is a little simplistic right now, improve
-    static void initLogging(bool enable_file, bool enable_console);
+    static void initLogging(bool enable_file, bool enable_console, const std::string &log_file_name = "");
     static void shutdownLogging();
     static void setLoggingLevel(spdlog::level::level_enum level);
 };

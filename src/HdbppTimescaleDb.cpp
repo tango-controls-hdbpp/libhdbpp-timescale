@@ -89,8 +89,11 @@ HdbppTimescaleDb::HdbppTimescaleDb(const vector<string> &configuration)
 
     // logging_level optional config parameter ----
     auto level = HdbppTimescaleDbUtils::getConfigParam(libhdb_conf, "logging_level", false);
+    auto log_file = HdbppTimescaleDbUtils::getConfigParam(libhdb_conf, "log_file", false);
+    auto log_console = HdbppTimescaleDbUtils::getConfigParam(libhdb_conf, "log_console", false);
+    auto log_file_name = HdbppTimescaleDbUtils::getConfigParam(libhdb_conf, "log_file_name", false);
 
-    LogConfigurator::initLogging(true, true);
+    LogConfigurator::initLogging(log_file == "true", log_console == "true", log_file_name);
 
     if (level == "ERROR" || level.empty())
         LogConfigurator::setLoggingLevel(spdlog::level::level_enum::err);
@@ -105,6 +108,10 @@ HdbppTimescaleDb::HdbppTimescaleDb(const vector<string> &configuration)
     else if (level == "DISABLED")
         LogConfigurator::setLoggingLevel(spdlog::level::level_enum::off);
 
+    spdlog::info("Logging level: {}", level);
+    spdlog::info("Logging to file: {}, logging to console: {}", log_file, log_console);
+    spdlog::info("Logfile (if any): {}", log_file_name);
+
     spdlog::info("Starting libhdbpp-timescale shared library...");
 
     // connect_string mandatory config parameter ----
@@ -116,7 +123,7 @@ HdbppTimescaleDb::HdbppTimescaleDb(const vector<string> &configuration)
 
     // now bring up the connection
     conn->connect(connection_string);
-    spdlog::info("Startied libhdbpp-timescale shared library successfully");
+    spdlog::info("Started libhdbpp-timescale shared library successfully");
 }
 
 //=============================================================================
@@ -133,10 +140,13 @@ void HdbppTimescaleDb::insert_Attr(Tango::EventData *event_data, HdbEventDataTyp
 {
     assert(event_data);
     assert(event_data->attr_value);
+    spdlog::trace("Insert data event for attribute: {}", event_data->attr_name);
 
     // if there is an error, we store an error, since there will be no data passed in
     if (event_data->err)
     {
+        spdlog::trace("Event type is error for attribute: {}", event_data->attr_name);
+
         conn->createTx<HdbppTxDataEvent>()
             .withName(event_data->attr_name)
             .withTraits(static_cast<Tango::AttrWriteType>(event_data_type.write_type),
@@ -216,4 +226,19 @@ void HdbppTimescaleDb::event_Attr(std::string fqdn_attr_name, unsigned char even
     spdlog::trace("History event request for attribute: {}", fqdn_attr_name);
     conn->createTx<HdbppTxHistoryEvent>().withName(fqdn_attr_name).withEvent(event).store();
 }
+
+//=============================================================================
+//=============================================================================
+AbstractDB *HdbppTimescaleDbFactory::create_db(vector<string> configuration)
+{
+    return new HdbppTimescaleDb(configuration);
+}
 } // namespace hdbpp
+
+//=============================================================================
+//=============================================================================
+DBFactory *getDBFactory()
+{
+	auto *factory = new hdbpp::HdbppTimescaleDbFactory();
+	return static_cast<DBFactory*>(factory);
+}

@@ -205,7 +205,7 @@ public:
 struct string_traits<std::vector<bool>>
 {
 public:
-    static constexpr const char *name() noexcept { return "vector<bool>"; }
+    static constexpr const char *name() noexcept { return "std::vector<bool>"; }
     static constexpr bool has_null() noexcept { return false; }
     static bool is_null(const std::vector<bool> &) { return false; }
     [[noreturn]] static std::vector<bool> null() { internal::throw_null_conversion(name()); }
@@ -225,7 +225,7 @@ public:
     }
 };*/
 
-// Specialisation for unsigned char, which was not included in pqxx,
+// Specialization for unsigned char, which was not included in pqxx,
 // this becomes an int16_t in the database
 template<>
 struct string_traits<uint8_t> : internal::builtin_traits<uint8_t>

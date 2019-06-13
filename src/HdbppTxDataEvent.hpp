@@ -158,23 +158,21 @@ HdbppTxDataEvent<Conn> &HdbppTxDataEvent<Conn>::store()
         // doStore the data is extracted and then stored
         switch (_traits.type())
         {
-            //case Tango::DEV_BOOLEAN: this->template doStore<bool>();
-            case Tango::DEV_SHORT: this->template doStore<int16_t>();
-            case Tango::DEV_LONG: this->template doStore<int32_t>();
-            case Tango::DEV_LONG64: this->template doStore<int64_t>();
-            case Tango::DEV_FLOAT: this->template doStore<float>();
-            case Tango::DEV_DOUBLE: this->template doStore<double>();
-            case Tango::DEV_UCHAR: this->template doStore<uint8_t>();
-            case Tango::DEV_USHORT: this->template doStore<uint16_t>();
-            case Tango::DEV_ULONG: this->template doStore<uint32_t>();
-            case Tango::DEV_ULONG64: this->template doStore<uint64_t>();
-            case Tango::DEV_STRING: this->template doStore<std::string>();
-            case Tango::DEV_STATE:
-                this->template doStore<int32_t>();
-
-                // TODO enable these calls.
-                //case Tango::DEV_ENUM: this->template doStore<?>();
-                //case Tango::DEV_ENCODED: this->template doStore<vector<uint8_t>>();
+            //case Tango::DEV_BOOLEAN: this->template doStore<bool>(); break;
+            case Tango::DEV_SHORT: this->template doStore<int16_t>(); break;
+            case Tango::DEV_LONG: this->template doStore<int32_t>(); break;
+            case Tango::DEV_LONG64: this->template doStore<int64_t>(); break;
+            case Tango::DEV_FLOAT: this->template doStore<float>(); break;
+            case Tango::DEV_DOUBLE: this->template doStore<double>(); break;
+            case Tango::DEV_UCHAR: this->template doStore<uint8_t>(); break;
+            case Tango::DEV_USHORT: this->template doStore<uint16_t>(); break;
+            case Tango::DEV_ULONG: this->template doStore<uint32_t>(); break;
+            case Tango::DEV_ULONG64: this->template doStore<uint64_t>(); break;
+            case Tango::DEV_STRING: this->template doStore<std::string>(); break;
+            case Tango::DEV_STATE: this->template doStore<int32_t>(); break;
+            // TODO enable these calls.
+            //case Tango::DEV_ENUM: this->template doStore<?>(); break;
+            //case Tango::DEV_ENCODED: this->template doStore<vector<uint8_t>>(); break;
         }
     }
 
@@ -189,7 +187,7 @@ template<typename Conn>
 template<typename T>
 void HdbppTxDataEvent<Conn>::doStore()
 {
-    auto value = [this](auto extractor) {
+    auto value = [this](auto extractor, bool has_data) {
         // this is the return, a unique ptr potentially with a vector in
         auto value = make_unique<std::vector<T>>();
 
@@ -197,7 +195,7 @@ void HdbppTxDataEvent<Conn>::doStore()
         // we still store the event, but with no event data, so filter them
         // here, and if we detect one, do not extract data, instead return
         // a vector with no elements in
-        if (!_dev_attr->is_empty() && _quality != Tango::ATTR_INVALID)
+        if (has_data && !_dev_attr->is_empty() && _quality != Tango::ATTR_INVALID)
         {
             // attempt to extract data, if none is received then clear
             // the unique_ptr as a signal to following functions there is no data
@@ -220,8 +218,8 @@ void HdbppTxDataEvent<Conn>::doStore()
     HdbppTxBase<Conn>::connection().template storeDataEvent<T>(HdbppTxBase<Conn>::attrNameForStorage(_attr_name),
         _event_time,
         _quality,
-        std::move(value([this](std::vector<T> &v) { return _dev_attr->extract_read(v); })),
-        std::move(value([this](std::vector<T> &v) { return _dev_attr->extract_set(v); })),
+        std::move(value([this](std::vector<T> &v) { return _dev_attr->extract_read(v); }, _traits.hasReadData())),
+        std::move(value([this](std::vector<T> &v) { return _dev_attr->extract_set(v); }, _traits.hasWriteData())),
         _traits);
 }
 
