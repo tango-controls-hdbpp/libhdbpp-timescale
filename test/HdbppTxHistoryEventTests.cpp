@@ -103,8 +103,7 @@ SCENARIO("Construct and store HdbppTxHistoryEvent data without error", "[hdbpp-t
     }
 }
 
-SCENARIO("When attempting to store invalid HdbppTxHistoryEvent states, errors are thrown",
-    "[hdbpp-tx][hdbpp-tx-history-event]")
+SCENARIO("When attempting to store invalid HdbppTxHistoryEvent states, errors are thrown", "[hdbpp-tx][hdbpp-tx-history-event]")
 {
     hdbpp_hist_event_test::MockConnection conn;
 
@@ -159,8 +158,7 @@ SCENARIO("When attempting to store invalid HdbppTxHistoryEvent states, errors ar
     }
 }
 
-SCENARIO("HdbppTxHistoryEvent's overloaded functions return identical results without error",
-    "[hdbpp-tx][hdbpp-tx-history-event]")
+SCENARIO("HdbppTxHistoryEvent's overloaded functions return identical results without error", "[hdbpp-tx][hdbpp-tx-history-event]")
 {
     hdbpp_hist_event_test::MockConnection conn;
 

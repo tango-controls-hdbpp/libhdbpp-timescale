@@ -103,33 +103,22 @@ void LogConfigurator::initLogging(bool enable_file, bool enable_console)
         if (enable_console)
             sinks.push_back(make_shared<spdlog::sinks::stdout_color_sink_mt>());
 
-        //sinks.push_back(make_shared<spdlog::sinks::syslog_sink_mt>("my_ident");
-
         if (sinks.empty())
             sinks.push_back(make_shared<spdlog::sinks::null_sink_mt>());
 
-        auto logger = make_shared<spdlog::async_logger>(LibLoggerName,
-            sinks.begin(),
-            sinks.end(),
-            spdlog::thread_pool(),
-            spdlog::async_overflow_policy::overrun_oldest);
-
-#if defined(PRODUCTION_BUILD)
-        logger->set_level(spdlog::level::warn);
-#else
-        logger->set_level(spdlog::level::trace);
-#endif
+        auto logger = make_shared<spdlog::async_logger>(LibLoggerName, sinks.begin(), sinks.end(), spdlog::thread_pool(), spdlog::async_overflow_policy::overrun_oldest);
 
         spdlog::register_logger(logger);
         spdlog::flush_every(std::chrono::seconds(1));
+        spdlog::flush_on(spdlog::level::warn);
         spdlog::set_default_logger(logger);
 
-        logger->debug("Initialised the logging system...");
+        spdlog::debug("Initialised the logging system...");
     }
     catch (const spdlog::spdlog_ex &ex)
     {
-        // TODO kinda fatal?
-        std::cout << "Log initialization failed: " << ex.what() << std::endl;
+        string msg {"Failed to initialise the logging system, caught error: " + string(ex.what())};
+        Tango::Except::throw_exception("Runtime Error", msg, LOCATION_INFO);
     }
 }
 
@@ -141,7 +130,7 @@ void LogConfigurator::shutdownLogging()
 
     if (!logger)
     {
-        logger->debug("Shutting down logging...");
+        spdlog::debug("Shutting down logging...");
         logger->flush();
     }
 }
@@ -150,13 +139,8 @@ void LogConfigurator::shutdownLogging()
 //=============================================================================
 void LogConfigurator::setLoggingLevel(spdlog::level::level_enum level)
 {
-    auto logger = spdlog::get(LibLoggerName);
-
-    if (!logger)
-    {
-        logger->set_level(level);
-        logger->debug("Logger set to level {}", (int)level);
-    }
+    spdlog::set_level(level);
+    spdlog::debug("Logger set to level {}", (int)level);
 }
 
 } // namespace hdbpp

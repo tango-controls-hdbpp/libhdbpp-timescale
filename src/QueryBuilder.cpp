@@ -127,19 +127,19 @@ namespace pqxx_conn
     const string &QueryBuilder::storeAttributeQuery()
     {
         // clang-format off
-    static string query =
-        "INSERT INTO " + CONF_TABLE_NAME + " (" +
-            CONF_COL_NAME + "," +
-            CONF_COL_DATA_TYPE_ID + "," +
-            CONF_COL_CS_NAME + "," + 
-            CONF_COL_DOMAIN + "," +
-            CONF_COL_FAMILY + "," +
-            CONF_COL_MEMBER + "," +
-            CONF_COL_LAST_NAME + ") (" +
-            "SELECT " +
-                "$1," + CONF_TYPE_COL_TYPE_ID + ",$2,$3,$4,$5,$6 " +
-            "FROM " + CONF_TYPE_TABLE_NAME + " " +
-            "WHERE " + CONF_TYPE_COL_TYPE + " = $7) RETURNING " + CONF_COL_ID;
+        static string query =
+            "INSERT INTO " + CONF_TABLE_NAME + " (" +
+                CONF_COL_NAME + "," +
+                CONF_COL_DATA_TYPE_ID + "," +
+                CONF_COL_CS_NAME + "," + 
+                CONF_COL_DOMAIN + "," +
+                CONF_COL_FAMILY + "," +
+                CONF_COL_MEMBER + "," +
+                CONF_COL_LAST_NAME + ") (" +
+                "SELECT " +
+                    "$1," + CONF_TYPE_COL_TYPE_ID + ",$2,$3,$4,$5,$6 " +
+                "FROM " + CONF_TYPE_TABLE_NAME + " " +
+                "WHERE " + CONF_TYPE_COL_TYPE + " = $7) RETURNING " + CONF_COL_ID;
         // clang-format on
 
         return query;
@@ -150,10 +150,10 @@ namespace pqxx_conn
     const string &QueryBuilder::storeHistoryStringQuery()
     {
         // clang-format off
-    static string query = 
-        "INSERT INTO " + HISTORY_EVENT_TABLE_NAME + " (" +
-            HISTORY_EVENT_COL_EVENT + 
-            ") VALUES ($1) RETURNING " + HISTORY_EVENT_COL_EVENT_ID;
+        static string query = 
+            "INSERT INTO " + HISTORY_EVENT_TABLE_NAME + " (" +
+                HISTORY_EVENT_COL_EVENT + 
+                ") VALUES ($1) RETURNING " + HISTORY_EVENT_COL_EVENT_ID;
         // clang-format on
 
         return query;
@@ -164,15 +164,15 @@ namespace pqxx_conn
     const string &QueryBuilder::storeHistoryEventQuery()
     {
         // clang-format off
-    static string query =
-        "INSERT INTO " + HISTORY_TABLE_NAME + " (" + 
-            HISTORY_COL_ID + "," +
-            HISTORY_COL_EVENT_ID + "," +
-            HISTORY_COL_TIME + ") " +
-            "SELECT " +
-                "$1," + HISTORY_EVENT_COL_EVENT_ID + ",CURRENT_TIMESTAMP(6)" +
-            " FROM " + HISTORY_EVENT_TABLE_NAME +
-            " WHERE " + HISTORY_EVENT_COL_EVENT + " = $2";
+        static string query =
+            "INSERT INTO " + HISTORY_TABLE_NAME + " (" + 
+                HISTORY_COL_ID + "," +
+                HISTORY_COL_EVENT_ID + "," +
+                HISTORY_COL_TIME + ") " +
+                "SELECT " +
+                    "$1," + HISTORY_EVENT_COL_EVENT_ID + ",CURRENT_TIMESTAMP(6)" +
+                " FROM " + HISTORY_EVENT_TABLE_NAME +
+                " WHERE " + HISTORY_EVENT_COL_EVENT + " = $2";
         // clang-format on
 
         return query;
@@ -183,21 +183,21 @@ namespace pqxx_conn
     const string &QueryBuilder::storeParameterEventQuery()
     {
         // clang-format off
-    static string query =
-        "INSERT INTO " +
-        PARAM_TABLE_NAME + " (" +
-        PARAM_COL_ID + "," +
-        PARAM_COL_EV_TIME + "," +
-        PARAM_COL_LABEL + "," +
-        PARAM_COL_UNIT + "," +
-        PARAM_COL_STANDARDUNIT + "," +
-        PARAM_COL_DISPLAYUNIT + "," +
-        PARAM_COL_FORMAT + "," +
-        PARAM_COL_ARCHIVERELCHANGE + "," +
-        PARAM_COL_ARCHIVEABSCHANGE + "," +
-        PARAM_COL_ARCHIVEPERIOD + "," +
-        PARAM_COL_DESCRIPTION + ") " +
-        "VALUES ($1, TO_TIMESTAMP($2), $3, $4, $5, $6, $7, $8, $9, $10, $11)";
+        static string query =
+            "INSERT INTO " +
+            PARAM_TABLE_NAME + " (" +
+            PARAM_COL_ID + "," +
+            PARAM_COL_EV_TIME + "," +
+            PARAM_COL_LABEL + "," +
+            PARAM_COL_UNIT + "," +
+            PARAM_COL_STANDARDUNIT + "," +
+            PARAM_COL_DISPLAYUNIT + "," +
+            PARAM_COL_FORMAT + "," +
+            PARAM_COL_ARCHIVERELCHANGE + "," +
+            PARAM_COL_ARCHIVEABSCHANGE + "," +
+            PARAM_COL_ARCHIVEPERIOD + "," +
+            PARAM_COL_DESCRIPTION + ") " +
+            "VALUES ($1, TO_TIMESTAMP($2), $3, $4, $5, $6, $7, $8, $9, $10, $11)";
         // clang-format on
 
         return query;
@@ -213,12 +213,11 @@ namespace pqxx_conn
         if (result == _data_event_error_queries.end())
         {
             auto param_number = 0;
-
             auto query = "INSERT INTO " + QueryBuilder::tableName(traits) + " (" + DAT_COL_ID + "," + DAT_COL_DATA_TIME;
 
             // split to ensure increments are in the correct order
-            query = query + "," + DAT_COL_QUALITY + "," + DAT_COL_ERROR_DESC_ID + ") VALUES ($" +
-                to_string(++param_number);
+            query = query + "," + DAT_COL_QUALITY + "," + DAT_COL_ERROR_DESC_ID + ") VALUES ($" + to_string(++param_number);
+
             query = query + ",TO_TIMESTAMP($" + to_string(++param_number) + ")";
 
             query = query + "," + "$" + to_string(++param_number);
@@ -243,9 +242,9 @@ namespace pqxx_conn
     const string &QueryBuilder::storeErrorQuery()
     {
         // clang-format off
-    static string query = 
-        "INSERT INTO " + ERR_TABLE_NAME + " (" +
-            ERR_COL_ERROR_DESC + ") VALUES ($1) RETURNING " + ERR_COL_ID;
+        static string query = 
+            "INSERT INTO " + ERR_TABLE_NAME + " (" +
+                ERR_COL_ERROR_DESC + ") VALUES ($1) RETURNING " + ERR_COL_ID;
         // clang-format on
 
         return query;
@@ -253,18 +252,16 @@ namespace pqxx_conn
 
     //=============================================================================
     //=============================================================================
-    const string QueryBuilder::fetchAllValuesQuery(
-        const string &column_name, const string &table_name, const string &reference)
+    const string QueryBuilder::fetchAllValuesQuery(const string &column_name, const string &table_name, const string &reference)
     {
         return "SELECT " + column_name + ", " + reference + " " + "FROM " + table_name;
     }
 
     //=============================================================================
     //=============================================================================
-    const string QueryBuilder::fetchValueQuery(
-        const string &column_name, const string &table_name, const string &reference)
+    const string QueryBuilder::fetchValueQuery(const string &column_name, const string &table_name, const string &reference)
     {
-        return "SELECT " + column_name + " " + "FROM " + table_name + " WHERE " + reference + "=";
+        return "SELECT " + column_name + " " + "FROM " + table_name + " WHERE " + reference + "=$1";
     }
 
     //=============================================================================
@@ -272,14 +269,14 @@ namespace pqxx_conn
     const string &QueryBuilder::fetchLastHistoryEventQuery()
     {
         // clang-format off
-    static string query = 
-        "SELECT " + HISTORY_EVENT_COL_EVENT +
-            " FROM " + HISTORY_TABLE_NAME +
-            " JOIN " + HISTORY_EVENT_TABLE_NAME +
-            " ON " + HISTORY_EVENT_TABLE_NAME + "." + 
-                HISTORY_EVENT_COL_EVENT_ID + "=" + HISTORY_TABLE_NAME + "." + HISTORY_COL_EVENT_ID +
-            " WHERE " + HISTORY_COL_ID + " = $1" +
-            " ORDER BY " + HISTORY_COL_TIME + " DESC LIMIT 1";
+        static string query = 
+            "SELECT " + HISTORY_EVENT_COL_EVENT +
+                " FROM " + HISTORY_TABLE_NAME +
+                " JOIN " + HISTORY_EVENT_TABLE_NAME +
+                " ON " + HISTORY_EVENT_TABLE_NAME + "." + 
+                    HISTORY_EVENT_COL_EVENT_ID + "=" + HISTORY_TABLE_NAME + "." + HISTORY_COL_EVENT_ID +
+                " WHERE " + HISTORY_COL_ID + " =$1" +
+                " ORDER BY " + HISTORY_COL_TIME + " DESC LIMIT 1";
         // clang-format on
 
         return query;
@@ -327,18 +324,17 @@ namespace pqxx_conn
 
     //=============================================================================
     //=============================================================================
-    const string &QueryBuilder::handleCache(
-        map<AttributeTraits, string> &cache, const AttributeTraits &traits, const string &stub)
+    const string &QueryBuilder::handleCache(map<AttributeTraits, string> &cache, const AttributeTraits &traits, const string &stub)
     {
         auto result = cache.find(traits);
 
         if (result == cache.end())
         {
             // clang-format off
-        string new_name = stub + 
-            "_Write_" + to_string(traits.writeType()) +
-            "_Format_" + to_string(traits.formatType()) + 
-            "_Type_" + to_string(traits.type());
+            string new_name = stub + 
+                "_Write_" + to_string(traits.writeType()) +
+                "_Format_" + to_string(traits.formatType()) + 
+                "_Type_" + to_string(traits.type());
             // clang-format on
 
             // add to the cache for future hits
@@ -349,6 +345,15 @@ namespace pqxx_conn
         }
 
         return result->second;
+    }
+
+    //=============================================================================
+    //=============================================================================
+    void QueryBuilder::print(std::ostream &os) const noexcept
+    {
+        os << "QueryBuilder(cached "
+           << "data_event: name/query " << _data_event_query_names.size() << "/" << _data_event_queries.size() << ", "
+           << "data_event_error: name/query " << _data_event_error_query_names.size() << "/" << _data_event_error_queries.size() << ")";
     }
 } // namespace pqxx_conn
 } // namespace hdbpp

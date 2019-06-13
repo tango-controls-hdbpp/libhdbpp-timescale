@@ -29,18 +29,15 @@ namespace pqxx_conn
     //=============================================================================
     //=============================================================================
     template<typename T>
-    void DbConnection::storeDataEvent(const std::string &full_attr_name,
-        double event_time,
-        int quality,
-        std::unique_ptr<vector<T>> value_r,
-        std::unique_ptr<vector<T>> value_w,
-        const AttributeTraits &traits)
+    void DbConnection::storeDataEvent(
+        const std::string &full_attr_name, double event_time, int quality, std::unique_ptr<vector<T>> value_r, std::unique_ptr<vector<T>> value_w, const AttributeTraits &traits)
     {
+        assert(!full_attr_name.empty());
+
         _logger->trace("Storing data event for attribute {} with traits {}", full_attr_name, traits);
 
-        assert(!full_attr_name.empty());
-        checkConnection();
-        checkAttributeExists(full_attr_name);
+        checkConnection(LOCATION_INFO);
+        checkAttributeExists(full_attr_name, LOCATION_INFO);
 
         try
         {
@@ -51,8 +48,7 @@ namespace pqxx_conn
                 // queries often
                 if (!tx.prepared(_query_builder.storeDataEventName(traits)).exists())
                 {
-                    tx.conn().prepare(
-                        _query_builder.storeDataEventName(traits), _query_builder.storeDataEventQuery<T>(traits));
+                    tx.conn().prepare(_query_builder.storeDataEventName(traits), _query_builder.storeDataEventQuery<T>(traits));
                 }
 
                 // get the pqxx prepared statement invocation object to allow us to
@@ -61,14 +57,12 @@ namespace pqxx_conn
                 pqxx::prepare::invocation inv = tx.prepared(_query_builder.storeDataEventName(traits));
 
                 // this lambda stores the data value correctly into the invocation,
-                // we must treat scalar/spectrum in different ways, once is a single
+                // we must treat scalar/spectrum in different ways, one is a single
                 // element and the other an array. Further, the unique_ptr may be
-                // empty and signify an null should be stored in the column instead
+                // empty and signify a null should be stored in the column instead
                 auto store_value = [&tx, &inv, &traits](auto &value) {
                     if (value && value->size() > 0)
                     {
-                        conn_utils::PreprocessValue<T>::run(value, tx);
-
                         // for a scalar, store the first element of the vector,
                         // we do not expect more than 1 element, for an array, store
                         // the entire vector
@@ -107,9 +101,7 @@ namespace pqxx_conn
         }
         catch (const pqxx::pqxx_exception &ex)
         {
-            handlePqxxError("The attribute [" + full_attr_name + "] data event was not saved.",
-                ex.base().what(),
-                _query_builder.storeDataEventQuery<T>(traits));
+            handlePqxxError("The attribute [" + full_attr_name + "] data event was not saved.", ex.base().what(), _query_builder.storeDataEventQuery<T>(traits), LOCATION_INFO);
         }
     }
 

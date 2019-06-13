@@ -45,8 +45,7 @@ namespace attr_name
 {
     // mock test data
     const std::string TestAttrFQDName = "tango://localhost.server.com:10000/test-domain/test-family/test-member/test";
-    const std::string TestAttrFQDNameNoTangoQual =
-        "localhost.server.com:10000/test-domain/test-family/test-member/test";
+    const std::string TestAttrFQDNameNoTangoQual = "localhost.server.com:10000/test-domain/test-family/test-member/test";
     const std::string TestAttrFQDNameNoDomain = "tango://localhost:10000/test-domain/test-family/test-member/test";
 
     const std::string TestAttrCs = "new_cs";
@@ -79,19 +78,135 @@ namespace attr_info
 
 namespace data_gen
 {
-    template<typename T>
-    std::unique_ptr<std::vector<T>> scalarData()
+    template<Tango::CmdArgType Type>
+    struct TangoTypeTraits
+    {};
+
+    template<>
+    struct TangoTypeTraits<Tango::DEV_BOOLEAN>
     {
-        std::unique_ptr<std::vector<T>> value = std::make_unique<std::vector<T>>();
-        std::random_device rd;
-        std::mt19937 gen(rd());
-        std::uniform_int_distribution<T> d;
-        value->push_back(d(gen));
-        return std::move(value);
-    }
+        using type = bool;
+        using array = std::unique_ptr<std::vector<bool>>;
+    };
+
+    template<>
+    struct TangoTypeTraits<Tango::DEV_SHORT>
+    {
+        using type = int16_t;
+        using array = std::unique_ptr<std::vector<int16_t>>;
+    };
+
+    template<>
+    struct TangoTypeTraits<Tango::DEV_LONG>
+    {
+        using type = int32_t;
+        using array = std::unique_ptr<std::vector<int32_t>>;
+    };
+
+    template<>
+    struct TangoTypeTraits<Tango::DEV_LONG64>
+    {
+        using type = int64_t;
+        using array = std::unique_ptr<std::vector<int64_t>>;
+    };
+
+    template<>
+    struct TangoTypeTraits<Tango::DEV_FLOAT>
+    {
+        using type = float;
+        using array = std::unique_ptr<std::vector<float>>;
+    };
+
+    template<>
+    struct TangoTypeTraits<Tango::DEV_DOUBLE>
+    {
+        using type = double;
+        using array = std::unique_ptr<std::vector<double>>;
+    };
+
+    template<>
+    struct TangoTypeTraits<Tango::DEV_UCHAR>
+    {
+        using type = uint8_t;
+        using array = std::unique_ptr<std::vector<uint8_t>>;
+    };
+
+    template<>
+    struct TangoTypeTraits<Tango::DEV_USHORT>
+    {
+        using type = uint16_t;
+        using array = std::unique_ptr<std::vector<uint16_t>>;
+    };
+
+    template<>
+    struct TangoTypeTraits<Tango::DEV_ULONG>
+    {
+        using type = uint32_t;
+        using array = std::unique_ptr<std::vector<uint32_t>>;
+    };
+
+    template<>
+    struct TangoTypeTraits<Tango::DEV_ULONG64>
+    {
+        using type = uint64_t;
+        using array = std::unique_ptr<std::vector<uint64_t>>;
+    };
+
+    template<>
+    struct TangoTypeTraits<Tango::DEV_STRING>
+    {
+        using type = std::string;
+        using array = std::unique_ptr<std::vector<std::string>>;
+    };
+
+    template<>
+    struct TangoTypeTraits<Tango::DEV_STATE>
+    {
+        using type = int32_t;
+        using array = std::unique_ptr<std::vector<int32_t>>;
+    };
+
+    template<Tango::CmdArgType Type>
+    typename TangoTypeTraits<Type>::array data(int size);
+
+    template<>
+    typename TangoTypeTraits<Tango::DEV_BOOLEAN>::array data<Tango::DEV_BOOLEAN>(int size);
+
+    template<>
+    typename TangoTypeTraits<Tango::DEV_SHORT>::array data<Tango::DEV_SHORT>(int size);
+
+    template<>
+    typename TangoTypeTraits<Tango::DEV_LONG>::array data<Tango::DEV_LONG>(int size);
+
+    template<>
+    typename TangoTypeTraits<Tango::DEV_LONG64>::array data<Tango::DEV_LONG64>(int size);
+
+    template<>
+    typename TangoTypeTraits<Tango::DEV_FLOAT>::array data<Tango::DEV_FLOAT>(int size);
+
+    template<>
+    typename TangoTypeTraits<Tango::DEV_DOUBLE>::array data<Tango::DEV_DOUBLE>(int size);
+
+    template<>
+    typename TangoTypeTraits<Tango::DEV_UCHAR>::array data<Tango::DEV_UCHAR>(int size);
+
+    template<>
+    typename TangoTypeTraits<Tango::DEV_USHORT>::array data<Tango::DEV_USHORT>(int size);
+
+    template<>
+    typename TangoTypeTraits<Tango::DEV_ULONG>::array data<Tango::DEV_ULONG>(int size);
+
+    template<>
+    typename TangoTypeTraits<Tango::DEV_ULONG64>::array data<Tango::DEV_ULONG64>(int size);
+
+    template<>
+    typename TangoTypeTraits<Tango::DEV_STRING>::array data<Tango::DEV_STRING>(int size);
+
+    template<>
+    typename TangoTypeTraits<Tango::DEV_STATE>::array data<Tango::DEV_STATE>(int size);
 
     template<typename T>
-    std::unique_ptr<std::vector<T>> spectrumData(int size)
+    std::unique_ptr<std::vector<T>> genericData(int size)
     {
         std::unique_ptr<std::vector<T>> value = std::make_unique<std::vector<T>>();
         std::random_device rd;
@@ -104,46 +219,26 @@ namespace data_gen
         return std::move(value);
     }
 
-    template<>
-    std::unique_ptr<std::vector<bool>> scalarData();
-    template<>
-    std::unique_ptr<std::vector<uint8_t>> scalarData();
-    template<>
-    std::unique_ptr<std::vector<std::string>> scalarData();
-    template<>
-    std::unique_ptr<std::vector<float>> scalarData();
-    template<>
-    std::unique_ptr<std::vector<double>> scalarData();
-
-    template<>
-    std::unique_ptr<std::vector<bool>> spectrumData(int size);
-    template<>
-    std::unique_ptr<std::vector<uint8_t>> spectrumData(int size);
-    template<>
-    std::unique_ptr<std::vector<std::string>> spectrumData(int size);
-    template<>
-    std::unique_ptr<std::vector<float>> spectrumData(int size);
-    template<>
-    std::unique_ptr<std::vector<double>> spectrumData(int size);
-
-    std::unique_ptr<std::vector<int32_t>> scalarStateData();
-    std::unique_ptr<std::vector<int32_t>> spectrumStateData(int size);
-
-    template<typename T>
-    std::unique_ptr<std::vector<T>> generateData(const hdbpp::AttributeTraits &traits, bool empty_data)
+    template<Tango::CmdArgType Type>
+    typename TangoTypeTraits<Type>::array generateScalarData(bool empty_data = false)
     {
-        if (!empty_data)
-        {
-            if (traits.isArray())
-                return std::move(spectrumData<T>(1024));
-            else
-                return std::move(scalarData<T>());
-        }
-
-        return std::move(std::make_unique<std::vector<T>>());
+        return std::move(data<Type>(empty_data ? 0 : 1));
     }
 
-    std::unique_ptr<std::vector<int32_t>> generateStateData(const hdbpp::AttributeTraits &traits, bool empty_data);
+    template<Tango::CmdArgType Type>
+    typename TangoTypeTraits<Type>::array generateSpectrumData(bool empty_data = false, int size = 1024)
+    {
+        return std::move(data<Type>(empty_data ? 0 : size));
+    }
+
+    template<Tango::CmdArgType Type>
+    typename TangoTypeTraits<Type>::array generateData(const hdbpp::AttributeTraits &traits, bool empty_data = false)
+    {
+        if (traits.isArray())
+            return generateSpectrumData<Type>(empty_data);
+
+        return generateScalarData<Type>(empty_data);
+    }
 } // namespace data_gen
 } // namespace hdbpp_test
 #endif // _TEST_HELPERS_HPP

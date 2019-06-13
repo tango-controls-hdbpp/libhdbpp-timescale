@@ -38,10 +38,7 @@ SCENARIO("Creating valid database table names for SCALAR", "[query-string]")
         {
             auto result = query_builder.tableName(traits);
 
-            THEN("The result must include the TYPE_SCALAR from the schema")
-            {
-                REQUIRE_THAT(result, Contains(TYPE_SCALAR));
-            }
+            THEN("The result must include the TYPE_SCALAR from the schema") { REQUIRE_THAT(result, Contains(TYPE_SCALAR)); }
         }
     }
 }
@@ -58,10 +55,7 @@ SCENARIO("Creating valid database table names for SPECTRUM", "[query-string]")
         {
             auto result = query_builder.tableName(traits);
 
-            THEN("The result must include the TYPE_ARRAY from the schema")
-            {
-                REQUIRE_THAT(result, Contains(TYPE_ARRAY));
-            }
+            THEN("The result must include the TYPE_ARRAY from the schema") { REQUIRE_THAT(result, Contains(TYPE_ARRAY)); }
         }
     }
 }
@@ -78,10 +72,7 @@ SCENARIO("Creating valid database table names for IMAGE", "[query-string]")
         {
             auto result = query_builder.tableName(traits);
 
-            THEN("The result must include the TYPE_IMAGE from the schema")
-            {
-                REQUIRE_THAT(result, Contains(TYPE_IMAGE));
-            }
+            THEN("The result must include the TYPE_IMAGE from the schema") { REQUIRE_THAT(result, Contains(TYPE_IMAGE)); }
         }
     }
 }
@@ -98,10 +89,7 @@ SCENARIO("Creating valid database table names for DEV_BOOLEAN", "[query-string]"
         {
             auto result = query_builder.tableName(traits);
 
-            THEN("The result must include the TYPE_DEV_BOOLEAN from the schema")
-            {
-                REQUIRE_THAT(result, Contains(TYPE_DEV_BOOLEAN));
-            }
+            THEN("The result must include the TYPE_DEV_BOOLEAN from the schema") { REQUIRE_THAT(result, Contains(TYPE_DEV_BOOLEAN)); }
         }
     }
 }
@@ -118,10 +106,7 @@ SCENARIO("Creating valid database table names for DEV_UCHAR", "[query-string]")
         {
             auto result = query_builder.tableName(traits);
 
-            THEN("The result must include the TYPE_DEV_UCHAR from the schema")
-            {
-                REQUIRE_THAT(result, Contains(TYPE_DEV_UCHAR));
-            }
+            THEN("The result must include the TYPE_DEV_UCHAR from the schema") { REQUIRE_THAT(result, Contains(TYPE_DEV_UCHAR)); }
         }
     }
 }
@@ -138,10 +123,7 @@ SCENARIO("Creating valid database table names for DEV_DOUBLE", "[query-string]")
         {
             auto result = query_builder.tableName(traits);
 
-            THEN("The result must include the TYPE_DEV_DOUBLE from the schema")
-            {
-                REQUIRE_THAT(result, Contains(TYPE_DEV_DOUBLE));
-            }
+            THEN("The result must include the TYPE_DEV_DOUBLE from the schema") { REQUIRE_THAT(result, Contains(TYPE_DEV_DOUBLE)); }
         }
     }
 }
@@ -158,10 +140,7 @@ SCENARIO("Creating valid database table names for DEV_FLOAT", "[query-string]")
         {
             auto result = query_builder.tableName(traits);
 
-            THEN("The result must include the TYPE_DEV_FLOAT from the schema")
-            {
-                REQUIRE_THAT(result, Contains(TYPE_DEV_FLOAT));
-            }
+            THEN("The result must include the TYPE_DEV_FLOAT from the schema") { REQUIRE_THAT(result, Contains(TYPE_DEV_FLOAT)); }
         }
     }
 }
@@ -178,10 +157,7 @@ SCENARIO("Creating valid database table names for DEV_STRING", "[query-string]")
         {
             auto result = query_builder.tableName(traits);
 
-            THEN("The result must include the TYPE_DEV_STRING from the schema")
-            {
-                REQUIRE_THAT(result, Contains(TYPE_DEV_STRING));
-            }
+            THEN("The result must include the TYPE_DEV_STRING from the schema") { REQUIRE_THAT(result, Contains(TYPE_DEV_STRING)); }
         }
     }
 }
@@ -198,10 +174,7 @@ SCENARIO("Creating valid database table names for DEV_LONG", "[query-string]")
         {
             auto result = query_builder.tableName(traits);
 
-            THEN("The result must include the TYPE_DEV_LONG from the schema")
-            {
-                REQUIRE_THAT(result, Contains(TYPE_DEV_LONG));
-            }
+            THEN("The result must include the TYPE_DEV_LONG from the schema") { REQUIRE_THAT(result, Contains(TYPE_DEV_LONG)); }
         }
     }
 }
@@ -218,10 +191,7 @@ SCENARIO("Creating valid database table names for DEV_ULONG", "[query-string]")
         {
             auto result = query_builder.tableName(traits);
 
-            THEN("The result must include the TYPE_DEV_ULONG from the schema")
-            {
-                REQUIRE_THAT(result, Contains(TYPE_DEV_ULONG));
-            }
+            THEN("The result must include the TYPE_DEV_ULONG from the schema") { REQUIRE_THAT(result, Contains(TYPE_DEV_ULONG)); }
         }
     }
 }

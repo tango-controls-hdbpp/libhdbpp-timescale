@@ -22,6 +22,7 @@
 
 #include "HdbppDefines.hpp"
 #include "HdbppTxBase.hpp"
+#include "LibUtils.hpp"
 
 #include <iostream>
 #include <string>
@@ -32,7 +33,6 @@ template<typename Conn>
 class HdbppTxHistoryEvent : public HdbppTxBase<Conn>
 {
 public:
-    // TODO print()
     // TODO make crash event configurable
 
     HdbppTxHistoryEvent(Conn &conn) : HdbppTxBase<Conn>(conn) {}
@@ -55,7 +55,7 @@ public:
     HdbppTxHistoryEvent<Conn> &store();
 
     /// @brief Print the HdbppTxHistoryEvent object to the stream
-    void print(std::ostream &os) const override;
+    void print(std::ostream &os) const noexcept override;
 
 private:
     AttributeName _attr_name;
@@ -82,7 +82,8 @@ HdbppTxHistoryEvent<Conn> &HdbppTxHistoryEvent<Conn>::withEvent(unsigned char ev
         default:
         {
             std::string msg {"Unknown event type passed, unable to convert this into known event system"};
-            throw std::invalid_argument(msg);
+            spdlog::error("Error: {}", msg);
+            Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
         }
     }
 
@@ -97,17 +98,20 @@ HdbppTxHistoryEvent<Conn> &HdbppTxHistoryEvent<Conn>::store()
     if (_attr_name.empty())
     {
         std::string msg {"AttributeName is reporting empty. Unable to complete the transaction."};
-        throw std::invalid_argument(msg);
+        spdlog::error("Error: {}", msg);
+        Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
     if (_event.empty())
     {
         std::string msg {"The event string is reporting empty. Unable to complete the transaction."};
-        throw std::invalid_argument(msg);
+        spdlog::error("Error: {}", msg);
+        Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
     else if (HdbppTxBase<Conn>::connection().isClosed())
     {
         std::string msg {"The connection is reporting it is closed. Unable to store event."};
-        throw std::invalid_argument(msg);
+        spdlog::error("Error: {}", msg);
+        Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
 
     // in the case that we receieve a start event, and the last was a start event,
@@ -115,18 +119,13 @@ HdbppTxHistoryEvent<Conn> &HdbppTxHistoryEvent<Conn>::store()
     // record a crash event before the next start event
     if (_event == events::StartEvent)
     {
-        auto last_event = HdbppTxBase<Conn>::connection().fetchLastHistoryEvent(
-            HdbppTxBase<Conn>::attrNameForStorage(_attr_name));
+        auto last_event = HdbppTxBase<Conn>::connection().fetchLastHistoryEvent(HdbppTxBase<Conn>::attrNameForStorage(_attr_name));
 
         // check the last event was a StartEvent
         if (last_event == events::StartEvent)
         {
             // insert the crash event
-            HdbppTxBase<Conn>::connection()
-                .template createTx<HdbppTxHistoryEvent>()
-                .withName(_attr_name.fqdnAttributeName())
-                .withEvent(events::CrashEvent)
-                .store();
+            HdbppTxBase<Conn>::connection().template createTx<HdbppTxHistoryEvent>().withName(_attr_name.fqdnAttributeName()).withEvent(events::CrashEvent).store();
         }
     }
 
@@ -142,13 +141,14 @@ HdbppTxHistoryEvent<Conn> &HdbppTxHistoryEvent<Conn>::store()
 //=============================================================================
 //=============================================================================
 template<typename Conn>
-void HdbppTxHistoryEvent<Conn>::print(std::ostream &os) const
+void HdbppTxHistoryEvent<Conn>::print(std::ostream &os) const noexcept
 {
+    os << "HdbppTxHistoryEvent(base: ";
     HdbppTxBase<Conn>::print(os);
 
-    // TODO print command
-    //os << "_attr_name: " << _attr_name
-    //<< "_event" << _event;
+    os << ", "
+       << "_attr_name: " << _attr_name << ", "
+       << "_event: " << _event << ")";
 }
 
 } // namespace hdbpp

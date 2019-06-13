@@ -37,10 +37,7 @@ class MockConnection
 class TestHdbppTxBase : public HdbppTxBase<MockConnection>
 {
 public:
-    static string testAttrNameForStorage(AttributeName &attr_name)
-    {
-        return HdbppTxBase<MockConnection>::attrNameForStorage(attr_name);
-    }
+    static string testAttrNameForStorage(AttributeName &attr_name) { return HdbppTxBase<MockConnection>::attrNameForStorage(attr_name); }
 };
 }; // namespace hdbpp_base_test
 
@@ -52,10 +49,7 @@ SCENARIO("HdbppTvBase can construct a valid attribute name for storage", "[hdbpp
 
         WHEN("Requesting the name for storage")
         {
-            THEN("The name is valid and as expected")
-            {
-                REQUIRE(hdbpp_base_test::TestHdbppTxBase::testAttrNameForStorage(attr_name) == TestAttrFinalName);
-            }
+            THEN("The name is valid and as expected") { REQUIRE(hdbpp_base_test::TestHdbppTxBase::testAttrNameForStorage(attr_name) == TestAttrFinalName); }
         }
     }
 }

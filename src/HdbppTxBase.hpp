@@ -45,7 +45,7 @@ public:
     bool result() const noexcept { return _result; };
 
     /// @brief Print the HdbppTxBase object to the stream
-    virtual void print(std::ostream &os) const {}
+    virtual void print(std::ostream &os) const noexcept { os << "HdbppTxBase(_result: " << _result << ")"; }
 
 protected:
     // access functions for the connection the transaction
@@ -57,14 +57,12 @@ protected:
 
     // small helper to generate the attribute name for the db consistently
     // across all the different tx classes
-    static std::string attrNameForStorage(AttributeName &attr_name)
-    {
-        return "tango://" + attr_name.tangoHostWithDomain() + "/" + attr_name.fullAttributeName();
-    }
+    static std::string attrNameForStorage(AttributeName &attr_name) { return "tango://" + attr_name.tangoHostWithDomain() + "/" + attr_name.fullAttributeName(); }
 
 private:
     // instance of the template type, this is the connection to
-    // the storage backend, i.e. database
+    // the storage backend, i.e. database, and all requests are routed
+    // through it
     Conn &_conn;
 
     bool _result = false;

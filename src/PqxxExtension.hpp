@@ -26,35 +26,6 @@
 #include <pqxx/strconv>
 #include <vector>
 
-namespace hdbpp
-{
-namespace pqxx_conn
-{
-    namespace conn_utils
-    {
-        //=============================================================================
-        //=============================================================================
-        template<typename T>
-        struct PreprocessValue
-        {
-            static void run(std::unique_ptr<std::vector<T>> &, pqxx::work &) {}
-        };
-
-        //=============================================================================
-        //=============================================================================
-        template<>
-        struct PreprocessValue<std::string>
-        {
-            static void run(std::unique_ptr<std::vector<std::string>> &value, pqxx::work &tx)
-            {
-                for (auto &str : *value)
-                    str = tx.quote(str);
-            }
-        };
-    } // namespace conn_utils
-} // namespace pqxx_conn
-} // namespace hdbpp
-
 namespace pqxx
 {
 namespace internal
@@ -224,10 +195,7 @@ public:
         //}
     }
 
-    static std::string to_string(const std::vector<std::string> &value)
-    {
-        return "{" + separated_list(",", value.begin(), value.end()) + "}";
-    }
+    static std::string to_string(const std::vector<std::string> &value) { return "{" + separated_list(",", value.begin(), value.end()) + "}"; }
 };
 
 /*template<>

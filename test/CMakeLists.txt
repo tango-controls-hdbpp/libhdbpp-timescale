@@ -16,7 +16,6 @@ set(TEST_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/AttributeTraitsTests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ColumnCacheTests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/DbConnectionTests.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/HdbppTimescaleDbTests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/HdbppTxNewAttributeTests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/HdbppTxHistoryEventTests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/HdbppTxParameterEventTests.cpp

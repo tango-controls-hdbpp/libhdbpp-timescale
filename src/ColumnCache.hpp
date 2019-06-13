@@ -20,7 +20,6 @@
 #ifndef _COLUMN_CACHE_HPP
 #define _COLUMN_CACHE_HPP
 
-#include "Exceptions.hpp"
 #include "LibUtils.hpp"
 #include "PqxxExtension.hpp"
 #include "QueryBuilder.hpp"
@@ -38,12 +37,9 @@ namespace pqxx_conn
     class ColumnCache
     {
     public:
-        ColumnCache(std::shared_ptr<pqxx::connection> conn,
-            const std::string &table_name,
-            const std::string &column_name,
-            const std::string &reference);
+        ColumnCache(std::shared_ptr<pqxx::connection> conn, const std::string &table_name, const std::string &column_name, const std::string &reference);
 
-        // query if the reference has a chached value
+        // query if the reference has a cached value
         bool valueExists(const TRef &reference);
 
         // get the value associated with the reference, throws and exception if it does not
@@ -53,27 +49,16 @@ namespace pqxx_conn
         // cache a value in the internal maps
         void cacheValue(const TValue &value, const TRef &reference);
 
+        // fetch all values from the database and cache them for future
+        // look up
+        void fetchAll();
+
         // utility functions
         void clear() noexcept { _values.clear(); }
-        void fetchAll();
         int size() const noexcept { return _values.size(); }
-
         void print(std::ostream &os) const noexcept;
 
     private:
-        template<typename T>
-        pqxx::result execTx(pqxx::work &tx, const T &reference)
-        {
-            // just exec the tx
-            return tx.exec(_fetch_id_query + pqxx::to_string(reference));
-        }
-
-        pqxx::result execTx(pqxx::work &tx, const std::string &reference)
-        {
-            // An overload for strings to ensure they are escaped.
-            return tx.exec(_fetch_id_query + "\'" + reference + "\'");
-        }
-
         // the database connection, only valid after the cache has been connected
         std::shared_ptr<pqxx::connection> _conn;
 
@@ -82,9 +67,9 @@ namespace pqxx_conn
         std::string _column_name;
         std::string _reference;
 
-        // cache the queries used
-        std::string _fetch_all_query;
-        std::string _fetch_id_query;
+        // prepared query names for this cache
+        std::string _fetch_all_query_name;
+        std::string _fetch_id_query_name;
 
         // cache of values to a reference, the unordered map is not sorted
         // so we do not loose time on each insert having it resorted
@@ -97,10 +82,7 @@ namespace pqxx_conn
     //=============================================================================
     //=============================================================================
     template<typename TValue, typename TRef>
-    ColumnCache<TValue, TRef>::ColumnCache(std::shared_ptr<pqxx::connection> conn,
-        const std::string &table_name,
-        const std::string &column_name,
-        const std::string &reference) :
+    ColumnCache<TValue, TRef>::ColumnCache(std::shared_ptr<pqxx::connection> conn, const std::string &table_name, const std::string &column_name, const std::string &reference) :
         _conn(conn),
         _table_name(table_name),
         _column_name(column_name),
@@ -111,10 +93,9 @@ namespace pqxx_conn
         assert(!_column_name.empty());
         assert(!_reference.empty());
 
-        // cache the queries used for the cache, rather than request and rebuild
-        // them each time they are used
-        _fetch_all_query = QueryBuilder::fetchAllValuesQuery(_column_name, _table_name, _reference);
-        _fetch_id_query = QueryBuilder::fetchValueQuery(_column_name, _table_name, _reference);
+        // create the query names
+        _fetch_all_query_name = _column_name + _table_name + _reference + "_all";
+        _fetch_id_query_name = _column_name + _table_name + _reference + "_id";
 
         _logger = spdlog::get(LibLoggerName);
 
@@ -137,25 +118,33 @@ namespace pqxx_conn
             pqxx::perform([this]() {
                 // request the entire table, since we will cache it fully
                 pqxx::work tx {*(_conn.get()), FetchAllValues};
-                pqxx::result result(tx.exec(_fetch_all_query));
+
+                if (!tx.prepared(_fetch_all_query_name).exists())
+                {
+                    tx.conn().prepare(_fetch_all_query_name, QueryBuilder::fetchAllValuesQuery(_column_name, _table_name, _reference));
+
+                    _logger->trace("Created prepared statement for: {}", _fetch_all_query_name);
+                }
+
+                auto result = tx.exec_prepared(_fetch_all_query_name);
                 tx.commit();
 
                 // load each value from the table into the cache
                 for (const auto &row : result)
-                    _values.insert({row[1].as<TRef>(), row[0].as<TValue>()});
+                    _values.insert({row[1].template as<TRef>(), row[0].template as<TValue>()});
 
                 _logger->debug("Loaded: {} values into cache", _values.size());
             });
         }
         catch (const pqxx::pqxx_exception &ex)
         {
-            string msg {"The database transaction failed. Unable to fetchAll for column: " + _column_name +
-                " in table: " + _table_name + "."};
+            string msg {"The database transaction failed. Unable to fetchAll for column: " + _column_name + " in table: " + _table_name + ". Error: " + ex.base().what()};
 
             _logger->error("Error: An unexpected error occurred when trying to run the database query");
             _logger->error("Caught error: \"{}\"", ex.base().what());
             _logger->error("Throwing storage error with message: \"{}\"", msg);
-            throw storage_error(msg);
+
+            Tango::Except::throw_exception("Storage Error", msg, LOCATION_INFO);
         }
     }
 
@@ -181,9 +170,17 @@ namespace pqxx_conn
             {
                 // the value is not loaded, so next step is to check the database
                 return pqxx::perform([this, &reference]() {
+                    // lookup the value
                     pqxx::work tx {(*_conn), FetchValue};
 
-                    auto result = execTx(tx, reference);
+                    if (!tx.prepared(_fetch_id_query_name).exists())
+                    {
+                        tx.conn().prepare(_fetch_id_query_name, QueryBuilder::fetchValueQuery(_column_name, _table_name, _reference));
+
+                        _logger->trace("Created prepared statement for: {}", _fetch_id_query_name);
+                    }
+
+                    auto result = tx.exec_prepared(_fetch_id_query_name, reference);
                     tx.commit();
 
                     // no result is not an error, the value simply does not exist and its
@@ -191,7 +188,7 @@ namespace pqxx_conn
                     if (!result.empty())
                     {
                         // if there is a result, there should be a single result, anything
-                        // else is unexpected
+                        // else is unexpected and an error
                         if (result.size() == 1)
                         {
                             auto value = result.at(0).at(0).template as<TValue>();
@@ -202,8 +199,7 @@ namespace pqxx_conn
                         }
                         else
                         {
-                            throw pqxx::unexpected_rows(
-                                "More than one row returned for value lookup. Expected just one.");
+                            throw pqxx::unexpected_rows("More than one row returned for value lookup. Expected just one.");
                         }
                     }
 
@@ -212,13 +208,13 @@ namespace pqxx_conn
             }
             catch (const pqxx::pqxx_exception &ex)
             {
-                string msg {"The database transaction failed. Unable to query column: " + _column_name +
-                    " in table: " + _table_name + "."};
+                string msg {"The database transaction failed. Unable to query column: " + _column_name + " in table: " + _table_name + ". Error: " + ex.base().what()};
 
                 _logger->error("Error: An unexpected error occurred when trying to run the database query");
                 _logger->error("Caught error: \"{}\"", ex.base().what());
                 _logger->error("Throwing storage error with message: \"{}\"", msg);
-                throw storage_error(msg);
+
+                Tango::Except::throw_exception("Storage Error", msg, LOCATION_INFO);
             }
         }
 
@@ -235,7 +231,12 @@ namespace pqxx_conn
         // run a check on if the value exists, this will attempt to load the value if
         // its not in the cache. If this fails, return a blank optional
         if (!valueExists(reference))
-            throw std::runtime_error("Error: Unable to find a value in either the cache or database.");
+        {
+            // this is pretty fatal, we can not store information if it does not exist
+            string msg {"Unable to find a value in either the cache or database for reference: " + reference};
+            _logger->error("Error: {}", msg);
+            Tango::Except::throw_exception("Storage Error", msg, LOCATION_INFO);
+        }
 
         // value exists, find and return it
         return _values.at(reference);
@@ -251,7 +252,10 @@ namespace pqxx_conn
         // ensure the value is not already cached, and if it is, throw an exception for
         // the caller to deal with
         if (_values.find(reference) != _values.end())
-            throw std::runtime_error("Error: Value already exists in cache. Check it exists first");
+        {
+            _logger->warn("Value already exists in cache, not caching. Value: {} with reference: {}", value, reference);
+            return;
+        }
 
         _values.insert({reference, value});
         _logger->debug("Cached new value: {} with reference: {} by request", value, reference);
@@ -262,7 +266,10 @@ namespace pqxx_conn
     template<typename TValue, typename TRef>
     void ColumnCache<TValue, TRef>::print(std::ostream &os) const noexcept
     {
-        os << "ColumnCache(size: " << _values.size() << ")";
+        os << "ColumnCache(size: " << _values.size() << ", "
+           << "_table_name: " << _table_name << ", "
+           << "_column_name: " << _column_name << ", "
+           << "_reference: " << _reference << ")";
     }
 
 } // namespace pqxx_conn

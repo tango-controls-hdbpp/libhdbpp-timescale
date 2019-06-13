@@ -38,6 +38,7 @@
 
 namespace hdbpp
 {
+// generic output operator for classes
 template<class T>
 auto operator<<(std::ostream &os, const T &t) -> decltype(t.print(os), static_cast<void>(0), os)
 {
@@ -45,10 +46,12 @@ auto operator<<(std::ostream &os, const T &t) -> decltype(t.print(os), static_ca
     return os;
 }
 
+// some output operators for tango enums
 std::ostream &operator<<(std::ostream &os, Tango::AttrWriteType write_type);
 std::ostream &operator<<(std::ostream &os, Tango::AttrDataFormat format);
 std::ostream &operator<<(std::ostream &os, Tango::AttributeDataType type);
 
+// SPDLOG config and setup
 const string LibLoggerName = "hdbpp";
 
 struct LogConfigurator
@@ -58,6 +61,11 @@ struct LogConfigurator
     static void shutdownLogging();
     static void setLoggingLevel(spdlog::level::level_enum level);
 };
+
+// Macros to get the location for reporting errors
+#define S1(x) #x
+#define S2(x) S1(x)
+#define LOCATION_INFO string(__func__) + ":" S2(__LINE__)
 
 }; // namespace hdbpp
 #endif // _LIBUTILS_H

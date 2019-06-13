@@ -20,11 +20,9 @@
 #ifndef _PSQL_CONNECTION_HPP
 #define _PSQL_CONNECTION_HPP
 
-#include "AttributeName.hpp"
 #include "AttributeTraits.hpp"
 #include "ColumnCache.hpp"
 #include "ConnectionBase.hpp"
-#include "Exceptions.hpp"
 #include "HdbppTxFactory.hpp"
 #include "QueryBuilder.hpp"
 #include "TimescaleSchema.hpp"
@@ -42,9 +40,9 @@ namespace pqxx_conn
     class DbConnection : public ConnectionBase, public HdbppTxFactory<DbConnection>
     {
     public:
-        // TODO add options fields
-        // map<std::string, bool> _optional_flags,
-        // map<std::string, std::string> _optional_fields,
+        // TODO add options fields - json string
+        // TODO add error feedback
+        // TODO add fetch DataType function
 
         DbConnection();
         virtual ~DbConnection() {}
@@ -86,11 +84,7 @@ namespace pqxx_conn
             std::unique_ptr<vector<T>> value_w,
             const AttributeTraits &traits);
 
-        void storeDataEventError(const std::string &full_attr_name,
-            double event_time,
-            int quality,
-            const std::string &error_msg,
-            const AttributeTraits &traits);
+        void storeDataEventError(const std::string &full_attr_name, double event_time, int quality, const std::string &error_msg, const AttributeTraits &traits);
 
         // fetch API
         std::string fetchLastHistoryEvent(const std::string &full_attr_name);
@@ -99,9 +93,10 @@ namespace pqxx_conn
         void storeEvent(const std::string &full_attr_name, const std::string &event);
         void storeErrorMsg(const std::string &full_attr_name, const std::string &error_msg);
 
-        void checkAttributeExists(const std::string &full_attr_name);
-        void checkConnection();
-        void handlePqxxError(const std::string &msg, const std::string &what, const std::string &query);
+        void checkAttributeExists(const std::string &full_attr_name, const std::string &location);
+        void checkConnection(const std::string &location);
+
+        void handlePqxxError(const std::string &msg, const std::string &what, const std::string &query, const std::string &location);
 
         // this object builds and caches queries for the database
         QueryBuilder _query_builder;

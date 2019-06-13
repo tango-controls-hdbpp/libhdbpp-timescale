@@ -27,6 +27,8 @@ namespace hdbpp
 class ConnectionBase
 {
 public:
+    // TODO conig params to constructor and get api
+
     // connection API
     virtual void connect(const std::string &connect_string) = 0;
     virtual void disconnect() = 0;

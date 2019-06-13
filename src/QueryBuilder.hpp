@@ -56,7 +56,7 @@ namespace pqxx_conn
     namespace query_utils
     {
         // This function generates the postgres cast for the event data insert
-        // queries, it is specialised for all possible tango types.
+        // queries, it is specialized for all possible tango types in the source file
         template<typename T>
         std::string postgresCast(bool is_array);
     }; // namespace query_utils
@@ -75,10 +75,14 @@ namespace pqxx_conn
     const string FetchValue = "FetchKey";
     const string FetchAllValues = "FetchAllKeys";
 
+    // Most of this class is static, its a simple query builder and cacher. The non-static
+    // methods build and cache more complex query strings for event data.
     class QueryBuilder
     {
     public:
         QueryBuilder() { _logger = spdlog::get(LibLoggerName); }
+
+        // Non-static methods
 
         // these builder functions cache the built query names, therefore they
         // are not static like the others
@@ -93,6 +97,10 @@ namespace pqxx_conn
         const std::string &storeDataEventErrorQuery(const AttributeTraits &traits);
         std::string tableName(const AttributeTraits &traits);
 
+        void print(std::ostream &os) const noexcept;
+
+        // Static methods
+
         static const std::string &storeAttributeQuery();
         static const std::string &storeHistoryEventQuery();
         static const std::string &storeHistoryStringQuery();
@@ -102,16 +110,13 @@ namespace pqxx_conn
 
         // these query strings are built each call, so are cached in the class
         // that requests them
-        static const std::string fetchValueQuery(
-            const std::string &column_name, const std::string &table_name, const std::string &reference);
+        static const std::string fetchValueQuery(const std::string &column_name, const std::string &table_name, const std::string &reference);
 
-        static const std::string fetchAllValuesQuery(
-            const std::string &column_name, const std::string &table_name, const std::string &reference);
+        static const std::string fetchAllValuesQuery(const std::string &column_name, const std::string &table_name, const std::string &reference);
 
     private:
         // generic function to handle caching items into the cache maps
-        const string &handleCache(
-            std::map<AttributeTraits, std::string> &cache, const AttributeTraits &traits, const std::string &stub);
+        const string &handleCache(std::map<AttributeTraits, std::string> &cache, const AttributeTraits &traits, const std::string &stub);
 
         // cached query names, these are built from the traits object
         std::map<AttributeTraits, std::string> _data_event_query_names;
@@ -153,13 +158,11 @@ namespace pqxx_conn
 
             // add the read parameter with cast
             if (traits.hasReadData())
-                query = query + "," + "$" + to_string(++param_number) +
-                    "::" + query_utils::postgresCast<T>(traits.isArray());
+                query = query + "," + "$" + to_string(++param_number) + "::" + query_utils::postgresCast<T>(traits.isArray());
 
             // add the write parameter with cast
             if (traits.hasWriteData())
-                query = query + "," + "$" + to_string(++param_number) +
-                    "::" + query_utils::postgresCast<T>(traits.isArray());
+                query = query + "," + "$" + to_string(++param_number) + "::" + query_utils::postgresCast<T>(traits.isArray());
 
             query = query + "," + "$" + to_string(++param_number) + ")";
 

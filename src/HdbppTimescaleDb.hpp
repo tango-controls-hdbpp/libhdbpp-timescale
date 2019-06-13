@@ -20,26 +20,13 @@
 #ifndef _HDBPP_TIMESCALE_HPP
 #define _HDBPP_TIMESCALE_HPP
 
-#include "DbConnection.hpp"
-#include "spdlog/spdlog.h"
-
 #include <libhdb++/LibHdb++.h>
-#include <map>
 #include <string>
 #include <tango.h>
-
-// why is it OmniORB (via Tango)) and Pqxx define these types in different ways? Perhaps
-// its the autotools used to configure them? Either way, we do not use tango, just need its
-// types, so undef and allow the Pqxx defines to take precedent
-#undef HAVE_UNISTD_H
-#undef HAVE_SYS_TYPES_H
-#undef HAVE_SYS_TIME_H
-#undef HAVE_POLL
+#include <vector>
 
 namespace hdbpp
 {
-//class HdbppTimescaleDbImpl; // https://en.cppreference.com/w/cpp/language/pimpl
-
 class HdbppTimescaleDb : public AbstractDB
 {
 public:
@@ -126,18 +113,6 @@ public:
     * @throw Tango::DevFailed
     */
     virtual void event_Attr(std::string fqdn_attr_name, unsigned char event);
-
-private:
-    std::string getConfigParam(
-        const std::map<std::string, std::string> &conf, const std::string &param, bool mandatory);
-
-    void setLibraryLoggingLevel(const std::string &level);
-    std::map<std::string, std::string> extractConfig(std::vector<std::string> str, const std::string &separator);
-
-    pqxx_conn::DbConnection _connection;
-
-    // logging subsystem
-    std::shared_ptr<spdlog::logger> _logger;
 };
 
 class HdbppTimescaleDbFactory : public DBFactory

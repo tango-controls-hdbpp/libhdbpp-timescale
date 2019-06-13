@@ -57,10 +57,12 @@ public:
     bool isArray() const noexcept { return _attr_format == Tango::SPECTRUM; }
     bool isScalar() const noexcept { return _attr_format == Tango::SCALAR; }
     bool isImage() const noexcept { return _attr_format == Tango::IMAGE; }
+
     bool isReadOnly() const noexcept { return _attr_write_type == Tango::READ; }
     bool isWriteOnly() const noexcept { return _attr_write_type == Tango::WRITE; }
     bool isReadWrite() const noexcept { return _attr_write_type == Tango::READ_WRITE; }
     bool isReadWithWrite() const noexcept { return _attr_write_type == Tango::READ_WITH_WRITE; }
+
     bool hasReadData() const noexcept { return isReadOnly() || isReadWrite() || isReadWithWrite(); }
     bool hasWriteData() const noexcept { return isWriteOnly() || isReadWrite() || isReadWithWrite(); }
 
@@ -71,11 +73,7 @@ public:
     AttributeTraits &operator=(const AttributeTraits &) = default;
     AttributeTraits &operator=(AttributeTraits &&) = default;
 
-    bool operator==(const AttributeTraits &other) const
-    {
-        return _attr_write_type == other.writeType() && _attr_format == other.formatType() &&
-            _attr_type == other.type();
-    }
+    bool operator==(const AttributeTraits &other) const { return _attr_write_type == other.writeType() && _attr_format == other.formatType() && _attr_type == other.type(); }
 
     /// @brief Print the AttributeTraits object to the stream
     void print(std::ostream &os) const;

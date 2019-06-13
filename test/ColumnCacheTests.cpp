@@ -25,7 +25,6 @@
 #include <string>
 
 using namespace std;
-using namespace pqxx;
 using namespace hdbpp;
 using namespace hdbpp::pqxx_conn;
 using namespace hdbpp_test::psql_conn_test;
@@ -37,7 +36,6 @@ const string ReferenceCol = "ReferenceCol";
 const string TableName = "id_columncache_test";
 const string Ref1 = "Reference string";
 const string Ref2 = "Some more reference \"strings\", and more";
-//const string Ref3 = "A cat likes to eat sausages";
 const string Ref3 = "A cat likes to eat 'sausages'";
 
 const string NewValue1 = "Newvalue1";
@@ -45,16 +43,13 @@ const string NewValue2 = "Newvalue2";
 const int NewValue1Id = 11;
 const int NewValue2Id = 12;
 
-void createColumnCacheTestDb(work &tx)
+void createColumnCacheTestDb(pqxx::work &tx)
 {
-    tx.exec("CREATE TEMP TABLE " + TableName + " (" + IdCol + " serial, " + ReferenceCol + " text, " + "PRIMARY KEY (" +
-        IdCol + ")) ON COMMIT PRESERVE ROWS;");
+    tx.exec("CREATE TEMP TABLE " + TableName + " (" + IdCol + " serial, " + ReferenceCol + " text, " + "PRIMARY KEY (" + IdCol + ")) ON COMMIT PRESERVE ROWS;");
 
-    tx.exec("INSERT INTO " + TableName + "(" + ReferenceCol + ") VALUES (" + tx.quote(Ref1) + ")");
-    tx.exec("INSERT INTO " + TableName + "(" + ReferenceCol + ") VALUES (" + tx.quote(Ref2) + ")");
-    tx.exec("INSERT INTO " + TableName + "(" + ReferenceCol + ") VALUES (" + tx.quote(Ref3) + ")");
-
-    tx.commit();
+    tx.exec("INSERT INTO " + TableName + "(" + ReferenceCol + ") VALUES (" + tx.quote(Ref1) + ");");
+    tx.exec("INSERT INTO " + TableName + "(" + ReferenceCol + ") VALUES (" + tx.quote(Ref2) + ");");
+    tx.exec("INSERT INTO " + TableName + "(" + ReferenceCol + ") VALUES (" + tx.quote(Ref3) + ");");
 }
 
 shared_ptr<pqxx::connection> connectDb()
@@ -65,7 +60,7 @@ shared_ptr<pqxx::connection> connectDb()
     REQUIRE(conn->is_open());
 
     {
-        work tx {*conn};
+        pqxx::work tx {*conn};
         REQUIRE_NOTHROW(createColumnCacheTestDb(tx));
         REQUIRE_NOTHROW(tx.commit());
     }
@@ -176,7 +171,7 @@ SCENARIO("ColumnCache can grown in size when caching", "[db-access][column-cache
     conn->disconnect();
 }
 
-SCENARIO("ColumnCache will not accept duplicate values", "[db-access][column-cache][psql]")
+SCENARIO("ColumnCache will handle the same value being added twice", "[db-access][column-cache][psql]")
 {
     auto conn = connectDb();
 
@@ -192,7 +187,7 @@ SCENARIO("ColumnCache will not accept duplicate values", "[db-access][column-cac
             THEN("The ColumnCache size grows by 1 to 1") { REQUIRE(cache.size() == 1); }
             AND_WHEN("Caching the same value again")
             {
-                THEN("Then an excaption is thrown") { REQUIRE_THROWS(cache.cacheValue(1, Ref1)); }
+                THEN("Then an no exception is thrown") { REQUIRE_NOTHROW(cache.cacheValue(1, Ref1)); }
             }
         }
         WHEN("Loading the database and trying to cache an existing value")
@@ -200,7 +195,7 @@ SCENARIO("ColumnCache will not accept duplicate values", "[db-access][column-cac
             REQUIRE_NOTHROW(cache.fetchAll());
             REQUIRE(cache.size() == 3);
 
-            THEN("Then an excaption is thrown") { REQUIRE_THROWS(cache.cacheValue(1, Ref1)); }
+            THEN("Then an no exception is thrown") { REQUIRE_NOTHROW(cache.cacheValue(1, Ref1)); }
         }
     }
 
@@ -259,8 +254,7 @@ SCENARIO("Clearing the cache does not stop entries being cached again", "[db-acc
     conn->disconnect();
 }
 
-SCENARIO("ColumnCache will fetch values from db and cache them as they are requested by reference",
-    "[db-access][column-cache][psql]")
+SCENARIO("ColumnCache will fetch values from db and cache them as they are requested by reference", "[db-access][column-cache][psql]")
 {
     auto conn = connectDb();
 

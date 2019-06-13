@@ -22,8 +22,8 @@
 
 #include "AttributeTraits.hpp"
 #include "HdbppTxHistoryEvent.hpp"
+#include "LibUtils.hpp"
 
-#include <experimental/optional>
 #include <iostream>
 #include <string>
 
@@ -33,8 +33,6 @@ template<typename Conn>
 class HdbppTxNewAttribute : public HdbppTxBase<Conn>
 {
 public:
-    // TODO print()
-
     HdbppTxNewAttribute(Conn &conn) : HdbppTxBase<Conn>(conn) {}
     virtual ~HdbppTxNewAttribute() {}
 
@@ -54,7 +52,7 @@ public:
     HdbppTxNewAttribute<Conn> &store();
 
     /// @brief Print the HdbppTxNewAttribute object to the stream
-    void print(std::ostream &os) const override;
+    void print(std::ostream &os) const noexcept override;
 
 private:
     AttributeName _attr_name;
@@ -72,17 +70,20 @@ HdbppTxNewAttribute<Conn> &HdbppTxNewAttribute<Conn>::store()
     if (_attr_name.empty())
     {
         std::string msg {"AttributeName is reporting empty. Unable to complete the transaction."};
-        throw std::invalid_argument(msg);
+        spdlog::error("Error: {}", msg);
+        Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
     else if (!_traits_set)
     {
         std::string msg {"AttributeTraits are not set. Unable to complete the transaction."};
-        throw std::invalid_argument(msg);
+        spdlog::error("Error: {}", msg);
+        Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
     else if (HdbppTxBase<Conn>::connection().isClosed())
     {
         std::string msg {"The connection is reporting it is closed. Unable to store new attribute."};
-        throw std::invalid_argument(msg);
+        spdlog::error("Error: {}", msg);
+        Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
 
     // attempt to store the new attribute into the database
@@ -102,14 +103,14 @@ HdbppTxNewAttribute<Conn> &HdbppTxNewAttribute<Conn>::store()
 //=============================================================================
 //=============================================================================
 template<typename Conn>
-void HdbppTxNewAttribute<Conn>::print(std::ostream &os) const
+void HdbppTxNewAttribute<Conn>::print(std::ostream &os) const noexcept
 {
+    os << "HdbppTxNewAttribute(base: ";
     HdbppTxBase<Conn>::print(os);
 
-    // TODO output command
-    //os << "HdbppTxNewAttribute("
-    //  << "_attr_name: " << _attr_name << ", "
-    //<< "_traits" << _traits << ")";
+    os << ", "
+       << "_traits: " << _traits << ", "
+       << "_attr_name: " << _attr_name << ")";
 }
 
 } // namespace hdbpp

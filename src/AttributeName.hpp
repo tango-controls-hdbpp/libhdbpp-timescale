@@ -20,6 +20,8 @@
 #ifndef _ATTRIBUTE_NAME_H
 #define _ATTRIBUTE_NAME_H
 
+#include "LibUtils.hpp"
+
 #include <iostream>
 #include <string>
 
@@ -39,9 +41,6 @@ class AttributeName
 {
 public:
     // TODO Test all exceptions
-    // TODO Tidy exceptions
-    // TODO print/<< function
-    // TODO logging
 
     /// @brief Default constructor
     AttributeName() = default;
@@ -56,13 +55,6 @@ public:
     /// @brief Construct an AttributeName object
     /// @param fqdn_attr_name FQDN attribute name
     AttributeName(const std::string &fqdn_attr_name);
-
-    /// @brief Set the contained attribute name
-    /// @param fqdn_attr_name FQDN attribute name
-    void set(const std::string &fqdn_attr_name);
-
-    /// @brief Clear attribute name and any internal cached items
-    void clear() noexcept;
 
     /// @brief Return the fully qualified attribute name the object was created with.
     /// @return FQDN attribute name
@@ -99,6 +91,13 @@ public:
     /// @throw std::invalid_argument
     const std::string &name();
 
+    /// @brief Set the contained attribute name
+    /// @param fqdn_attr_name FQDN attribute name
+    void set(const std::string &fqdn_attr_name);
+
+    /// @brief Clear attribute name and any internal cached items
+    void clear() noexcept;
+
     /// @brief Return the status of the AttributeName setting.
     /// @return True if empty, False otherwise
     bool empty() const noexcept { return _fqdn_attr_name.empty(); }
@@ -119,10 +118,6 @@ public:
     AttributeName &operator=(const AttributeName &other);
 
 private:
-    // extract the tango host from the fqdm attribute name, returns unknown
-    // if unable to find the tango host
-    std::string getAttrTangoHost(const std::string &fqdn_attr_name);
-
     // extract the full attribute name, i.e. domain/family/member/name
     std::string getFullAttributeName(const std::string &fqdn_attr_name);
 
@@ -141,8 +136,7 @@ private:
     std::string _fqdn_attr_name;
 
     // each string is a cache, and generated only once to save
-    // on performance. Yet to measure this to see if the difference is worth
-    // the complexity
+    // on performance
     std::string _full_attribute_name_cache;
     std::string _tango_host_cache;
     std::string _tango_host_with_domain_cache;

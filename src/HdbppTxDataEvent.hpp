@@ -22,6 +22,7 @@
 
 #include "AttributeTraits.hpp"
 #include "HdbppTxBase.hpp"
+#include "LibUtils.hpp"
 
 #include <iostream>
 #include <string>
@@ -32,10 +33,10 @@ template<typename Conn>
 class HdbppTxDataEvent : public HdbppTxBase<Conn>
 {
 public:
-    // TODO print()
     // TODO check fully tested
-    // TODO when storing INVALID events, i.e. empty or bad quality, do we need to generate an event time, or is the given one
-    // still valid?
+    // TODO when storing INVALID events, i.e. empty or bad quality, do we need to generate an event time, or is the given one still valid?
+    // TODO Quality is an enum?
+    // TODO auto add new attribute feature
 
     HdbppTxDataEvent(Conn &conn) : HdbppTxBase<Conn>(conn) {}
     virtual ~HdbppTxDataEvent() {}
@@ -83,7 +84,7 @@ public:
     HdbppTxDataEvent<Conn> &store();
 
     /// @brief Print the HdbppTxDataEvent object to the stream
-    void print(std::ostream &os) const override;
+    void print(std::ostream &os) const noexcept override;
 
 private:
     // perform the actual storage for the type, this template helps
@@ -119,22 +120,26 @@ HdbppTxDataEvent<Conn> &HdbppTxDataEvent<Conn>::store()
     if (_attr_name.empty())
     {
         std::string msg {"AttributeName is reporting empty. Unable to complete the transaction."};
-        throw std::invalid_argument(msg);
+        spdlog::error("Error: {}", msg);
+        Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
     else if (!_traits_set)
     {
         std::string msg {"AttributeTraits are not set. Unable to complete the transaction."};
-        throw std::invalid_argument(msg);
+        spdlog::error("Error: {}", msg);
+        Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
     else if (!_dev_attr)
     {
         std::string msg {"Device Attribute is not set. Unable to complete the transaction."};
-        throw std::invalid_argument(msg);
+        spdlog::error("Error: {}", msg);
+        Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
     else if (HdbppTxBase<Conn>::connection().isClosed())
     {
         string msg {"The connection is reporting it is closed. Unable to store data event."};
-        throw std::invalid_argument(msg);
+        spdlog::error("Error: {}", msg);
+        Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
 
     // disable is_empty exception
@@ -198,14 +203,11 @@ void HdbppTxDataEvent<Conn>::doStore()
             // the unique_ptr as a signal to following functions there is no data
             if (!extractor(*value))
             {
-                // TODO convert to std exception
-                //std::stringstream error_desc;
+                std::string msg {
+                    "Failed to extract the attribute data for attribute: [" + _attr_name.fullAttributeName() + "] and off type: [" + std::to_string(_traits.type()) + "]"};
 
-                //error_desc << "Failed to extract the attribute " << data->attr_name
-                //<< " from the Tango EventData. Possible type mismatch?" << ends;
-
-                //LOG(Utils::Error) << error_desc.str() << endl;
-                //Tango::Except::throw_exception(EXCEPTION_TYPE_TYPE_MISMATCH, error_desc.str(), __func__);
+                spdlog::error("Error: {}", msg);
+                Tango::Except::throw_exception("Runtime Error", msg, LOCATION_INFO);
             }
         }
 
@@ -230,18 +232,27 @@ void HdbppTxDataEvent<Conn>::doStoreError()
 {
     // attempt to store the error in the database, any exceptions are left to
     // propergate to the caller
-    HdbppTxBase<Conn>::connection().storeDataEventError(
-        HdbppTxBase<Conn>::attrNameForStorage(_attr_name), _event_time, _quality, _error_msg, _traits);
+    HdbppTxBase<Conn>::connection().storeDataEventError(HdbppTxBase<Conn>::attrNameForStorage(_attr_name), _event_time, _quality, _error_msg, _traits);
 }
 
 //=============================================================================
 //=============================================================================
 template<typename Conn>
-void HdbppTxDataEvent<Conn>::print(std::ostream &os) const
+void HdbppTxDataEvent<Conn>::print(std::ostream &os) const noexcept
 {
+    // TODO can not print tango objects, the operator<< are not const correct!
+
+    os << "HdbppTxDataEvent(base: ";
     HdbppTxBase<Conn>::print(os);
 
-    //os << "_attr_name: " << _attr_name;
+    os << ", "
+       << "_event_time: " << _event_time << ", "
+       << "_attr_name: " << _attr_name << ", "
+       << "_traits: " << _traits << ", "
+       << "_traits_set: " << _traits_set << ", "
+       << "_error_msg: " << _error_msg << ", "
+       << "_quality: " << _quality << ", "
+       << "_event_time: " << _event_time << ")";
 }
 
 } // namespace hdbpp

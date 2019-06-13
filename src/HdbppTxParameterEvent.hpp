@@ -22,6 +22,7 @@
 
 #include "AttributeTraits.hpp"
 #include "HdbppTxBase.hpp"
+#include "LibUtils.hpp"
 
 #include <iostream>
 #include <string>
@@ -32,8 +33,6 @@ template<typename Conn>
 class HdbppTxParameterEvent : public HdbppTxBase<Conn>
 {
 public:
-    // TODO print()
-
     HdbppTxParameterEvent(Conn &conn) : HdbppTxBase<Conn>(conn) {}
     virtual ~HdbppTxParameterEvent() {}
 
@@ -45,13 +44,14 @@ public:
 
     HdbppTxParameterEvent<Conn> &withAttrInfo(const Tango::AttributeInfoEx &attr_conf)
     {
-        _attr_conf = attr_conf;
-        _attr_conf_set = true;
+        _attr_info_ex = attr_conf;
+        _attr_info_ex_set = true;
         return *this;
     }
 
     HdbppTxParameterEvent<Conn> &withEventTime(Tango::TimeVal tv)
     {
+        // convert to a double that can be passed on to the storage api
         _event_time = tv.tv_sec + tv.tv_usec / 1.0e6;
         return *this;
     }
@@ -59,7 +59,7 @@ public:
     HdbppTxParameterEvent<Conn> &store();
 
     /// @brief Print the HdbppTxParameterEvent object to the stream
-    void print(std::ostream &os) const override;
+    void print(std::ostream &os) const noexcept override;
 
 private:
     AttributeName _attr_name;
@@ -69,10 +69,12 @@ private:
 
     // a copy to the AttributeInfo passed when the event was raised, taken
     // as a copy so we can in future pipeline these events and not worry about
-    // holding pointers to tango structures.
-    Tango::AttributeInfoEx _attr_conf;
+    // holding pointers to tango structures. The copy is not a major performance
+    // issue since this is a parameter event, not a data event.
+    Tango::AttributeInfoEx _attr_info_ex;
 
-    bool _attr_conf_set = false;
+    // quick flag to ensure the _attr_info_ex has been set
+    bool _attr_info_ex_set = false;
 };
 
 //=============================================================================
@@ -83,36 +85,40 @@ HdbppTxParameterEvent<Conn> &HdbppTxParameterEvent<Conn>::store()
     if (_attr_name.empty())
     {
         std::string msg {"AttributeName is reporting empty. Unable to complete the transaction."};
-        throw std::invalid_argument(msg);
+        spdlog::error("Error: {}", msg);
+        Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
-    else if (!_attr_conf_set)
+    else if (!_attr_info_ex_set)
     {
         std::string msg {"AttributeInfo is not set. Unable to complete the transaction."};
-        throw std::invalid_argument(msg);
+        spdlog::error("Error: {}", msg);
+        Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
     else if (_event_time == 0)
     {
         std::string msg {"Event time is not set. Unable to complete the transaction."};
-        throw std::invalid_argument(msg);
+        spdlog::error("Error: {}", msg);
+        Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
     else if (HdbppTxBase<Conn>::connection().isClosed())
     {
         string msg {"The connection is reporting it is closed. Unable to store parameter event."};
-        throw std::invalid_argument(msg);
+        spdlog::error("Error: {}", msg);
+        Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
 
     // now store the parameter event
     HdbppTxBase<Conn>::connection().storeParameterEvent(HdbppTxBase<Conn>::attrNameForStorage(_attr_name),
         _event_time,
-        _attr_conf.label,
-        _attr_conf.unit,
-        _attr_conf.standard_unit,
-        _attr_conf.display_unit,
-        _attr_conf.format,
-        _attr_conf.events.arch_event.archive_rel_change,
-        _attr_conf.events.arch_event.archive_abs_change,
-        _attr_conf.events.arch_event.archive_period,
-        _attr_conf.description);
+        _attr_info_ex.label,
+        _attr_info_ex.unit,
+        _attr_info_ex.standard_unit,
+        _attr_info_ex.display_unit,
+        _attr_info_ex.format,
+        _attr_info_ex.events.arch_event.archive_rel_change,
+        _attr_info_ex.events.arch_event.archive_abs_change,
+        _attr_info_ex.events.arch_event.archive_period,
+        _attr_info_ex.description);
 
     // success in running the store command, so set the result as true
     HdbppTxBase<Conn>::setResult(true);
@@ -122,11 +128,17 @@ HdbppTxParameterEvent<Conn> &HdbppTxParameterEvent<Conn>::store()
 //=============================================================================
 //=============================================================================
 template<typename Conn>
-void HdbppTxParameterEvent<Conn>::print(std::ostream &os) const
+void HdbppTxParameterEvent<Conn>::print(std::ostream &os) const noexcept
 {
+    // TODO can not print tango objects, the operator<< are not const correct!
+
+    os << "HdbppTxParameterEvent(base: ";
     HdbppTxBase<Conn>::print(os);
 
-    //os << "_attr_name: " << _attr_name;
+    os << ", "
+       << "_event_time: " << _event_time << ", "
+       << "_attr_name: " << _attr_name << ", "
+       << "_attr_info_ex_set: " << _attr_info_ex_set << ")";
 }
 
 } // namespace hdbpp

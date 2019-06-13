@@ -19,6 +19,8 @@
 
 #include "AttributeName.hpp"
 
+#include "LibUtils.hpp"
+
 #include <netdb.h>
 
 using namespace std;
@@ -27,7 +29,10 @@ namespace hdbpp
 {
 //=============================================================================
 //=============================================================================
-AttributeName::AttributeName(const std::string &fqdn_attr_name) { set(fqdn_attr_name); }
+AttributeName::AttributeName(const std::string &fqdn_attr_name)
+{
+    set(fqdn_attr_name);
+}
 
 //=============================================================================
 //=============================================================================
@@ -59,7 +64,12 @@ const string &AttributeName::tangoHost()
     validate();
 
     if (_tango_host_cache.empty())
-        _tango_host_cache = getAttrTangoHost(fqdnAttributeName());
+    {
+        // if tango:// exists on the string, strip it off by moving the start in 8 characters
+        auto start = _fqdn_attr_name.find("tango://") == string::npos ? 0 : 8;
+        auto end = _fqdn_attr_name.find('/', start);
+        _tango_host_cache = _fqdn_attr_name.substr(start, end - start);
+    }
 
     return _tango_host_cache;
 }
@@ -71,7 +81,39 @@ const string &AttributeName::tangoHostWithDomain()
     validate();
 
     if (_tango_host_with_domain_cache.empty())
-        _tango_host_with_domain_cache = addDomainToTangoHost(tangoHost());
+    {
+        string tango_host = tangoHost();
+
+        if (tango_host.find('.') == string::npos)
+        {
+            string server_name_with_domain;
+            auto server_name = tango_host.substr(0, tango_host.find(':', 0));
+
+            struct addrinfo hints = {};
+            hints.ai_family = AF_UNSPEC; /*either IPV4 or IPV6*/
+            hints.ai_socktype = SOCK_STREAM;
+            hints.ai_flags = AI_CANONNAME;
+
+            struct addrinfo *result, *rp;
+            const int status = getaddrinfo(server_name.c_str(), nullptr, &hints, &result);
+
+            if (status != 0)
+            {
+                spdlog::error("Error: Unable to add domain to tango host: getaddrinfo failed with error: {}", gai_strerror(status));
+                return tango_host;
+            }
+
+            for (rp = result; rp != nullptr; rp = rp->ai_next)
+                server_name_with_domain = string(rp->ai_canonname) + tango_host.substr(tango_host.find(':', 0));
+
+            freeaddrinfo(result); // all done with this structure
+            _tango_host_with_domain_cache = server_name_with_domain;
+        }
+        else
+        {
+            _tango_host_with_domain_cache = tango_host;
+        }
+    }
 
     return _tango_host_with_domain_cache;
 }
@@ -83,7 +125,13 @@ const string &AttributeName::fullAttributeName()
     validate();
 
     if (_full_attribute_name_cache.empty())
-        _full_attribute_name_cache = getFullAttributeName(fqdnAttributeName());
+    {
+        // if tango:// exists on the string, strip it off by moving the start in 8 characters
+        auto start = _fqdn_attr_name.find("tango://") == string::npos ? 0 : 8;
+        start = _fqdn_attr_name.find('/', start);
+        start++;
+        _full_attribute_name_cache = _fqdn_attr_name.substr(start);
+    }
 
     return _full_attribute_name_cache;
 }
@@ -145,8 +193,8 @@ void AttributeName::setDomainFamilyMemberName(const string &full_attr_name)
     if (first_slash == string::npos)
     {
         string msg {"Invalid attribute name: " + full_attr_name + ". There is no slash in attribute name"};
-        //LOG(LogLevel::Error) << msg << endl;
-        throw invalid_argument(msg);
+        spdlog::error("Error: {}", msg);
+        Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
 
     auto second_slash = full_attr_name.find('/', first_slash + 1);
@@ -154,8 +202,8 @@ void AttributeName::setDomainFamilyMemberName(const string &full_attr_name)
     if (second_slash == string::npos)
     {
         string msg {"Invalid attribute name: " + full_attr_name + ". There is only one slash in attribute name"};
-        //LOG(LogLevel::Error) << msg << endl;
-        throw invalid_argument(msg);
+        spdlog::error("Error: {}", msg);
+        Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
 
     auto third_slash = full_attr_name.find('/', second_slash + 1);
@@ -163,8 +211,8 @@ void AttributeName::setDomainFamilyMemberName(const string &full_attr_name)
     if (third_slash == string::npos)
     {
         string msg {"Invalid attribute name: " + full_attr_name + ". There are only two slashes in attribute name"};
-        //LOG(LogLevel::Error) << msg << endl;
-        throw invalid_argument(msg);
+        spdlog::error("Error: {}", msg);
+        Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
 
     auto last_slash = full_attr_name.rfind('/');
@@ -172,96 +220,42 @@ void AttributeName::setDomainFamilyMemberName(const string &full_attr_name)
     if (last_slash != third_slash)
     {
         string msg {"Invalid attribute name: " + full_attr_name + ". Too many slashes provided in attribute name"};
-        //LOG(LogLevel::Error) << msg << endl;
-        throw invalid_argument(msg);
+        spdlog::error("Error: {}", msg);
+        Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
 
     if (first_slash == 0)
     {
         string msg {"Invalid attribute name: " + full_attr_name + ". Empty domain"};
-        //LOG(LogLevel::Error) << msg << endl;
-        throw invalid_argument(msg);
+        spdlog::error("Error: {}", msg);
+        Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
 
     if (second_slash - first_slash - 1 == 0)
     {
         string msg {"Invalid attribute name: " + full_attr_name + ". Empty family"};
-        //LOG(LogLevel::Error) << msg << endl;
-        throw invalid_argument(msg);
+        spdlog::error("Error: {}", msg);
+        Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
 
     if (third_slash - second_slash - 1 == 0)
     {
         string msg {"Invalid attribute name: " + full_attr_name + ". Empty member"};
-        //LOG(LogLevel::Error) << msg << endl;
-        throw invalid_argument(msg);
+        spdlog::error("Error: {}", msg);
+        Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
 
     if (third_slash + 1 == full_attr_name.length())
     {
         string msg {"Invalid attribute name: " + full_attr_name + ". Empty name"};
-        //LOG(LogLevel::Error) << msg << endl;
-        throw invalid_argument(msg);
+        spdlog::error("Error: {}", msg);
+        Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
 
     _domain_cache = full_attr_name.substr(0, first_slash);
     _family_cache = full_attr_name.substr(first_slash + 1, second_slash - first_slash - 1);
     _member_cache = full_attr_name.substr(second_slash + 1, third_slash - second_slash - 1);
     _attribute_name_cache = full_attr_name.substr(third_slash + 1);
-}
-
-//=============================================================================
-//=============================================================================
-string AttributeName::getAttrTangoHost(const string &fqdn_attr_name)
-{
-    // if tango:// exists on the string, strip it off by moving the start in 8 characters
-    auto start = fqdn_attr_name.find("tango://") == string::npos ? 0 : 8;
-    auto end = fqdn_attr_name.find('/', start);
-    return fqdn_attr_name.substr(start, end - start);
-}
-
-//=============================================================================
-//=============================================================================
-string AttributeName::getFullAttributeName(const string &fqdn_attr_name)
-{
-    // if tango:// exists on the string, strip it off by moving the start in 8 characters
-    auto start = fqdn_attr_name.find("tango://") == string::npos ? 0 : 8;
-    start = fqdn_attr_name.find('/', start);
-    start++;
-    return fqdn_attr_name.substr(start);
-}
-
-//=============================================================================
-//=============================================================================
-string AttributeName::addDomainToTangoHost(const string &tango_host)
-{
-    if (tango_host.find('.') == string::npos)
-    {
-        string server_name_with_domain;
-        auto server_name = tango_host.substr(0, tango_host.find(':', 0));
-
-        struct addrinfo hints = {};
-        hints.ai_family = AF_UNSPEC; /*either IPV4 or IPV6*/
-        hints.ai_socktype = SOCK_STREAM;
-        hints.ai_flags = AI_CANONNAME;
-
-        struct addrinfo *result, *rp;
-        const int status = getaddrinfo(server_name.c_str(), nullptr, &hints, &result);
-
-        if (status != 0)
-        {
-            //LOG(LogLevel::Error) << "Error: getaddrinfo: " << gai_strerror(status) << endl;
-            return tango_host;
-        }
-
-        for (rp = result; rp != nullptr; rp = rp->ai_next)
-            server_name_with_domain = string(rp->ai_canonname) + tango_host.substr(tango_host.find(':', 0));
-
-        freeaddrinfo(result); // all done with this structure
-        return server_name_with_domain;
-    }
-
-    return tango_host;
 }
 
 //=============================================================================
@@ -273,14 +267,17 @@ void AttributeName::validate()
     if (empty())
     {
         string msg {"AttributeName is empty."};
-        //LOG(LogLevel::Error) << msg << endl;
-        throw invalid_argument(msg);
+        spdlog::error("Failed validation for attribute: {}", msg);
+        Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
 }
 
 //=============================================================================
 //=============================================================================
-void AttributeName::print(std::ostream &os) const { os << "AttributeName(_fqdn_attr_name: " << _fqdn_attr_name << ")"; }
+void AttributeName::print(std::ostream &os) const
+{
+    os << "AttributeName(_fqdn_attr_name: " << _fqdn_attr_name << ")";
+}
 
 //=============================================================================
 //=============================================================================
