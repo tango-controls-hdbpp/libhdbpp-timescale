@@ -76,13 +76,13 @@ HdbppTxNewAttribute<Conn> &HdbppTxNewAttribute<Conn>::store()
     else if (!_traits_set)
     {
         std::string msg {"AttributeTraits are not set. Unable to complete the transaction."};
-        spdlog::error("Error: {}", msg);
+        spdlog::error("Error: {} For attribute {}", msg, _attr_name);
         Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
     else if (HdbppTxBase<Conn>::connection().isClosed())
     {
         std::string msg {"The connection is reporting it is closed. Unable to store new attribute."};
-        spdlog::error("Error: {}", msg);
+        spdlog::error("Error: {} For attribute {}", msg, _attr_name);
         Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
 

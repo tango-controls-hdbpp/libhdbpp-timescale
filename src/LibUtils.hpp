@@ -50,6 +50,7 @@ auto operator<<(std::ostream &os, const T &t) -> decltype(t.print(os), static_ca
 std::ostream &operator<<(std::ostream &os, Tango::AttrWriteType write_type);
 std::ostream &operator<<(std::ostream &os, Tango::AttrDataFormat format);
 std::ostream &operator<<(std::ostream &os, Tango::AttributeDataType type);
+std::ostream &operator<<(std::ostream &os, Tango::AttrQuality quality);
 
 // SPDLOG config and setup
 const string LibLoggerName = "hdbpp";

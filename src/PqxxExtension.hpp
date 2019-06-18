@@ -30,8 +30,6 @@ namespace pqxx
 {
 namespace internal
 {
-    // these specialisations help pull the data from results
-    // using the name of the traits specialisation.
     template<>
     struct type_name<uint8_t>
     {

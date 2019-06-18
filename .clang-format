@@ -49,7 +49,7 @@ BreakConstructorInitializers: AfterColon
 BreakInheritanceList: AfterColon
 BreakStringLiterals: true
 
-ColumnLimit:     140 # Set to 0 to turn off
+ColumnLimit:     120 # Set to 0 to turn off
 
 # Need? CommentPragmas:  '^ IWYU pragma:'
 

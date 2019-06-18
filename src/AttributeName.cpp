@@ -99,8 +99,10 @@ const string &AttributeName::tangoHostWithDomain()
 
             if (status != 0)
             {
-                spdlog::error("Error: Unable to add domain to tango host: getaddrinfo failed with error: {}", gai_strerror(status));
-                return tango_host;
+                spdlog::error("Error: Unable to add domain to tango host: getaddrinfo failed with error: {}",
+                    gai_strerror(status));
+
+                return tangoHost();
             }
 
             for (rp = result; rp != nullptr; rp = rp->ai_next)

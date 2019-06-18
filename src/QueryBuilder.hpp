@@ -118,7 +118,8 @@ namespace pqxx_conn
 
     private:
         // generic function to handle caching items into the cache maps
-        const string &handleCache(std::map<AttributeTraits, std::string> &cache, const AttributeTraits &traits, const std::string &stub);
+        const string &handleCache(
+            std::map<AttributeTraits, std::string> &cache, const AttributeTraits &traits, const std::string &stub);
 
         // cached query names, these are built from the traits object
         std::map<AttributeTraits, std::string> _data_event_query_names;
@@ -160,11 +161,13 @@ namespace pqxx_conn
 
             // add the read parameter with cast
             if (traits.hasReadData())
-                query = query + "," + "$" + to_string(++param_number) + "::" + query_utils::postgresCast<T>(traits.isArray());
+                query = query + "," + "$" + to_string(++param_number) +
+                    "::" + query_utils::postgresCast<T>(traits.isArray());
 
             // add the write parameter with cast
             if (traits.hasWriteData())
-                query = query + "," + "$" + to_string(++param_number) + "::" + query_utils::postgresCast<T>(traits.isArray());
+                query = query + "," + "$" + to_string(++param_number) +
+                    "::" + query_utils::postgresCast<T>(traits.isArray());
 
             query = query + "," + "$" + to_string(++param_number) + ")";
 

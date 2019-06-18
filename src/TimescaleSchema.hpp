@@ -47,17 +47,15 @@ namespace pqxx_conn
     const std::string TYPE_DEV_STATE = "devstate";
     const std::string TYPE_DEV_ENCODED = "devencoded";
     const std::string TYPE_DEV_ENUM = "devenum";
-    const std::string TYPE_RO = "ro";
-    const std::string TYPE_RW = "rw";
 
     // att_conf table
     const std::string CONF_TABLE_NAME = "att_conf";
     const std::string CONF_COL_ID = "att_conf_id";
     const std::string CONF_COL_NAME = "att_name";
-    const std::string CONF_COL_DATA_TYPE_ID = "att_conf_data_type_id";
-    const std::string CONF_COL_TYPE = "type";
-    const std::string CONF_COL_WRITE_TYPE = "write_type";
-    const std::string CONF_COL_FORMAT_TYPE = "format_type";
+    const std::string CONF_COL_TYPE_ID = "att_conf_type_id";
+    const std::string CONF_COL_FORMAT_TYPE_ID = "att_conf_format_id";
+    const std::string CONF_COL_WRITE_TYPE_ID = "att_conf_write_id";
+    const std::string CONF_COL_TABLE_NAME = "table_name";
     const std::string CONF_COL_CS_NAME = "cs_name";
     const std::string CONF_COL_DOMAIN = "domain";
     const std::string CONF_COL_FAMILY = "family";
@@ -65,16 +63,30 @@ namespace pqxx_conn
     const std::string CONF_COL_LAST_NAME = "name";
     const std::string CONF_COL_TTL = "ttl";
 
-    // att_conf_data_type table
-    const std::string CONF_TYPE_TABLE_NAME = "att_conf_data_type";
-    const std::string CONF_TYPE_COL_TYPE_ID = "att_conf_data_type_id";
-    const std::string CONF_TYPE_COL_TYPE = "data_type";
+    // att_conf_type table
+    const std::string CONF_TYPE_TABLE_NAME = "att_conf_type";
+    const std::string CONF_TYPE_COL_TYPE_ID = "att_conf_type_id";
+    const std::string CONF_TYPE_COL_TYPE = "type";
+    const std::string CONF_TYPE_COL_TYPE_NUM = "type_num";
+
+    // att_conf_format table
+    const std::string CONF_FORMAT_TABLE_NAME = "att_conf_format";
+    const std::string CONF_FORMAT_COL_FORMAT_ID = "att_conf_format_id";
+    const std::string CONF_FORMAT_COL_FORMAT = "format";
+    const std::string CONF_FORMAT_COL_FORMAT_NUM = "format_num";
+
+    // att_conf_write table
+    const std::string CONF_WRITE_TABLE_NAME = "att_conf_write";
+    const std::string CONF_WRITE_COL_WRITE_ID = "att_conf_write_id";
+    const std::string CONF_WRITE_COL_WRITE = "write";
+    const std::string CONF_WRITE_COL_WRITE_NUM = "write_num";
 
     // att_history table
     const std::string HISTORY_TABLE_NAME = "att_history";
     const std::string HISTORY_COL_ID = "att_conf_id";
     const std::string HISTORY_COL_EVENT_ID = "att_history_event_id";
     const std::string HISTORY_COL_TIME = "event_time";
+    const std::string HISTORY_COL_DETAILS = "details";
 
     // att_history_event table
     const std::string HISTORY_EVENT_TABLE_NAME = "att_history_event";
@@ -95,6 +107,7 @@ namespace pqxx_conn
     const std::string PARAM_COL_ARCHIVEABSCHANGE = "archive_abs_change";
     const std::string PARAM_COL_ARCHIVEPERIOD = "archive_period";
     const std::string PARAM_COL_DESCRIPTION = "description";
+    const std::string PARAM_COL_DETAILS = "details";
 
     // att_error_desc table
     const std::string ERR_TABLE_NAME = "att_error_desc";
@@ -110,13 +123,17 @@ namespace pqxx_conn
     const std::string DAT_COL_VALUE_W = "value_w";
     const std::string DAT_COL_QUALITY = "quality";
     const std::string DAT_COL_ERROR_DESC_ID = "att_error_desc_id";
+    const std::string DAT_COL_DETAILS = "details";
+
+    // special fields for enums
+    const std::string DAT_COL_DAT_COL_VALUE_R_LABEL = "value_r_label";
+    const std::string DAT_COL_DAT_COL_VALUE_W_LABEL = "value_w_label";
 
     // special fields for image tables
     const std::string DAT_IMG_COL_DIMX_R = "dim_x_r";
     const std::string DAT_IMG_COL_DIMY_R = "dim_y_r";
     const std::string DAT_IMG_COL_DIMX_W = "dim_x_w";
     const std::string DAT_IMG_COL_DIMY_W = "dim_y_w";
-
 } // namespace pqxx_conn
 } // namespace hdbpp
 #endif // _TIMESCALE_SCHEMA_HPP

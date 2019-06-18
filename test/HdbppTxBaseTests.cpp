@@ -37,7 +37,10 @@ class MockConnection
 class TestHdbppTxBase : public HdbppTxBase<MockConnection>
 {
 public:
-    static string testAttrNameForStorage(AttributeName &attr_name) { return HdbppTxBase<MockConnection>::attrNameForStorage(attr_name); }
+    static string testAttrNameForStorage(AttributeName &attr_name)
+    {
+        return HdbppTxBase<MockConnection>::attrNameForStorage(attr_name);
+    }
 };
 }; // namespace hdbpp_base_test
 

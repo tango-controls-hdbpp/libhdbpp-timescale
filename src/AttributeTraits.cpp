@@ -28,9 +28,9 @@ namespace hdbpp
 void AttributeTraits::print(ostream &os) const
 {
     os << "AttributeTraits("
-       << "write_type: " << _attr_write_type << ", "
-       << "format_type: " << _attr_format << ", "
-       << "type: " << _attr_type << ")";
+       << "write_type: " << _attr_write_type << "(" << static_cast<unsigned int>(_attr_write_type) << "), "
+       << "format_type: " << _attr_format << "(" << static_cast<unsigned int>(_attr_format) << "), "
+       << "type: " << _attr_type << "(" << static_cast<unsigned int>(_attr_type) << ")";
 }
 
 } // namespace hdbpp

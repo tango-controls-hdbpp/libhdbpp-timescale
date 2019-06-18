@@ -70,7 +70,8 @@ namespace pqxx_conn
         // will destroy any existing cache objects managed by the unique pointers
         _conf_id_cache = make_unique<ColumnCache<int, std::string>>(_conn, CONF_TABLE_NAME, CONF_COL_ID, CONF_COL_NAME);
 
-        _error_desc_id_cache = make_unique<ColumnCache<int, std::string>>(_conn, ERR_TABLE_NAME, ERR_COL_ID, ERR_COL_ERROR_DESC);
+        _error_desc_id_cache = make_unique<ColumnCache<int, std::string>>(
+            _conn, ERR_TABLE_NAME, ERR_COL_ID, ERR_COL_ERROR_DESC);
 
         _event_id_cache = make_unique<ColumnCache<int, std::string>>(
             _conn, HISTORY_EVENT_TABLE_NAME, HISTORY_EVENT_COL_EVENT_ID, HISTORY_EVENT_COL_EVENT);
@@ -122,7 +123,8 @@ namespace pqxx_conn
         // this is an error case
         if (_conf_id_cache->valueExists(full_attr_name))
         {
-            string msg {"This attribute [" + full_attr_name + "] already exists in the database. Unable to add it again."};
+            string msg {
+                "This attribute [" + full_attr_name + "] already exists in the database. Unable to add it again."};
             _logger->error("Error: The attribute already exists in the database and can not be added again");
             _logger->error("Attribute details. Name: {} traits: {}", full_attr_name, traits);
             _logger->error("Throwing consistency error with message: \"{}\"", msg);
@@ -143,12 +145,15 @@ namespace pqxx_conn
 
                 auto row = tx.exec_prepared1(StoreAttribute,
                     full_attr_name,
+                    _query_builder.tableName(traits),
                     control_system,
                     att_domain,
                     att_family,
                     att_member,
                     att_name,
-                    _query_builder.tableName(traits));
+                    static_cast<unsigned int>(traits.type()),
+                    static_cast<unsigned int>(traits.formatType()),
+                    static_cast<unsigned int>(traits.writeType()));
 
                 tx.commit();
 
@@ -193,8 +198,10 @@ namespace pqxx_conn
 
         if (!_event_id_cache->valueExists(event))
         {
-            string msg {"The event [" + event + "] is missing in both the cache and database, this is an unrecoverable error."};
-            _logger->error("Event found missing, this occurred when storing event: {} for attribute: {}", event, full_attr_name);
+            string msg {
+                "The event [" + event + "] is missing in both the cache and database, this is an unrecoverable error."};
+            _logger->error(
+                "Event found missing, this occurred when storing event: {} for attribute: {}", event, full_attr_name);
             _logger->error("Throwing consistency error with message: \"{}\"", msg);
             Tango::Except::throw_exception("Consistency Error", msg, LOCATION_INFO);
         }
@@ -281,15 +288,15 @@ namespace pqxx_conn
                 tx.exec_prepared0(StoreParameterEvent,
                     _conf_id_cache->value(full_attr_name),
                     event_time,
-                    tx.quote(label),
-                    tx.quote(unit),
-                    tx.quote(standard_unit),
-                    tx.quote(display_unit),
-                    tx.quote(format),
-                    tx.quote(archive_rel_change),
-                    tx.quote(archive_abs_change),
-                    tx.quote(archive_period),
-                    tx.quote(description));
+                    label,
+                    unit,
+                    standard_unit,
+                    display_unit,
+                    format,
+                    archive_rel_change,
+                    archive_abs_change,
+                    archive_period,
+                    description);
 
                 tx.commit();
             });
@@ -307,8 +314,11 @@ namespace pqxx_conn
 
     //=============================================================================
     //=============================================================================
-    void DbConnection::storeDataEventError(
-        const std::string &full_attr_name, double event_time, int quality, const std::string &error_msg, const AttributeTraits &traits)
+    void DbConnection::storeDataEventError(const std::string &full_attr_name,
+        double event_time,
+        int quality,
+        const std::string &error_msg,
+        const AttributeTraits &traits)
     {
         assert(!full_attr_name.empty());
         assert(!error_msg.empty());
@@ -317,7 +327,8 @@ namespace pqxx_conn
         assert(_error_desc_id_cache != nullptr);
         assert(_event_id_cache != nullptr);
 
-        _logger->trace("Storing error message event for attribute {}. Error message: \"{}\"", full_attr_name, error_msg);
+        _logger->trace(
+            "Storing error message event for attribute {}. Error message: \"{}\"", full_attr_name, error_msg);
 
         checkConnection(LOCATION_INFO);
         checkAttributeExists(full_attr_name, LOCATION_INFO);
@@ -330,10 +341,13 @@ namespace pqxx_conn
         // double check it really exists....
         if (!_error_desc_id_cache->valueExists(error_msg))
         {
-            string msg {"The error message [" + error_msg + "] is missing in both the cache and database, this is an unrecoverable error."};
+            string msg {"The error message [" + error_msg +
+                "] is missing in both the cache and database, this is an unrecoverable error."};
 
-            _logger->error(
-                "Error message found missing, this occurred when storing msg: \"{}\" for attribute: {}", error_msg, full_attr_name);
+            _logger->error("Error message found missing, this occurred when storing msg: \"{}\" for attribute: {}",
+                error_msg,
+                full_attr_name);
+                
             _logger->error("Throwing consistency error with message: \"{}\"", msg);
             Tango::Except::throw_exception("Consistency Error", msg, LOCATION_INFO);
         }
@@ -346,8 +360,10 @@ namespace pqxx_conn
 
                 if (!tx.prepared(_query_builder.storeDataEventErrorName(traits)).exists())
                 {
-                    tx.conn().prepare(_query_builder.storeDataEventErrorName(traits), _query_builder.storeDataEventErrorQuery(traits));
-                    _logger->trace("Created prepared statement for: {}", _query_builder.storeDataEventErrorName(traits));
+                    tx.conn().prepare(_query_builder.storeDataEventErrorName(traits),
+                        _query_builder.storeDataEventErrorQuery(traits));
+                    _logger->trace(
+                        "Created prepared statement for: {}", _query_builder.storeDataEventErrorName(traits));
                 }
 
                 _logger->warn("{}", _error_desc_id_cache->value(error_msg));
@@ -446,7 +462,8 @@ namespace pqxx_conn
                 return row.at(0).as<int>();
             });
 
-            _logger->debug("Stored event {} for attribute {} and got database id for it: {}", event, full_attr_name, event_id);
+            _logger->debug(
+                "Stored event {} for attribute {} and got database id for it: {}", event, full_attr_name, event_id);
 
             // cache the new event id for future use
             _event_id_cache->cacheValue(event_id, event);
@@ -464,7 +481,8 @@ namespace pqxx_conn
     //=============================================================================
     void DbConnection::storeErrorMsg(const std::string &full_attr_name, const std::string &error_msg)
     {
-        _logger->debug("Error message \"{}\" needs adding to the database, by request of attribute {}", error_msg, full_attr_name);
+        _logger->debug(
+            "Error message \"{}\" needs adding to the database, by request of attribute {}", error_msg, full_attr_name);
 
         try
         {
@@ -485,8 +503,10 @@ namespace pqxx_conn
                 return row.at(0).as<int>();
             });
 
-            _logger->debug(
-                "Stored error message \"{}\" for attribute {} and got database id for it: {}", error_msg, full_attr_name, error_id);
+            _logger->debug("Stored error message \"{}\" for attribute {} and got database id for it: {}",
+                error_msg,
+                full_attr_name,
+                error_id);
 
             // cache the new error id for future use
             _error_desc_id_cache->cacheValue(error_id, error_msg);
@@ -524,8 +544,10 @@ namespace pqxx_conn
     {
         if (isClosed())
         {
-            string msg {"Connection to database is closed. Ensure it has been opened before trying to use the connection."};
-            _logger->error("Error: The DbConnection is showing a closed connection status, open it before using store functions");
+            string msg {
+                "Connection to database is closed. Ensure it has been opened before trying to use the connection."};
+            _logger->error(
+                "Error: The DbConnection is showing a closed connection status, open it before using store functions");
             _logger->error("Throwing connection error with message: \"{}\"", msg);
             Tango::Except::throw_exception("Connecion Error", msg, location);
         }
@@ -533,7 +555,8 @@ namespace pqxx_conn
 
     //=============================================================================
     //=============================================================================
-    void DbConnection::handlePqxxError(const string &msg, const string &what, const string &query, const std::string &location)
+    void DbConnection::handlePqxxError(
+        const string &msg, const string &what, const string &query, const std::string &location)
     {
         string full_msg {"The database transaction failed. " + msg};
         _logger->error("Error: An unexpected error occurred when trying to run the database query");

@@ -30,7 +30,7 @@ namespace pqxx_conn
 {
     namespace query_utils
     {
-        // these specialisation just return the correct postgres cast for the insert queries,
+        // these specializations just return the correct postgres cast for the insert queries,
         // this is important for the custom types, since the library libpqxx and postgres will
         // not know how to store them.
         template<>
@@ -130,16 +130,29 @@ namespace pqxx_conn
         static string query =
             "INSERT INTO " + CONF_TABLE_NAME + " (" +
                 CONF_COL_NAME + "," +
-                CONF_COL_DATA_TYPE_ID + "," +
+                CONF_COL_TYPE_ID + "," +
+                CONF_COL_FORMAT_TYPE_ID + "," +
+                CONF_COL_WRITE_TYPE_ID + "," +
+                CONF_COL_TABLE_NAME + "," +
                 CONF_COL_CS_NAME + "," + 
                 CONF_COL_DOMAIN + "," +
                 CONF_COL_FAMILY + "," +
                 CONF_COL_MEMBER + "," +
                 CONF_COL_LAST_NAME + ") (" +
-                "SELECT " +
-                    "$1," + CONF_TYPE_COL_TYPE_ID + ",$2,$3,$4,$5,$6 " +
-                "FROM " + CONF_TYPE_TABLE_NAME + " " +
-                "WHERE " + CONF_TYPE_COL_TYPE + " = $7) RETURNING " + CONF_COL_ID;
+                "SELECT " + 
+                    "$1," + 
+                    CONF_TYPE_COL_TYPE_ID + "," + 
+                    CONF_FORMAT_COL_FORMAT_ID + "," + 
+                    CONF_WRITE_COL_WRITE_ID + 
+                    ",$2,$3,$4,$5,$6,$7 " +
+                "FROM " + 
+                    CONF_TYPE_TABLE_NAME + ", " +
+                    CONF_FORMAT_TABLE_NAME + ", " +
+                    CONF_WRITE_TABLE_NAME + " " +
+                "WHERE " + CONF_TYPE_TABLE_NAME + "." + CONF_TYPE_COL_TYPE_NUM + " = $8 " + 
+                "AND " + CONF_FORMAT_TABLE_NAME + "." + CONF_FORMAT_COL_FORMAT_NUM + " = $9 " + 
+                "AND " + CONF_WRITE_TABLE_NAME + "." + CONF_WRITE_COL_WRITE_NUM + " = $10) " +
+                "RETURNING " + CONF_COL_ID;
         // clang-format on
 
         return query;
@@ -216,7 +229,8 @@ namespace pqxx_conn
             auto query = "INSERT INTO " + QueryBuilder::tableName(traits) + " (" + DAT_COL_ID + "," + DAT_COL_DATA_TIME;
 
             // split to ensure increments are in the correct order
-            query = query + "," + DAT_COL_QUALITY + "," + DAT_COL_ERROR_DESC_ID + ") VALUES ($" + to_string(++param_number);
+            query = query + "," + DAT_COL_QUALITY + "," + DAT_COL_ERROR_DESC_ID + ") VALUES ($" +
+                to_string(++param_number);
 
             query = query + ",TO_TIMESTAMP($" + to_string(++param_number) + ")";
 
@@ -252,14 +266,16 @@ namespace pqxx_conn
 
     //=============================================================================
     //=============================================================================
-    const string QueryBuilder::fetchAllValuesQuery(const string &column_name, const string &table_name, const string &reference)
+    const string QueryBuilder::fetchAllValuesQuery(
+        const string &column_name, const string &table_name, const string &reference)
     {
         return "SELECT " + column_name + ", " + reference + " " + "FROM " + table_name;
     }
 
     //=============================================================================
     //=============================================================================
-    const string QueryBuilder::fetchValueQuery(const string &column_name, const string &table_name, const string &reference)
+    const string QueryBuilder::fetchValueQuery(
+        const string &column_name, const string &table_name, const string &reference)
     {
         return "SELECT " + column_name + " " + "FROM " + table_name + " WHERE " + reference + "=$1";
     }
@@ -297,8 +313,7 @@ namespace pqxx_conn
 
                 return string("Unknown");
             }() +
-            "_" +
-            [&traits]() {
+            "_" + [&traits]() {
                 switch (traits.type())
                 {
                     case Tango::DEV_DOUBLE: return TYPE_DEV_DOUBLE;
@@ -318,13 +333,13 @@ namespace pqxx_conn
                 }
 
                 return string("Unknown");
-            }() +
-            "_" + (traits.isReadOnly() ? TYPE_RO : TYPE_RW);
+            }();
     }
 
     //=============================================================================
     //=============================================================================
-    const string &QueryBuilder::handleCache(map<AttributeTraits, string> &cache, const AttributeTraits &traits, const string &stub)
+    const string &QueryBuilder::handleCache(
+        map<AttributeTraits, string> &cache, const AttributeTraits &traits, const string &stub)
     {
         auto result = cache.find(traits);
 
@@ -353,7 +368,8 @@ namespace pqxx_conn
     {
         os << "QueryBuilder(cached "
            << "data_event: name/query " << _data_event_query_names.size() << "/" << _data_event_queries.size() << ", "
-           << "data_event_error: name/query " << _data_event_error_query_names.size() << "/" << _data_event_error_queries.size() << ")";
+           << "data_event_error: name/query " << _data_event_error_query_names.size() << "/"
+           << _data_event_error_queries.size() << ")";
     }
 } // namespace pqxx_conn
 } // namespace hdbpp

@@ -84,7 +84,22 @@ ostream &operator<<(ostream &os, Tango::AttributeDataType type)
     return os;
 }
 
-const int LoggerThreadCount = 1;
+//=============================================================================
+//=============================================================================
+ostream &operator<<(ostream &os, Tango::AttrQuality quality)
+{
+    switch (quality)
+    {
+        case Tango::ATTR_VALID: os << "ATTR_VALID"; return os;
+        case Tango::ATTR_INVALID: os << "ATTR_INVALID"; return os;
+        case Tango::ATTR_ALARM: os << "ATTR_ALARM"; return os;
+        case Tango::ATTR_CHANGING: os << "ATTR_CHANGING"; return os;
+        case Tango::ATTR_WARNING: os << "ATTR_WARNING"; return os;
+    }
+
+    os << "UNKNOWN";
+    return os;
+}
 
 //=============================================================================
 //=============================================================================
@@ -92,7 +107,7 @@ void LogConfigurator::initLogging(bool enable_file, bool enable_console, const s
 {
     try
     {
-        spdlog::init_thread_pool(8192, LoggerThreadCount);
+        spdlog::init_thread_pool(8192, 1);
 
         vector<spdlog::sink_ptr> sinks;
 
@@ -105,8 +120,11 @@ void LogConfigurator::initLogging(bool enable_file, bool enable_console, const s
         if (sinks.empty())
             sinks.push_back(make_shared<spdlog::sinks::null_sink_mt>());
 
-        auto logger = make_shared<spdlog::async_logger>(
-            LibLoggerName, sinks.begin(), sinks.end(), spdlog::thread_pool(), spdlog::async_overflow_policy::overrun_oldest);
+        auto logger = make_shared<spdlog::async_logger>(LibLoggerName,
+            sinks.begin(),
+            sinks.end(),
+            spdlog::thread_pool(),
+            spdlog::async_overflow_policy::overrun_oldest);
 
         spdlog::register_logger(logger);
         spdlog::flush_every(std::chrono::seconds(1));

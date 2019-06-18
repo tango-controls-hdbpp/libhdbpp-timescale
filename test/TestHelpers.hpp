@@ -45,7 +45,8 @@ namespace attr_name
 {
     // mock test data
     const std::string TestAttrFQDName = "tango://localhost.server.com:10000/test-domain/test-family/test-member/test";
-    const std::string TestAttrFQDNameNoTangoQual = "localhost.server.com:10000/test-domain/test-family/test-member/test";
+    const std::string TestAttrFQDNameNoTangoQual =
+        "localhost.server.com:10000/test-domain/test-family/test-member/test";
     const std::string TestAttrFQDNameNoDomain = "tango://localhost:10000/test-domain/test-family/test-member/test";
 
     const std::string TestAttrCs = "new_cs";

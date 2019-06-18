@@ -45,8 +45,8 @@ const int NewValue2Id = 12;
 
 void createColumnCacheTestDb(pqxx::work &tx)
 {
-    tx.exec("CREATE TEMP TABLE " + TableName + " (" + IdCol + " serial, " + ReferenceCol + " text, " + "PRIMARY KEY (" + IdCol +
-        ")) ON COMMIT PRESERVE ROWS;");
+    tx.exec("CREATE TEMP TABLE " + TableName + " (" + IdCol + " serial, " + ReferenceCol + " text, " + "PRIMARY KEY (" +
+        IdCol + ")) ON COMMIT PRESERVE ROWS;");
 
     tx.exec("INSERT INTO " + TableName + "(" + ReferenceCol + ") VALUES (" + tx.quote(Ref1) + ");");
     tx.exec("INSERT INTO " + TableName + "(" + ReferenceCol + ") VALUES (" + tx.quote(Ref2) + ");");
@@ -255,7 +255,8 @@ SCENARIO("Clearing the cache does not stop entries being cached again", "[db-acc
     conn->disconnect();
 }
 
-SCENARIO("ColumnCache will fetch values from db and cache them as they are requested by reference", "[db-access][column-cache][psql]")
+SCENARIO("ColumnCache will fetch values from db and cache them as they are requested by reference",
+    "[db-access][column-cache][psql]")
 {
     auto conn = connectDb();
 

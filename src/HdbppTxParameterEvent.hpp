@@ -91,19 +91,19 @@ HdbppTxParameterEvent<Conn> &HdbppTxParameterEvent<Conn>::store()
     else if (!_attr_info_ex_set)
     {
         std::string msg {"AttributeInfo is not set. Unable to complete the transaction."};
-        spdlog::error("Error: {}", msg);
+        spdlog::error("Error: {} For attribute {}", msg, _attr_name);
         Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
     else if (_event_time == 0)
     {
         std::string msg {"Event time is not set. Unable to complete the transaction."};
-        spdlog::error("Error: {}", msg);
+        spdlog::error("Error: {} For attribute {}", msg, _attr_name);
         Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
     else if (HdbppTxBase<Conn>::connection().isClosed())
     {
         string msg {"The connection is reporting it is closed. Unable to store parameter event."};
-        spdlog::error("Error: {}", msg);
+        spdlog::error("Error: {} For attribute {}", msg, _attr_name);
         Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
 

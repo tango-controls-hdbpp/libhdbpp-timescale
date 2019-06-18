@@ -122,7 +122,7 @@ SCENARIO("Construct and store HdbppTxParameterEvent data without error", "[hdbpp
     struct timeval tv;
     struct Tango::TimeVal tango_tv;
 
-    // seriously ugly, how is this dealt with in Tango!?!
+    // ugly, how is this dealt with in Tango!?!
     gettimeofday(&tv, NULL);
     tango_tv.tv_sec = tv.tv_sec;
     tango_tv.tv_usec = tv.tv_usec;
@@ -134,7 +134,9 @@ SCENARIO("Construct and store HdbppTxParameterEvent data without error", "[hdbpp
 
         WHEN("Passing a valid configuration with method chaining")
         {
-            tx.withName(TestAttrFQDName).withAttrInfo(hdbpp_param_test::createAttributeInfoEx()).withEventTime(tango_tv);
+            tx.withName(TestAttrFQDName)
+                .withAttrInfo(hdbpp_param_test::createAttributeInfoEx())
+                .withEventTime(tango_tv);
 
             THEN("No exception is raised when storing the transaction") { REQUIRE_NOTHROW(tx.store()); }
             AND_WHEN("The result of the store is examined after storing")
@@ -161,14 +163,15 @@ SCENARIO("Construct and store HdbppTxParameterEvent data without error", "[hdbpp
     }
 }
 
-SCENARIO("When attempting to store invalid HdbppTxParameterEvent states, errors are thrown", "[hdbpp-tx][hdbpp-tx-parameter-event]")
+SCENARIO("When attempting to store invalid HdbppTxParameterEvent states, errors are thrown",
+    "[hdbpp-tx][hdbpp-tx-parameter-event]")
 {
     hdbpp_param_test::MockConnection conn;
 
     struct timeval tv;
     struct Tango::TimeVal tango_tv;
 
-    // seriously ugly, how is this dealt with in Tango!?!
+    // ugly, how is this dealt with in Tango!?!
     gettimeofday(&tv, NULL);
     tango_tv.tv_sec = tv.tv_sec;
     tango_tv.tv_usec = tv.tv_usec;
@@ -221,7 +224,9 @@ SCENARIO("When attempting to store invalid HdbppTxParameterEvent states, errors 
             conn.disconnect();
             REQUIRE(conn.isClosed());
 
-            tx.withName(TestAttrFQDName).withEventTime(tango_tv).withAttrInfo(hdbpp_param_test::createAttributeInfoEx());
+            tx.withName(TestAttrFQDName)
+                .withEventTime(tango_tv)
+                .withAttrInfo(hdbpp_param_test::createAttributeInfoEx());
 
             THEN("An exception is raised and result is false")
             {
@@ -239,7 +244,7 @@ SCENARIO("HdbppTxParameterEvent Simulated exception received", "[hdbpp-tx][hdbpp
     struct timeval tv;
     struct Tango::TimeVal tango_tv;
 
-    // seriously ugly, how is this dealt with in Tango!?!
+    // ugly, how is this dealt with in Tango!?!
     gettimeofday(&tv, NULL);
     tango_tv.tv_sec = tv.tv_sec;
     tango_tv.tv_usec = tv.tv_usec;

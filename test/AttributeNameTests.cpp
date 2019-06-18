@@ -39,7 +39,10 @@ SCENARIO("AttributeName supports fully qualified attribute name", "[attribute-na
         }
         WHEN("Full attribute name is requested")
         {
-            THEN("Valid full attribute name returned") { REQUIRE(attribute_name.fullAttributeName() == TestAttrFullAttrName); }
+            THEN("Valid full attribute name returned")
+            {
+                REQUIRE(attribute_name.fullAttributeName() == TestAttrFullAttrName);
+            }
         }
         WHEN("Tango host is requested")
         {
@@ -79,11 +82,17 @@ SCENARIO("AttributeName supports fully qualified attribute name missing tango pr
 
         WHEN("Fully qualified domain name requested")
         {
-            THEN("Valid fqdn is returned") { REQUIRE(attribute_name.fqdnAttributeName() == TestAttrFQDNameNoTangoQual); }
+            THEN("Valid fqdn is returned")
+            {
+                REQUIRE(attribute_name.fqdnAttributeName() == TestAttrFQDNameNoTangoQual);
+            }
         }
         WHEN("Full attribute name is requested")
         {
-            THEN("Valid full attribute name returned") { REQUIRE(attribute_name.fullAttributeName() == TestAttrFullAttrName); }
+            THEN("Valid full attribute name returned")
+            {
+                REQUIRE(attribute_name.fullAttributeName() == TestAttrFullAttrName);
+            }
         }
         WHEN("Tango host is requested")
         {
@@ -127,7 +136,10 @@ SCENARIO("AttributeName supports fully qualified attribute name but no network d
         }
         WHEN("Full attribute name is requested")
         {
-            THEN("Valid full attribute name returned") { REQUIRE(attribute_name.fullAttributeName() == TestAttrFullAttrName); }
+            THEN("Valid full attribute name returned")
+            {
+                REQUIRE(attribute_name.fullAttributeName() == TestAttrFullAttrName);
+            }
         }
         WHEN("Tango host is requested")
         {

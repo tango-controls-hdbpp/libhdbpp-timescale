@@ -20,6 +20,7 @@
 #include "DbConnection.hpp"
 #include "HdbppDefines.hpp"
 #include "LibUtils.hpp"
+#include "QueryBuilder.hpp"
 #include "TestHelpers.hpp"
 #include "TimescaleSchema.hpp"
 #include "catch2/catch.hpp"
@@ -55,8 +56,8 @@ void clearTable(pqxx::connection &conn, const string &table_name)
 // wrapper to store an attribute
 void storeTestAttribute(DbConnection &conn, const AttributeTraits &traits)
 {
-    REQUIRE_NOTHROW(
-        conn.storeAttribute(TestAttrFinalName, TestAttrCs, TestAttrDomain, TestAttrFamily, TestAttrMember, TestAttrName, traits));
+    REQUIRE_NOTHROW(conn.storeAttribute(
+        TestAttrFinalName, TestAttrCs, TestAttrDomain, TestAttrFamily, TestAttrMember, TestAttrName, traits));
 }
 
 // wrapper to store some event data, and return the data for comparison
@@ -157,11 +158,13 @@ bool compareVector<double>(const vector<double> &lhs, const vector<double> &rhs)
 // taking the original data as a reference, this function loads the last line of data and compares
 // it to the reference data as a test
 template<typename T>
-void checkStoreTestEventData(pqxx::connection &test_conn, const AttributeTraits &traits, const tuple<vector<T>, vector<T>> &data)
+void checkStoreTestEventData(
+    pqxx::connection &test_conn, const AttributeTraits &traits, const tuple<vector<T>, vector<T>> &data)
 {
     pqxx::work tx {test_conn};
 
-    auto data_row(tx.exec1("SELECT * FROM " + query_builder.tableName(traits) + " ORDER BY " + DAT_COL_DATA_TIME + " LIMIT 1"));
+    auto data_row(
+        tx.exec1("SELECT * FROM " + query_builder.tableName(traits) + " ORDER BY " + DAT_COL_DATA_TIME + " LIMIT 1"));
 
     auto attr_row(tx.exec1("SELECT * FROM " + CONF_TABLE_NAME));
     tx.commit();
@@ -192,7 +195,8 @@ void checkStoreTestEventData(pqxx::connection &test_conn, const AttributeTraits 
 }
 }; // namespace psql_conn_test
 
-SCENARIO("The DbConnection class can open a valid connection to a postgres node", "[db-access][hdbpp-db-access][db-connection][psql]")
+SCENARIO("The DbConnection class can open a valid connection to a postgres node",
+    "[db-access][hdbpp-db-access][db-connection][psql]")
 {
     GIVEN("An unconnected DbConnection object")
     {
@@ -213,7 +217,8 @@ SCENARIO("The DbConnection class can open a valid connection to a postgres node"
     }
 }
 
-SCENARIO("The DbConnection class handles a bad connection attempt with an exception", "[db-access][hdbpp-db-access][db-connection][psql]")
+SCENARIO("The DbConnection class handles a bad connection attempt with an exception",
+    "[db-access][hdbpp-db-access][db-connection][psql]")
 {
     GIVEN("An unconnected DbConnection object")
     {
@@ -264,24 +269,44 @@ SCENARIO("Storing Attributes in the database", "[db-access][hdbpp-db-access][db-
             {
                 {
                     pqxx::work tx {test_conn};
-                    auto r(tx.exec1("SELECT * FROM " + CONF_TABLE_NAME));
+                    auto attr_row(tx.exec1("SELECT * FROM " + CONF_TABLE_NAME));
+
+                    auto type_row(tx.exec1("SELECT " + CONF_TYPE_COL_TYPE_ID + " FROM " + CONF_TYPE_TABLE_NAME +
+                        " WHERE " + CONF_TYPE_COL_TYPE_NUM + " = " + std::to_string(traits.type())));
+
+                    auto format_row(tx.exec1("SELECT " + CONF_FORMAT_COL_FORMAT_ID + " FROM " + CONF_FORMAT_TABLE_NAME +
+                        " WHERE " + CONF_FORMAT_COL_FORMAT_NUM + " = " + std::to_string(traits.formatType())));
+
+                    auto access_row(tx.exec1("SELECT " + CONF_WRITE_COL_WRITE_ID + " FROM " + CONF_WRITE_TABLE_NAME +
+                        " WHERE " + CONF_WRITE_COL_WRITE_NUM + " = " + std::to_string(traits.writeType())));
+
                     tx.commit();
 
-                    REQUIRE(r.at(CONF_COL_NAME).as<string>() == TestAttrFQDName);
-                    REQUIRE(r.at(CONF_COL_CS_NAME).as<string>() == TestAttrCs);
-                    REQUIRE(r.at(CONF_COL_DOMAIN).as<string>() == TestAttrDomain);
-                    REQUIRE(r.at(CONF_COL_FAMILY).as<string>() == TestAttrFamily);
-                    REQUIRE(r.at(CONF_COL_MEMBER).as<string>() == TestAttrMember);
-                    REQUIRE(r.at(CONF_COL_LAST_NAME).as<string>() == TestAttrName);
+                    REQUIRE(attr_row.at(CONF_COL_NAME).as<string>() == TestAttrFQDName);
+                    REQUIRE(attr_row.at(CONF_COL_CS_NAME).as<string>() == TestAttrCs);
+                    REQUIRE(attr_row.at(CONF_COL_DOMAIN).as<string>() == TestAttrDomain);
+                    REQUIRE(attr_row.at(CONF_COL_FAMILY).as<string>() == TestAttrFamily);
+                    REQUIRE(attr_row.at(CONF_COL_MEMBER).as<string>() == TestAttrMember);
+                    REQUIRE(attr_row.at(CONF_COL_LAST_NAME).as<string>() == TestAttrName);
+                    REQUIRE(attr_row.at(CONF_COL_TABLE_NAME).as<string>() == QueryBuilder().tableName(traits));
+                    REQUIRE(attr_row.at(CONF_COL_TYPE_ID).as<int>() == type_row.at(CONF_TYPE_COL_TYPE_ID).as<int>());
+                    REQUIRE(attr_row.at(CONF_COL_FORMAT_TYPE_ID).as<int>() ==
+                        format_row.at(CONF_FORMAT_COL_FORMAT_ID).as<int>());
+                    REQUIRE(attr_row.at(CONF_COL_WRITE_TYPE_ID).as<int>() ==
+                        access_row.at(CONF_WRITE_COL_WRITE_ID).as<int>());
                 }
             }
             AND_WHEN("Trying to store the attribute again")
             {
                 THEN("An exception is throw as the entry already exists in the database")
                 {
-                    REQUIRE_THROWS_AS(
-                        conn.storeAttribute(
-                            TestAttrFinalName, TestAttrCs, TestAttrDomain, TestAttrFamily, TestAttrMember, TestAttrName, traits),
+                    REQUIRE_THROWS_AS(conn.storeAttribute(TestAttrFinalName,
+                                          TestAttrCs,
+                                          TestAttrDomain,
+                                          TestAttrFamily,
+                                          TestAttrMember,
+                                          TestAttrName,
+                                          traits),
                         Tango::DevFailed);
                 }
             }
@@ -314,8 +339,13 @@ SCENARIO("Storing Attributes in a disconnected state", "[db-access][hdbpp-db-acc
 
             THEN("An exception is throw as the database connection is down")
             {
-                REQUIRE_THROWS_AS(conn.storeAttribute(
-                                      TestAttrFinalName, TestAttrCs, TestAttrDomain, TestAttrFamily, TestAttrMember, TestAttrName, traits),
+                REQUIRE_THROWS_AS(conn.storeAttribute(TestAttrFinalName,
+                                      TestAttrCs,
+                                      TestAttrDomain,
+                                      TestAttrFamily,
+                                      TestAttrMember,
+                                      TestAttrName,
+                                      traits),
                     Tango::DevFailed);
             }
         }
@@ -362,7 +392,8 @@ SCENARIO("Storing History Events in the database", "[db-access][hdbpp-db-access]
                     REQUIRE(event_row.at(HISTORY_EVENT_COL_EVENT).as<string>() == events::PauseEvent);
 
                     // check event id matches event table id
-                    REQUIRE(event_row.at(HISTORY_EVENT_COL_EVENT_ID).as<int>() == history_row.at(HISTORY_COL_EVENT_ID).as<int>());
+                    REQUIRE(event_row.at(HISTORY_EVENT_COL_EVENT_ID).as<int>() ==
+                        history_row.at(HISTORY_COL_EVENT_ID).as<int>());
 
                     // check attribute id match
                     REQUIRE(attr_row.at(CONF_COL_ID).as<int>() == history_row.at(HISTORY_COL_ID).as<int>());
@@ -389,7 +420,8 @@ SCENARIO("Storing History Events in the database", "[db-access][hdbpp-db-access]
                             REQUIRE(attr_row.at(CONF_COL_ID).as<int>() == row.at(HISTORY_COL_ID).as<int>());
 
                             // check event id matches event table id
-                            REQUIRE(row.at(HISTORY_COL_EVENT_ID).as<int>() == event_result.at(HISTORY_COL_EVENT_ID).as<int>());
+                            REQUIRE(row.at(HISTORY_COL_EVENT_ID).as<int>() ==
+                                event_result.at(HISTORY_COL_EVENT_ID).as<int>());
                         }
                     }
                 }
@@ -666,8 +698,8 @@ SCENARIO("Storing event data which is invalid", "[db-access][hdbpp-db-access][db
             {
                 {
                     pqxx::work tx {test_conn};
-                    auto data_row(tx.exec1("SELECT * FROM " + psql_conn_test::query_builder.tableName(traits) + " ORDER BY " +
-                        DAT_COL_DATA_TIME + " LIMIT 1"));
+                    auto data_row(tx.exec1("SELECT * FROM " + psql_conn_test::query_builder.tableName(traits) +
+                        " ORDER BY " + DAT_COL_DATA_TIME + " LIMIT 1"));
                     auto attr_row(tx.exec1("SELECT * FROM " + CONF_TABLE_NAME));
                     tx.commit();
 
@@ -692,8 +724,8 @@ SCENARIO("Storing event data which is invalid", "[db-access][hdbpp-db-access][db
             {
                 {
                     pqxx::work tx {test_conn};
-                    auto data_row(tx.exec1("SELECT * FROM " + psql_conn_test::query_builder.tableName(traits) + " ORDER BY " +
-                        DAT_COL_DATA_TIME + " LIMIT 1"));
+                    auto data_row(tx.exec1("SELECT * FROM " + psql_conn_test::query_builder.tableName(traits) +
+                        " ORDER BY " + DAT_COL_DATA_TIME + " LIMIT 1"));
                     auto attr_row(tx.exec1("SELECT * FROM " + CONF_TABLE_NAME));
                     tx.commit();
 
@@ -712,7 +744,8 @@ SCENARIO("Storing event data which is invalid", "[db-access][hdbpp-db-access][db
         test_conn.disconnect();
 }
 
-TEST_CASE("Storing event data of all Tango type combinations in the database", "[db-access][hdbpp-db-access][db-connection][psql]")
+TEST_CASE("Storing event data of all Tango type combinations in the database",
+    "[db-access][hdbpp-db-access][db-connection][psql]")
 {
     DbConnection conn;
     REQUIRE_NOTHROW(conn.connect(postgres_db::HdbppConnectionString));
@@ -756,6 +789,7 @@ TEST_CASE("Storing event data of all Tango type combinations in the database", "
 
                     switch (traits.type())
                     {
+                            // TODO enable commented out calls.
                             //case Tango::DEV_BOOLEAN:
                             //psql_conn_test::checkStoreTestEventData(
                             //test_conn, traits, psql_conn_test::storeTestEventData<Tango::DEV_BOOLEAN>(conn, traits));
@@ -810,8 +844,9 @@ TEST_CASE("Storing event data of all Tango type combinations in the database", "
                             break;
 
                         case Tango::DEV_ULONG64:
-                            psql_conn_test::checkStoreTestEventData(
-                                test_conn, traits, psql_conn_test::storeTestEventData<Tango::DEV_ULONG64>(conn, traits));
+                            psql_conn_test::checkStoreTestEventData(test_conn,
+                                traits,
+                                psql_conn_test::storeTestEventData<Tango::DEV_ULONG64>(conn, traits));
 
                             break;
 
@@ -917,15 +952,16 @@ SCENARIO("Storing data events as errors", "[db-access][hdbpp-db-access][db-conne
 
         WHEN("Storing a new error message in the database")
         {
-            REQUIRE_NOTHROW(conn.storeDataEventError(TestAttrFinalName, event_time, Tango::ATTR_VALID, error_msg, traits));
+            REQUIRE_NOTHROW(
+                conn.storeDataEventError(TestAttrFinalName, event_time, Tango::ATTR_VALID, error_msg, traits));
 
             THEN("Then both the event and history event exists in the database, and can be read back and verified")
             {
                 {
                     pqxx::work tx {test_conn};
 
-                    auto data_row(tx.exec1("SELECT * FROM " + psql_conn_test::query_builder.tableName(traits) + " ORDER BY " +
-                        DAT_COL_DATA_TIME + " LIMIT 1"));
+                    auto data_row(tx.exec1("SELECT * FROM " + psql_conn_test::query_builder.tableName(traits) +
+                        " ORDER BY " + DAT_COL_DATA_TIME + " LIMIT 1"));
 
                     auto attr_row(tx.exec1("SELECT * FROM " + CONF_TABLE_NAME));
                     auto error_row(tx.exec1("SELECT * FROM " + ERR_TABLE_NAME));
@@ -939,15 +975,19 @@ SCENARIO("Storing data events as errors", "[db-access][hdbpp-db-access][db-conne
             }
             AND_WHEN("A second error is stored with the same message")
             {
-                REQUIRE_NOTHROW(conn.storeDataEventError(TestAttrFinalName, event_time, Tango::ATTR_VALID, error_msg, traits));
+                gettimeofday(&tv, NULL);
+                event_time = tv.tv_sec + tv.tv_usec / 1.0e6;
+
+                REQUIRE_NOTHROW(
+                    conn.storeDataEventError(TestAttrFinalName, event_time, Tango::ATTR_VALID, error_msg, traits));
 
                 THEN("The same error id is used in the event data")
                 {
                     {
                         pqxx::work tx {test_conn};
 
-                        auto data_row(tx.exec1("SELECT * FROM " + psql_conn_test::query_builder.tableName(traits) + " ORDER BY " +
-                            DAT_COL_DATA_TIME + " LIMIT 1"));
+                        auto data_row(tx.exec1("SELECT * FROM " + psql_conn_test::query_builder.tableName(traits) +
+                            " ORDER BY " + DAT_COL_DATA_TIME + " LIMIT 1"));
 
                         auto attr_row(tx.exec1("SELECT * FROM " + CONF_TABLE_NAME));
                         auto error_row(tx.exec1("SELECT * FROM " + ERR_TABLE_NAME));
@@ -1014,7 +1054,8 @@ SCENARIO("Fetching the last event after it has just been stored", "[db-access][h
         test_conn.disconnect();
 }
 
-SCENARIO("When no exevts have been stored, no error is thrown requesting the last event", "[hdbpp-tx][hdbpp-tx-history-event]")
+SCENARIO("When no events have been stored, no error is thrown requesting the last event",
+    "[db-access][hdbpp-db-access][db-connection][psql]")
 {
     DbConnection conn;
     REQUIRE_NOTHROW(conn.connect(postgres_db::HdbppConnectionString));
@@ -1024,6 +1065,9 @@ SCENARIO("When no exevts have been stored, no error is thrown requesting the las
 
     GIVEN("A valid DbConnection connected to a hdbpp database with no attribute nor history event stored in it")
     {
+        psql_conn_test::clearTable(test_conn, HISTORY_TABLE_NAME);
+        psql_conn_test::clearTable(test_conn, HISTORY_EVENT_TABLE_NAME);
+
         WHEN("Requesting the last event")
         {
             string event;

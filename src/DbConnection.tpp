@@ -26,6 +26,27 @@ namespace hdbpp
 {
 namespace pqxx_conn
 {
+    namespace store_data_utils
+    {
+        template<typename T>
+        struct Preprocess
+        {
+            static void run(std::unique_ptr<std::vector<T>> &, pqxx::work &) {}
+        };
+
+        //=============================================================================
+        //=============================================================================
+        template<>
+        struct Preprocess<std::string>
+        {
+            static void run(std::unique_ptr<std::vector<std::string>> &value, pqxx::work &tx)
+            {
+                for (auto &str : *value)
+                    str = tx.quote(str);
+            }
+        };
+    } // namespace store_data_utils
+
     //=============================================================================
     //=============================================================================
     template<typename T>
@@ -38,8 +59,11 @@ namespace pqxx_conn
     {
         assert(!full_attr_name.empty());
 
-        _logger->trace("Storing data event for attribute {} with traits {}, value_r valid: {}, value_w valid: {}", 
-            full_attr_name, traits, value_r->size() > 0, value_w->size() > 0);
+        _logger->trace("Storing data event for attribute {} with traits {}, value_r valid: {}, value_w valid: {}",
+            full_attr_name,
+            traits,
+            value_r->size() > 0,
+            value_w->size() > 0);
 
         checkConnection(LOCATION_INFO);
         checkAttributeExists(full_attr_name, LOCATION_INFO);
@@ -53,13 +77,14 @@ namespace pqxx_conn
                 // queries often
                 if (!tx.prepared(_query_builder.storeDataEventName(traits)).exists())
                 {
-                    tx.conn().prepare(_query_builder.storeDataEventName(traits), _query_builder.storeDataEventQuery<T>(traits));
+                    tx.conn().prepare(
+                        _query_builder.storeDataEventName(traits), _query_builder.storeDataEventQuery<T>(traits));
                 }
 
                 // get the pqxx prepared statement invocation object to allow us to
                 // bind each parameter in turn, this gives us the flexibility to bind
                 // conditional parameters (as long as the query string matches)
-                pqxx::prepare::invocation inv = tx.prepared(_query_builder.storeDataEventName(traits));
+                auto inv = tx.prepared(_query_builder.storeDataEventName(traits));
 
                 // this lambda stores the data value correctly into the invocation,
                 // we must treat scalar/spectrum in different ways, one is a single
@@ -68,6 +93,9 @@ namespace pqxx_conn
                 auto store_value = [&tx, &inv, &traits](auto &value) {
                     if (value && value->size() > 0)
                     {
+                        // this ensures strings are quoted and escaped, other types are ignored
+                        store_data_utils::Preprocess<T>::run(value, tx);
+
                         // for a scalar, store the first element of the vector,
                         // we do not expect more than 1 element, for an array, store
                         // the entire vector

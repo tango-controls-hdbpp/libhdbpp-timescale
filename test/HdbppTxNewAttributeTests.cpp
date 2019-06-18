@@ -72,7 +72,6 @@ public:
     string new_att_member;
     string new_att_name;
     AttributeTraits att_traits;
-
     bool store_attribute_triggers_ex = false;
 
 private:
@@ -117,7 +116,8 @@ SCENARIO("Construct and store HdbppTxNewAttribute data without error", "[hdbpp-t
     }
 }
 
-SCENARIO("When attempting to store invalid HdbppTxNewAttribute states, errors are thrown", "[hdbpp-tx][hdbpp-tx-new-attribute]")
+SCENARIO("When attempting to store invalid HdbppTxNewAttribute states, errors are thrown",
+    "[hdbpp-tx][hdbpp-tx-new-attribute]")
 {
     hdbpp_new_attr_test::MockConnection conn;
 
@@ -163,7 +163,9 @@ SCENARIO("HdbppTxNewAttribute Simulated exception received", "[hdbpp-tx][hdbpp-t
 
     GIVEN("An HdbppTxNewAttribute object with name and traits set")
     {
-        auto tx = conn.createTx<HdbppTxNewAttribute>().withName(TestAttrFQDName).withTraits(Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE);
+        auto tx = conn.createTx<HdbppTxNewAttribute>()
+                      .withName(TestAttrFQDName)
+                      .withTraits(Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE);
 
         WHEN("Storing the transaction with a triggered exception set")
         {

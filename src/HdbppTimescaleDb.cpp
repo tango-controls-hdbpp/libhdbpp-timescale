@@ -21,6 +21,7 @@
 
 #include "DbConnection.hpp"
 #include "HdbppTxDataEvent.hpp"
+#include "HdbppTxDataEventError.hpp"
 #include "HdbppTxHistoryEvent.hpp"
 #include "HdbppTxNewAttribute.hpp"
 #include "HdbppTxParameterEvent.hpp"
@@ -36,14 +37,14 @@ namespace hdbpp
 // declaring this variable here removes it from the header, and keeps the header clean.
 // It is allocated in the constructor. It can be abstracted further to allow easy plug
 // in of different backends at a later point
-unique_ptr<pqxx_conn::DbConnection> conn;
+unique_ptr<pqxx_conn::DbConnection> Conn;
 
 // simple class to gather utility functions that were previously part of HdbppTimescaleDb,
 // removes them from the header and keeps it clean for includes
 struct HdbppTimescaleDbUtils
 {
     static string getConfigParam(const map<string, string> &conf, const string &param, bool mandatory);
-    static map<string, string> extractConfig(vector<string> str, const string &separator);
+    static map<string, string> extractConfig(vector<string> config, const string &separator);
 };
 
 //=============================================================================
@@ -119,10 +120,10 @@ HdbppTimescaleDb::HdbppTimescaleDb(const vector<string> &configuration)
     spdlog::info("Manatory config parameter connect_string: {}", connection_string);
 
     // allocate a connection to store data with
-    conn = make_unique<pqxx_conn::DbConnection>();
+    Conn = make_unique<pqxx_conn::DbConnection>();
 
     // now bring up the connection
-    conn->connect(connection_string);
+    Conn->connect(connection_string);
     spdlog::info("Started libhdbpp-timescale shared library successfully");
 }
 
@@ -130,8 +131,8 @@ HdbppTimescaleDb::HdbppTimescaleDb(const vector<string> &configuration)
 //=============================================================================
 HdbppTimescaleDb::~HdbppTimescaleDb()
 {
-    if (conn->isOpen())
-        conn->disconnect();
+    if (Conn->isOpen())
+        Conn->disconnect();
 }
 
 //=============================================================================
@@ -147,28 +148,30 @@ void HdbppTimescaleDb::insert_Attr(Tango::EventData *event_data, HdbEventDataTyp
     {
         spdlog::trace("Event type is error for attribute: {}", event_data->attr_name);
 
-        conn->createTx<HdbppTxDataEvent>()
+        Conn->createTx<HdbppTxDataEventError>()
             .withName(event_data->attr_name)
             .withTraits(static_cast<Tango::AttrWriteType>(event_data_type.write_type),
                 static_cast<Tango::AttrDataFormat>(event_data_type.data_format),
                 event_data_type.data_type)
             .withError(string(event_data->errors[0].desc))
             .withEventTime(event_data->attr_value->get_date())
-            .withQuality(static_cast<int>(event_data->attr_value->get_quality()))
+            .withQuality(event_data->attr_value->get_quality())
             .store();
     }
     else
     {
+        spdlog::trace("Event type is data for attribute: {}", event_data->attr_name);
+
         // build a data event request, this will store 0 or more data elements,
         // pending on type, format and quality
-        conn->createTx<HdbppTxDataEvent>()
+        Conn->createTx<HdbppTxDataEvent>()
             .withName(event_data->attr_name)
             .withTraits(static_cast<Tango::AttrWriteType>(event_data_type.write_type),
                 static_cast<Tango::AttrDataFormat>(event_data_type.data_format),
                 event_data_type.data_type)
             .withAttribute(event_data->attr_value)
             .withEventTime(event_data->attr_value->get_date())
-            .withQuality(static_cast<int>(event_data->attr_value->get_quality()))
+            .withQuality(event_data->attr_value->get_quality())
             .store();
     }
 }
@@ -180,7 +183,7 @@ void HdbppTimescaleDb::insert_param_Attr(Tango::AttrConfEventData *conf_event_da
     assert(conf_event_data);
     spdlog::trace("Insert parameter event request for attribute: {}", conf_event_data->attr_name);
 
-    conn->createTx<HdbppTxParameterEvent>()
+    Conn->createTx<HdbppTxParameterEvent>()
         .withName(conf_event_data->attr_name)
         .withEventTime(conf_event_data->get_date())
         .withAttrInfo(*(conf_event_data->attr_conf))
@@ -189,7 +192,8 @@ void HdbppTimescaleDb::insert_param_Attr(Tango::AttrConfEventData *conf_event_da
 
 //=============================================================================
 //=============================================================================
-void HdbppTimescaleDb::configure_Attr(std::string fqdn_attr_name, int type, int format, int write_type, unsigned int ttl)
+void HdbppTimescaleDb::configure_Attr(
+    std::string fqdn_attr_name, int type, int format, int write_type, unsigned int ttl)
 {
     assert(!fqdn_attr_name.empty());
     spdlog::trace("Insert new attribute request for attribute: {}", fqdn_attr_name);
@@ -199,13 +203,13 @@ void HdbppTimescaleDb::configure_Attr(std::string fqdn_attr_name, int type, int 
     // forgive the ugly casting, but for some reason we receive the enum values
     // already cast to ints, we cast them back to enums so they function as
     // enums again
-    conn->createTx<HdbppTxNewAttribute>()
+    Conn->createTx<HdbppTxNewAttribute>()
         .withName(fqdn_attr_name)
         .withTraits(static_cast<Tango::AttrWriteType>(write_type), static_cast<Tango::AttrDataFormat>(format), type)
         .store();
 
     // add a start event
-    conn->createTx<HdbppTxHistoryEvent>().withName(fqdn_attr_name).withEvent(events::StartEvent).store();
+    Conn->createTx<HdbppTxHistoryEvent>().withName(fqdn_attr_name).withEvent(events::StartEvent).store();
 }
 
 //=============================================================================
@@ -224,7 +228,7 @@ void HdbppTimescaleDb::event_Attr(std::string fqdn_attr_name, unsigned char even
 {
     assert(!fqdn_attr_name.empty());
     spdlog::trace("History event request for attribute: {}", fqdn_attr_name);
-    conn->createTx<HdbppTxHistoryEvent>().withName(fqdn_attr_name).withEvent(event).store();
+    Conn->createTx<HdbppTxHistoryEvent>().withName(fqdn_attr_name).withEvent(event).store();
 }
 
 //=============================================================================
@@ -239,6 +243,6 @@ AbstractDB *HdbppTimescaleDbFactory::create_db(vector<string> configuration)
 //=============================================================================
 DBFactory *getDBFactory()
 {
-	auto *factory = new hdbpp::HdbppTimescaleDbFactory();
-	return static_cast<DBFactory*>(factory);
+    auto *factory = new hdbpp::HdbppTimescaleDbFactory();
+    return static_cast<DBFactory *>(factory);
 }

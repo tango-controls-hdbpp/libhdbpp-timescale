@@ -127,7 +127,8 @@ namespace pqxx_conn
 
                 if (!tx.prepared(_fetch_all_query_name).exists())
                 {
-                    tx.conn().prepare(_fetch_all_query_name, QueryBuilder::fetchAllValuesQuery(_column_name, _table_name, _reference));
+                    tx.conn().prepare(_fetch_all_query_name,
+                        QueryBuilder::fetchAllValuesQuery(_column_name, _table_name, _reference));
 
                     _logger->trace("Created prepared statement for: {}", _fetch_all_query_name);
                 }
@@ -144,8 +145,8 @@ namespace pqxx_conn
         }
         catch (const pqxx::pqxx_exception &ex)
         {
-            string msg {"The database transaction failed. Unable to fetchAll for column: " + _column_name + " in table: " + _table_name +
-                ". Error: " + ex.base().what()};
+            string msg {"The database transaction failed. Unable to fetchAll for column: " + _column_name +
+                " in table: " + _table_name + ". Error: " + ex.base().what()};
 
             _logger->error("Error: An unexpected error occurred when trying to run the database query");
             _logger->error("Caught error: \"{}\"", ex.base().what());
@@ -182,7 +183,8 @@ namespace pqxx_conn
 
                     if (!tx.prepared(_fetch_id_query_name).exists())
                     {
-                        tx.conn().prepare(_fetch_id_query_name, QueryBuilder::fetchValueQuery(_column_name, _table_name, _reference));
+                        tx.conn().prepare(
+                            _fetch_id_query_name, QueryBuilder::fetchValueQuery(_column_name, _table_name, _reference));
 
                         _logger->trace("Created prepared statement for: {}", _fetch_id_query_name);
                     }
@@ -206,7 +208,8 @@ namespace pqxx_conn
                         }
                         else
                         {
-                            throw pqxx::unexpected_rows("More than one row returned for value lookup. Expected just one.");
+                            throw pqxx::unexpected_rows(
+                                "More than one row returned for value lookup. Expected just one.");
                         }
                     }
 
@@ -215,8 +218,8 @@ namespace pqxx_conn
             }
             catch (const pqxx::pqxx_exception &ex)
             {
-                string msg {"The database transaction failed. Unable to query column: " + _column_name + " in table: " + _table_name +
-                    ". Error: " + ex.base().what()};
+                string msg {"The database transaction failed. Unable to query column: " + _column_name +
+                    " in table: " + _table_name + ". Error: " + ex.base().what()};
 
                 _logger->error("Error: An unexpected error occurred when trying to run the database query");
                 _logger->error("Caught error: \"{}\"", ex.base().what());

@@ -26,7 +26,68 @@ using namespace hdbpp;
 using namespace hdbpp::pqxx_conn;
 using namespace Catch::Matchers;
 
-SCENARIO("Creating valid database table names for SCALAR", "[query-string]")
+SCENARIO("storeDataEventQuery() returns the correct Value fields for the given traits", "[query-string]")
+{
+    GIVEN("A query builder object with nothing cached")
+    {
+        QueryBuilder query_builder;
+
+        WHEN("Requesting a query string for traits configured for Tango::READ")
+        {
+            AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE};
+            auto result = query_builder.storeDataEventQuery<double>(traits);
+
+            THEN("The result must include the DAT_COL_VALUE_R field only")
+            {
+                REQUIRE_THAT(result, Contains(DAT_COL_VALUE_R));
+                REQUIRE_THAT(result, !Contains(DAT_COL_VALUE_W));
+                REQUIRE_THAT(result, Contains("$4"));
+                REQUIRE_THAT(result, !Contains("$5"));
+            }
+        }
+        WHEN("Requesting a query string for traits configured for Tango::WRITE")
+        {
+            AttributeTraits traits {Tango::WRITE, Tango::SCALAR, Tango::DEV_DOUBLE};
+            auto result = query_builder.storeDataEventQuery<double>(traits);
+
+            THEN("The result must include the DAT_COL_VALUE_W field only")
+            {
+                REQUIRE_THAT(result, !Contains(DAT_COL_VALUE_R));
+                REQUIRE_THAT(result, Contains(DAT_COL_VALUE_W));
+                REQUIRE_THAT(result, Contains("$4"));
+                REQUIRE_THAT(result, !Contains("$5"));
+            }
+        }
+        WHEN("Requesting a query string for traits configured for Tango::READ_WRITE")
+        {
+            AttributeTraits traits {Tango::READ_WRITE, Tango::SCALAR, Tango::DEV_DOUBLE};
+            auto result = query_builder.storeDataEventQuery<double>(traits);
+
+            THEN("The result must include both the DAT_COL_VALUE_R and DAT_COL_VALUE_W field")
+            {
+                REQUIRE_THAT(result, Contains(DAT_COL_VALUE_R));
+                REQUIRE_THAT(result, Contains(DAT_COL_VALUE_W));
+                REQUIRE_THAT(result, Contains("$4"));
+                REQUIRE_THAT(result, Contains("$5"));
+            }
+        }
+        WHEN("Requesting a query string for traits configured for Tango::READ_WITH_WRITE")
+        {
+            AttributeTraits traits {Tango::READ_WITH_WRITE, Tango::SCALAR, Tango::DEV_DOUBLE};
+            auto result = query_builder.storeDataEventQuery<double>(traits);
+
+            THEN("The result must include both the DAT_COL_VALUE_R and DAT_COL_VALUE_W field")
+            {
+                REQUIRE_THAT(result, Contains(DAT_COL_VALUE_R));
+                REQUIRE_THAT(result, Contains(DAT_COL_VALUE_W));
+                REQUIRE_THAT(result, Contains("$4"));
+                REQUIRE_THAT(result, Contains("$5"));
+            }
+        }
+    }
+}
+
+SCENARIO("Creating valid insert queries with storeDataEventErrorQuery()", "[query-string]")
 {
     QueryBuilder query_builder;
 
@@ -38,160 +99,68 @@ SCENARIO("Creating valid database table names for SCALAR", "[query-string]")
         {
             auto result = query_builder.tableName(traits);
 
-            THEN("The result must include the TYPE_SCALAR from the schema") { REQUIRE_THAT(result, Contains(TYPE_SCALAR)); }
+            THEN("The result must include the TYPE_SCALAR from the schema")
+            {
+                REQUIRE_THAT(result, Contains(TYPE_SCALAR));
+            }
         }
     }
 }
 
-SCENARIO("Creating valid database table names for SPECTRUM", "[query-string]")
+TEST_CASE("Creating valid database table names for types", "[query-string]")
 {
-    QueryBuilder query_builder;
+    vector<unsigned int> types {Tango::DEV_DOUBLE,
+        Tango::DEV_FLOAT,
+        Tango::DEV_STRING,
+        Tango::DEV_LONG,
+        Tango::DEV_ULONG,
+        Tango::DEV_LONG64,
+        Tango::DEV_ULONG64,
+        Tango::DEV_SHORT,
+        Tango::DEV_USHORT,
+        Tango::DEV_BOOLEAN,
+        Tango::DEV_UCHAR,
+        Tango::DEV_STATE,
+        Tango::DEV_ENCODED,
+        Tango::DEV_ENUM};
 
-    GIVEN("An Attribute traits configured for spectrum")
+    vector<Tango::AttrWriteType> write_types {Tango::READ, Tango::WRITE, Tango::READ_WRITE, Tango::READ_WITH_WRITE};
+    vector<Tango::AttrDataFormat> format_types {Tango::SCALAR, Tango::SPECTRUM, Tango::IMAGE};
+
+    vector<string> types_str {TYPE_DEV_DOUBLE,
+        TYPE_DEV_FLOAT,
+        TYPE_DEV_STRING,
+        TYPE_DEV_LONG,
+        TYPE_DEV_ULONG,
+        TYPE_DEV_LONG64,
+        TYPE_DEV_ULONG64,
+        TYPE_DEV_SHORT,
+        TYPE_DEV_USHORT,
+        TYPE_DEV_BOOLEAN,
+        TYPE_DEV_UCHAR,
+        TYPE_DEV_STATE,
+        TYPE_DEV_ENCODED,
+        TYPE_DEV_ENUM};
+
+    vector<string> format_types_str {TYPE_SCALAR, TYPE_ARRAY, TYPE_IMAGE};
+
+    // loop for every combination of type in Tango
+    for (unsigned int t = 0; t < types.size(); ++t)
     {
-        AttributeTraits traits {Tango::READ, Tango::SPECTRUM, Tango::DEV_DOUBLE};
-
-        WHEN("Requesting a table name for the traits")
+        for (unsigned int f = 0; f < format_types.size(); ++f)
         {
-            auto result = query_builder.tableName(traits);
+            for (unsigned int w = 0; w < write_types.size(); ++w)
+            {
+                QueryBuilder query_builder;
+                AttributeTraits traits {write_types[w], format_types[f], types[t]};
 
-            THEN("The result must include the TYPE_ARRAY from the schema") { REQUIRE_THAT(result, Contains(TYPE_ARRAY)); }
-        }
-    }
-}
-
-SCENARIO("Creating valid database table names for IMAGE", "[query-string]")
-{
-    QueryBuilder query_builder;
-
-    GIVEN("An Attribute traits configured for image")
-    {
-        AttributeTraits traits {Tango::READ, Tango::IMAGE, Tango::DEV_DOUBLE};
-
-        WHEN("Requesting a table name for the traits")
-        {
-            auto result = query_builder.tableName(traits);
-
-            THEN("The result must include the TYPE_IMAGE from the schema") { REQUIRE_THAT(result, Contains(TYPE_IMAGE)); }
-        }
-    }
-}
-
-SCENARIO("Creating valid database table names for DEV_BOOLEAN", "[query-string]")
-{
-    QueryBuilder query_builder;
-
-    GIVEN("An Attribute traits configured for boolean")
-    {
-        AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_BOOLEAN};
-
-        WHEN("Requesting a table name for the traits")
-        {
-            auto result = query_builder.tableName(traits);
-
-            THEN("The result must include the TYPE_DEV_BOOLEAN from the schema") { REQUIRE_THAT(result, Contains(TYPE_DEV_BOOLEAN)); }
-        }
-    }
-}
-
-SCENARIO("Creating valid database table names for DEV_UCHAR", "[query-string]")
-{
-    QueryBuilder query_builder;
-
-    GIVEN("An Attribute traits configured for unsigned char")
-    {
-        AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_UCHAR};
-
-        WHEN("Requesting a table name for the traits")
-        {
-            auto result = query_builder.tableName(traits);
-
-            THEN("The result must include the TYPE_DEV_UCHAR from the schema") { REQUIRE_THAT(result, Contains(TYPE_DEV_UCHAR)); }
-        }
-    }
-}
-
-SCENARIO("Creating valid database table names for DEV_DOUBLE", "[query-string]")
-{
-    QueryBuilder query_builder;
-
-    GIVEN("An Attribute traits configured for unsigned char")
-    {
-        AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE};
-
-        WHEN("Requesting a table name for the traits")
-        {
-            auto result = query_builder.tableName(traits);
-
-            THEN("The result must include the TYPE_DEV_DOUBLE from the schema") { REQUIRE_THAT(result, Contains(TYPE_DEV_DOUBLE)); }
-        }
-    }
-}
-
-SCENARIO("Creating valid database table names for DEV_FLOAT", "[query-string]")
-{
-    QueryBuilder query_builder;
-
-    GIVEN("An Attribute traits configured for unsigned char")
-    {
-        AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_FLOAT};
-
-        WHEN("Requesting a table name for the traits")
-        {
-            auto result = query_builder.tableName(traits);
-
-            THEN("The result must include the TYPE_DEV_FLOAT from the schema") { REQUIRE_THAT(result, Contains(TYPE_DEV_FLOAT)); }
-        }
-    }
-}
-
-SCENARIO("Creating valid database table names for DEV_STRING", "[query-string]")
-{
-    QueryBuilder query_builder;
-
-    GIVEN("An Attribute traits configured for unsigned char")
-    {
-        AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_STRING};
-
-        WHEN("Requesting a table name for the traits")
-        {
-            auto result = query_builder.tableName(traits);
-
-            THEN("The result must include the TYPE_DEV_STRING from the schema") { REQUIRE_THAT(result, Contains(TYPE_DEV_STRING)); }
-        }
-    }
-}
-
-SCENARIO("Creating valid database table names for DEV_LONG", "[query-string]")
-{
-    QueryBuilder query_builder;
-
-    GIVEN("An Attribute traits configured for unsigned char")
-    {
-        AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_LONG};
-
-        WHEN("Requesting a table name for the traits")
-        {
-            auto result = query_builder.tableName(traits);
-
-            THEN("The result must include the TYPE_DEV_LONG from the schema") { REQUIRE_THAT(result, Contains(TYPE_DEV_LONG)); }
-        }
-    }
-}
-
-SCENARIO("Creating valid database table names for DEV_ULONG", "[query-string]")
-{
-    QueryBuilder query_builder;
-
-    GIVEN("An Attribute traits configured for unsigned char")
-    {
-        AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_ULONG};
-
-        WHEN("Requesting a table name for the traits")
-        {
-            auto result = query_builder.tableName(traits);
-
-            THEN("The result must include the TYPE_DEV_ULONG from the schema") { REQUIRE_THAT(result, Contains(TYPE_DEV_ULONG)); }
+                DYNAMIC_SECTION("Testing table name for traits: " << traits)
+                {
+                    auto result = query_builder.tableName(traits);
+                    REQUIRE_THAT(result, Contains(types_str[t]));
+                    REQUIRE_THAT(result, Contains(format_types_str[f]));
+                }
+            }
         }
     }
 }
