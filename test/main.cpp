@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
 {
     // console only warning level logging
     hdbpp::LogConfigurator::initLogging(false, true);
-    hdbpp::LogConfigurator::setLoggingLevel(spdlog::level::trace);
+    hdbpp::LogConfigurator::setLoggingLevel(spdlog::level::err);
 
     int result = Catch::Session().run(argc, argv);
 

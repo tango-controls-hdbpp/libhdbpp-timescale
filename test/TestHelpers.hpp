@@ -66,11 +66,11 @@ namespace attr_name
 
 namespace attr_info
 {
-    const std::string AttrInfoDescription = "Description";
+    const std::string AttrInfoDescription = "Description about attribute, its \"quoted\",  and 'quoted', yet does it work?";
     const std::string AttrInfoLabel = "Label";
-    const std::string AttrInfoUnit = "Unit";
+    const std::string AttrInfoUnit = "Unit %";
     const std::string AttrInfoStandardUnit = "Standard Unit";
-    const std::string AttrInfoDisplayUnit = "Display Unit";
+    const std::string AttrInfoDisplayUnit = "Display Unit $";
     const std::string AttrInfoFormat = "Format";
     const std::string AttrInfoRel = "Rel";
     const std::string AttrInfoAbs = "Abs";

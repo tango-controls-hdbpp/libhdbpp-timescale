@@ -97,8 +97,7 @@ HdbppTxDataEvent<Conn> &HdbppTxDataEvent<Conn>::store()
     // doStore the data is extracted and then stored
     switch (Base::attributeTraits().type())
     {
-        // TODO enable commented out calls.
-        //case Tango::DEV_BOOLEAN: this->template doStore<bool>(); break;
+        case Tango::DEV_BOOLEAN: this->template doStore<bool>(); break;
         case Tango::DEV_SHORT: this->template doStore<int16_t>(); break;
         case Tango::DEV_LONG: this->template doStore<int32_t>(); break;
         case Tango::DEV_LONG64: this->template doStore<int64_t>(); break;

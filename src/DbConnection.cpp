@@ -347,7 +347,7 @@ namespace pqxx_conn
             _logger->error("Error message found missing, this occurred when storing msg: \"{}\" for attribute: {}",
                 error_msg,
                 full_attr_name);
-                
+
             _logger->error("Throwing consistency error with message: \"{}\"", msg);
             Tango::Except::throw_exception("Consistency Error", msg, LOCATION_INFO);
         }
@@ -496,7 +496,7 @@ namespace pqxx_conn
                     _logger->trace("Created prepared statement for: {}", StoreErrorString);
                 }
 
-                auto row = tx.exec_prepared1(StoreErrorString, tx.quote(error_msg));
+                auto row = tx.exec_prepared1(StoreErrorString, error_msg);
                 tx.commit();
 
                 // we should have a single row with a single result, so attempt to return it

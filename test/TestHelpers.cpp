@@ -206,7 +206,10 @@ namespace data_gen
             "it's",
             "going",
             "to",
-            "taste"};
+            "taste",
+            "more test's",
+            "test '' quotes",
+            "test \a escape"};
 
         auto value = make_unique<vector<typename TangoTypeTraits<Tango::DEV_STRING>::type>>();
 

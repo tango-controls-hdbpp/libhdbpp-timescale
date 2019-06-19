@@ -37,7 +37,6 @@ Tango::DeviceAttribute createDeviceAttribute(const AttributeTraits &traits)
     auto attr_gen = [&traits](int size_x, int size_y) {
         switch (traits.type())
         {
-            // TODO enable commented out calls.
             case Tango::DEV_BOOLEAN:
                 return Tango::DeviceAttribute(
                     TestAttrFQDName.c_str(), *generateSpectrumData<Tango::DEV_BOOLEAN>(false, size_x + size_y));

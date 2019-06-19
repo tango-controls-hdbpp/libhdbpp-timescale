@@ -26,8 +26,12 @@ namespace hdbpp
 {
 namespace pqxx_conn
 {
+    // This namespace containers a collection of specialisations for the storeDataEvent() function. These
+    // specialisations can not be handled by the main function, so we break them out here.
     namespace store_data_utils
     {
+        //=============================================================================
+        //=============================================================================
         template<typename T>
         struct Preprocess
         {
@@ -41,8 +45,57 @@ namespace pqxx_conn
         {
             static void run(std::unique_ptr<std::vector<std::string>> &value, pqxx::work &tx)
             {
-                for (auto &str : *value)
+                cout << "dump " << endl;
+                
+                for (auto &str : *value) 
+                    cout << str << " ";
+
+                for (auto &str : *value) 
                     str = tx.quote(str);
+
+                for (auto &str : *value) 
+                    cout << str << " ";
+            }
+        };
+
+        //=============================================================================
+        //=============================================================================
+        template<typename T>
+        struct Store
+        {
+            static void run(
+                std::unique_ptr<std::vector<T>> &value, pqxx::prepare::invocation &inv, const AttributeTraits &traits)
+            {
+                // for a scalar, store the first element of the vector,
+                // we do not expect more than 1 element, for an array, store
+                // the entire vector
+                if (traits.isScalar())
+                    inv((*value)[0]);
+                else
+                    inv(*value);
+            }
+        };
+
+        //=============================================================================
+        //=============================================================================
+        template<>
+        struct Store<bool>
+        {
+            static void run(std::unique_ptr<std::vector<bool>> &value,
+                pqxx::prepare::invocation &inv,
+                const AttributeTraits &traits)
+            {
+                // a vector<bool> is not actually a vector<bool>, rather its some kind of bitfield. When
+                // trying to return an element, we appear to get some kind of bitfield reference (?),
+                // and since we have no way to handle this in the string_traits templates, it causes
+                // errors. Here we work around it, by creating a local variable and passing that instead
+                if (traits.isScalar())
+                {
+                    bool v = (*value)[0];
+                    inv(v);
+                }
+                else
+                    inv(*value);
             }
         };
     } // namespace store_data_utils
@@ -95,14 +148,7 @@ namespace pqxx_conn
                     {
                         // this ensures strings are quoted and escaped, other types are ignored
                         store_data_utils::Preprocess<T>::run(value, tx);
-
-                        // for a scalar, store the first element of the vector,
-                        // we do not expect more than 1 element, for an array, store
-                        // the entire vector
-                        if (traits.isScalar())
-                            inv((*value)[0]);
-                        else
-                            inv(*value);
+                        store_data_utils::Store<T>::run(value, inv, traits);
                     }
                     else
                     {

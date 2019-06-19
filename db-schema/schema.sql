@@ -21,56 +21,85 @@ CREATE DOMAIN ulong64 AS numeric(20)
     CHECK(VALUE >= 0 AND VALUE <= 18446744073709551615);
 
 -------------------------------------------------------------------------------
-DROP TABLE IF EXISTS att_conf_data_type;
+DROP TABLE IF EXISTS att_conf_type;
 
-CREATE TABLE IF NOT EXISTS att_conf_data_type (
-    att_conf_data_type_id serial NOT NULL,
-    data_type text NOT NULL,
-    tango_data_type smallint NOT NULL,
-    PRIMARY KEY (att_conf_data_type_id)
+-- Mappings for ths Tango Data Type (used in att_conf)
+CREATE TABLE att_conf_type (
+    att_conf_type_id serial NOT NULL,
+    type text NOT NULL,
+    type_num smallint NOT NULL,
+    PRIMARY KEY (att_conf_type_id)
 );
 
-COMMENT ON TABLE att_conf_data_type is 'Attribute types description';
+COMMENT ON TABLE att_conf_type is 'Attribute data type';
 
-INSERT INTO att_conf_data_type (data_type, tango_data_type) VALUES
-('att_scalar_devboolean_ro', 1),('att_scalar_devboolean_rw', 1),('att_att_array_devboolean_ro', 1),('att_array_devboolean_rw', 1),
-('att_scalar_devuchar_ro', 22),('att_scalar_devuchar_rw', 22),('att_array_devuchar_ro', 22),('att_array_devuchar_rw', 22),
-('att_scalar_devshort_ro', 2),('att_scalar_devshort_rw', 2),('att_array_devshort_ro', 2),('att_array_devshort_rw', 2),
-('att_scalar_devushort_ro', 6),('att_scalar_devushort_rw', 6),('att_array_devushort_ro', 6),('att_array_devushort_rw', 6),
-('att_scalar_devlong_ro', 3),('att_scalar_devlong_rw', 3),('att_array_devlong_ro', 3),('att_array_devlong_rw', 3),
-('att_scalar_devulong_ro', 7),('att_scalar_devulong_rw', 7),('att_array_devulong_ro', 7),('att_array_devulong_rw', 7),
-('att_scalar_devlong64_ro', 23),('att_scalar_devlong64_rw', 23),('att_array_devlong64_ro', 23),('att_array_devlong64_rw', 23),
-('att_scalar_devulong64_ro', 24),('att_scalar_devulong64_rw', 24),('att_array_devulong64_ro', 24),('att_array_devulong64_rw', 24),
-('att_scalar_devfloat_ro', 4),('att_scalar_devfloat_rw', 4),('att_array_devfloat_ro', 4),('att_array_devfloat_rw', 4),
-('att_scalar_devdouble_ro', 5),('att_scalar_devdouble_rw', 5),('att_array_devdouble_ro', 5),('att_array_devdouble_rw', 5),
-('att_scalar_devstring_ro', 8),('att_scalar_devstring_rw', 8),('att_array_devstring_ro', 8),('att_array_devstring_rw', 8),
-('att_scalar_devstate_ro', 19),('att_scalar_devstate_rw', 19),('att_array_devstate_ro', 19),('att_array_devstate_rw', 19),
-('att_scalar_devencoded_ro', 28),('att_scalar_devencoded_rw', 28),('att_array_devencoded_ro', 28),('att_array_devencoded_rw', 28),
-('att_scalar_devenum_ro', 29),('att_scalar_devenum_rw', 29),('att_array_devenum_ro', 29),('att_array_devenum_rw', 29);
+INSERT INTO att_conf_type (type, type_num) VALUES
+('DEV_BOOLEAN', 1),('DEV_SHORT', 2),('DEV_LONG', 3),('DEV_FLOAT', 4),
+('DEV_DOUBLE', 5),('DEV_USHORT', 6),('DEV_ULONG', 7),('DEV_STRING', 8),
+('DEV_STATE', 19),('DEV_UCHAR',22),('DEV_LONG64', 23),('DEV_ULONG64', 24),
+('DEV_ENCODED', 28),('DEV_ENUM', 29);
 
+DROP TABLE IF EXISTS att_conf_format;
+
+-- Mappings for ths Tango Data Format Type (used in att_conf)
+CREATE TABLE att_conf_format (
+    att_conf_format_id serial NOT NULL,
+    format text NOT NULL,
+    format_num smallint NOT NULL,
+    PRIMARY KEY (att_conf_format_id)
+);
+
+COMMENT ON TABLE att_conf_format is 'Attribute format type';
+
+INSERT INTO att_conf_format (format, format_num) VALUES
+('SCALAR', 0),('SPECTRUM', 1),('IMAGE', 2);
+
+DROP TABLE IF EXISTS att_conf_write;
+
+-- Mappings for the Tango Data Write Type (used in att_conf)
+CREATE TABLE att_conf_write (
+    att_conf_write_id serial NOT NULL,
+    write text NOT NULL,
+    write_num smallint NOT NULL,
+    PRIMARY KEY (att_conf_write_id)
+);
+
+COMMENT ON TABLE att_conf_write is 'Attribute write type';
+
+INSERT INTO att_conf_write (write, write_num) VALUES
+('READ', 0),('READ_WITH_WRITE', 1),('WRITE', 2),('READ_WRITE', 3);
+
+-- The att_conf table contains the primary key for all data tables, the
+-- att_conf_id. Expanded on the normal hdb++ tables since we add information
+-- about the type.
 CREATE TABLE IF NOT EXISTS att_conf (
     att_conf_id serial NOT NULL,
     att_name text NOT NULL,
-    att_conf_data_type_id integer NOT NULL,
+    att_conf_type_id smallint NOT NULL,
+    att_conf_format_id smallint NOT NULL,
+    att_conf_write_id smallint NOT NULL,
+    table_name text NOT NULL,
     cs_name text NOT NULL DEFAULT '',
     domain text NOT NULL DEFAULT '',
     family text NOT NULL DEFAULT '',
     member text NOT NULL DEFAULT '',
     name text NOT NULL DEFAULT '',
-    ttl int, -- TODO
+    ttl int,
     PRIMARY KEY (att_conf_id),
-    FOREIGN KEY (att_conf_data_type_id) REFERENCES att_conf_data_type (att_conf_data_type_id),
+    FOREIGN KEY (att_conf_type_id) REFERENCES att_conf_type (att_conf_type_id),
+    FOREIGN KEY (att_conf_format_id) REFERENCES att_conf_format (att_conf_format_id),
+    FOREIGN KEY (att_conf_write_id) REFERENCES att_conf_write (att_conf_write_id),
     UNIQUE (att_name)
 );
 
 COMMENT ON TABLE att_conf is 'Attribute Configuration Table';
 CREATE INDEX IF NOT EXISTS att_conf_att_conf_id_idx ON att_conf (att_conf_id);
-CREATE INDEX IF NOT EXISTS att_conf_att_conf_data_type_id_idx ON att_conf (att_conf_data_type_id);
+CREATE INDEX IF NOT EXISTS att_conf_att_conf_type_id_idx ON att_conf (att_conf_type_id);
 
 -------------------------------------------------------------------------------
 DROP TABLE IF EXISTS att_history_event;
 
-CREATE TABLE IF NOT EXISTS att_history_event (
+CREATE TABLE att_history_event (
     att_history_event_id serial NOT NULL,
     event text NOT NULL,
     PRIMARY KEY (att_history_event_id)
@@ -83,6 +112,7 @@ CREATE TABLE IF NOT EXISTS att_history (
     att_conf_id integer NOT NULL,
     att_history_event_id integer NOT NULL,
     event_time timestamp(6) with time zone,
+    details json,
     PRIMARY KEY (att_conf_id, event_time),
     FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id),
     FOREIGN KEY (att_history_event_id) REFERENCES att_history_event (att_history_event_id)
@@ -95,7 +125,6 @@ CREATE INDEX IF NOT EXISTS att_history_att_conf_id_inx ON att_history (att_conf_
 CREATE TABLE IF NOT EXISTS att_parameter (
     att_conf_id integer NOT NULL,
     recv_time timestamp with time zone NOT NULL,
-    insert_time timestamp with time zone,
     label text NOT NULL DEFAULT '',
     unit text NOT NULL DEFAULT '',
     standard_unit text NOT NULL DEFAULT '',
@@ -105,6 +134,7 @@ CREATE TABLE IF NOT EXISTS att_parameter (
     archive_abs_change text NOT NULL DEFAULT '',
     archive_period text NOT NULL DEFAULT '',
     description text NOT NULL DEFAULT '',
+    details json,
     FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id)
 );
 
@@ -125,1034 +155,510 @@ COMMENT ON TABLE att_error_desc IS 'Error Description Table';
 CREATE INDEX IF NOT EXISTS att_error_desc_att_error_desc_id_idx ON att_error_desc (att_error_desc_id);
 
 -------------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS att_scalar_devboolean_ro (
+CREATE TABLE IF NOT EXISTS att_scalar_devboolean (
     att_conf_id integer NOT NULL,
     data_time timestamp with time zone NOT NULL,
-    recv_time timestamp with time zone,
-    insert_time timestamp with time zone,
-    value_r boolean,
-    quality smallint,
-    att_error_desc_id integer,
-    PRIMARY KEY (att_conf_id, data_time),
-    FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id),
-    FOREIGN KEY (att_error_desc_id) REFERENCES att_error_desc (att_error_desc_id)
-);
-
-COMMENT ON TABLE att_scalar_devboolean_ro IS 'Scalar Boolean ReadOnly Values Table';
-CREATE INDEX IF NOT EXISTS att_scalar_devboolean_ro_att_conf_id_idx ON att_scalar_devboolean_ro (att_conf_id);
-CREATE INDEX IF NOT EXISTS att_scalar_devboolean_ro_att_conf_id_data_time_idx ON att_scalar_devboolean_ro (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_scalar_devboolean_ro', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
-
-CREATE TABLE IF NOT EXISTS att_scalar_devboolean_rw (
-    att_conf_id integer NOT NULL,
-    data_time timestamp with time zone NOT NULL,
-    recv_time timestamp with time zone,
-    insert_time timestamp with time zone,
     value_r boolean,
     value_w boolean,
     quality smallint,
     att_error_desc_id integer,
+    details json,
     PRIMARY KEY (att_conf_id, data_time),
     FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id),
     FOREIGN KEY (att_error_desc_id) REFERENCES att_error_desc (att_error_desc_id)
 );
 
-COMMENT ON TABLE att_scalar_devboolean_rw IS 'Scalar Boolean ReadWrite Values Table';
-CREATE INDEX IF NOT EXISTS att_scalar_devboolean_rw_att_conf_id_idx ON att_scalar_devboolean_rw (att_conf_id);
-CREATE INDEX IF NOT EXISTS att_scalar_devboolean_rw_att_conf_id_data_time_idx ON att_scalar_devboolean_rw (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_scalar_devboolean_rw', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
+COMMENT ON TABLE att_scalar_devboolean IS 'Scalar Boolean Values Table';
+CREATE INDEX IF NOT EXISTS att_scalar_devboolean_att_conf_id_idx ON att_scalar_devboolean (att_conf_id);
+CREATE INDEX IF NOT EXISTS att_scalar_devboolean_att_conf_id_data_time_idx ON att_scalar_devboolean (att_conf_id,data_time DESC);
+SELECT create_hypertable('att_scalar_devboolean', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
 
-CREATE TABLE IF NOT EXISTS att_array_devboolean_ro (
+CREATE TABLE IF NOT EXISTS att_array_devboolean (
     att_conf_id integer NOT NULL,
     data_time timestamp with time zone NOT NULL,
-    recv_time timestamp with time zone,
-    insert_time timestamp with time zone,
-    value_r boolean[],
-    quality smallint,
-    att_error_desc_id integer,
-    PRIMARY KEY (att_conf_id, data_time),
-    FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id),
-    FOREIGN KEY (att_error_desc_id) REFERENCES att_error_desc (att_error_desc_id)
-);
-
-COMMENT ON TABLE att_array_devboolean_ro IS 'Array Boolean ReadOnly Values Table';
-CREATE INDEX IF NOT EXISTS att_array_devboolean_ro_att_conf_id_idx ON att_array_devboolean_ro (att_conf_id);
-CREATE INDEX IF NOT EXISTS att_array_devboolean_ro_att_conf_id_data_time_idx ON att_array_devboolean_ro (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_array_devboolean_ro', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
-
-CREATE TABLE IF NOT EXISTS att_array_devboolean_rw (
-    att_conf_id integer NOT NULL,
-    data_time timestamp with time zone NOT NULL,
-    recv_time timestamp with time zone,
-    insert_time timestamp with time zone,
     value_r boolean[],
     value_w boolean[],
     quality smallint,
     att_error_desc_id integer,
+    details json,
     PRIMARY KEY (att_conf_id, data_time),
     FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id),
     FOREIGN KEY (att_error_desc_id) REFERENCES att_error_desc (att_error_desc_id)
 );
 
-COMMENT ON TABLE att_array_devboolean_rw IS 'Array Boolean ReadWrite Values Table';
-CREATE INDEX IF NOT EXISTS att_array_devboolean_rw_att_conf_id_idx ON att_array_devboolean_rw (att_conf_id);
-CREATE INDEX IF NOT EXISTS att_array_devboolean_rw_att_conf_id_data_time_idx ON att_array_devboolean_rw (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_array_devboolean_rw', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
+COMMENT ON TABLE att_array_devboolean IS 'Array Boolean Values Table';
+CREATE INDEX IF NOT EXISTS att_array_devboolean_att_conf_id_idx ON att_array_devboolean (att_conf_id);
+CREATE INDEX IF NOT EXISTS att_array_devboolean_att_conf_id_data_time_idx ON att_array_devboolean (att_conf_id,data_time DESC);
+SELECT create_hypertable('att_array_devboolean', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
 
-CREATE TABLE IF NOT EXISTS att_scalar_devuchar_ro (
+CREATE TABLE IF NOT EXISTS att_scalar_devuchar (
     att_conf_id integer NOT NULL,
     data_time timestamp with time zone NOT NULL,
-    recv_time timestamp with time zone,
-    insert_time timestamp with time zone,
-    value_r uchar,
-    quality smallint,
-    att_error_desc_id integer,
-    PRIMARY KEY (att_conf_id, data_time),
-    FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id),
-    FOREIGN KEY (att_error_desc_id) REFERENCES att_error_desc (att_error_desc_id)
-);
-
-COMMENT ON TABLE att_scalar_devuchar_ro IS 'Scalar UChar ReadOnly Values Table';
-CREATE INDEX IF NOT EXISTS att_scalar_devuchar_ro_att_conf_id_idx ON att_scalar_devuchar_ro (att_conf_id);
-CREATE INDEX IF NOT EXISTS att_scalar_devuchar_ro_att_conf_id_data_time_idx ON att_scalar_devuchar_ro (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_scalar_devuchar_ro', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
-
-CREATE TABLE IF NOT EXISTS att_scalar_devuchar_rw (
-    att_conf_id integer NOT NULL,
-    data_time timestamp with time zone NOT NULL,
-    recv_time timestamp with time zone,
-    insert_time timestamp with time zone,
     value_r uchar,
     value_w uchar,
     quality smallint,
     att_error_desc_id integer,
+    details json,
     PRIMARY KEY (att_conf_id, data_time),
     FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id),
     FOREIGN KEY (att_error_desc_id) REFERENCES att_error_desc (att_error_desc_id)
 );
 
-COMMENT ON TABLE att_scalar_devuchar_rw IS 'Scalar UChar ReadWrite Values Table';
-CREATE INDEX IF NOT EXISTS att_scalar_devuchar_rw_att_conf_id_idx ON att_scalar_devuchar_rw (att_conf_id);
-CREATE INDEX IF NOT EXISTS att_scalar_devuchar_rw_att_conf_id_data_time_idx ON att_scalar_devuchar_rw (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_scalar_devuchar_rw', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
+COMMENT ON TABLE att_scalar_devuchar IS 'Scalar UChar Values Table';
+CREATE INDEX IF NOT EXISTS att_scalar_devuchar_att_conf_id_idx ON att_scalar_devuchar (att_conf_id);
+CREATE INDEX IF NOT EXISTS att_scalar_devuchar_att_conf_id_data_time_idx ON att_scalar_devuchar (att_conf_id,data_time DESC);
+SELECT create_hypertable('att_scalar_devuchar', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
 
-CREATE TABLE IF NOT EXISTS att_array_devuchar_ro (
+CREATE TABLE IF NOT EXISTS att_array_devuchar (
     att_conf_id integer NOT NULL,
     data_time timestamp with time zone NOT NULL,
-    recv_time timestamp with time zone,
-    insert_time timestamp with time zone,
-    value_r uchar[],
-    quality smallint,
-    att_error_desc_id integer,
-    PRIMARY KEY (att_conf_id, data_time),
-    FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id),
-    FOREIGN KEY (att_error_desc_id) REFERENCES att_error_desc (att_error_desc_id)
-);
-
-COMMENT ON TABLE att_array_devuchar_ro IS 'Array UChar ReadOnly Values Table';
-CREATE INDEX IF NOT EXISTS att_array_devuchar_ro_att_conf_id_idx ON att_array_devuchar_ro (att_conf_id);
-CREATE INDEX IF NOT EXISTS att_array_devuchar_ro_att_conf_id_data_time_idx ON att_array_devuchar_ro (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_array_devuchar_ro', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
-
-CREATE TABLE IF NOT EXISTS att_array_devuchar_rw (
-    att_conf_id integer NOT NULL,
-    data_time timestamp with time zone NOT NULL,
-    recv_time timestamp with time zone,
-    insert_time timestamp with time zone,
     value_r uchar[],
     value_w uchar[],
     quality smallint,
+    details json,
     att_error_desc_id integer,
     PRIMARY KEY (att_conf_id, data_time),
     FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id),
     FOREIGN KEY (att_error_desc_id) REFERENCES att_error_desc (att_error_desc_id)
 );
 
-COMMENT ON TABLE att_array_devuchar_rw IS 'Array UChar ReadWrite Values Table';
-CREATE INDEX IF NOT EXISTS att_array_devuchar_rw_att_conf_id_idx ON att_array_devuchar_rw (att_conf_id);
-CREATE INDEX IF NOT EXISTS att_array_devuchar_rw_att_conf_id_data_time_idx ON att_array_devuchar_rw (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_array_devuchar_rw', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
+COMMENT ON TABLE att_array_devuchar IS 'Array UChar Values Table';
+CREATE INDEX IF NOT EXISTS att_array_devuchar_att_conf_id_idx ON att_array_devuchar (att_conf_id);
+CREATE INDEX IF NOT EXISTS att_array_devuchar_att_conf_id_data_time_idx ON att_array_devuchar (att_conf_id,data_time DESC);
+SELECT create_hypertable('att_array_devuchar', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
 
-CREATE TABLE IF NOT EXISTS att_scalar_devshort_ro (
+CREATE TABLE IF NOT EXISTS att_scalar_devshort (
     att_conf_id integer NOT NULL,
     data_time timestamp with time zone NOT NULL,
-    recv_time timestamp with time zone,
-    insert_time timestamp with time zone,
-    value_r smallint,
-    quality smallint,
-    att_error_desc_id integer,
-    PRIMARY KEY (att_conf_id, data_time),
-    FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id),
-    FOREIGN KEY (att_error_desc_id) REFERENCES att_error_desc (att_error_desc_id)
-);
-
-COMMENT ON TABLE att_scalar_devshort_ro IS 'Scalar Short ReadOnly Values Table';
-CREATE INDEX IF NOT EXISTS att_scalar_devshort_ro_att_conf_id_idx ON att_scalar_devshort_ro (att_conf_id);
-CREATE INDEX IF NOT EXISTS att_scalar_devshort_ro_att_conf_id_data_time_idx ON att_scalar_devshort_ro (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_scalar_devshort_ro', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
-
-CREATE TABLE IF NOT EXISTS att_scalar_devshort_rw (
-    att_conf_id integer NOT NULL,
-    data_time timestamp with time zone NOT NULL,
-    recv_time timestamp with time zone,
-    insert_time timestamp with time zone,
     value_r smallint,
     value_w smallint,
     quality smallint,
+    details json,
     att_error_desc_id integer,
     PRIMARY KEY (att_conf_id, data_time),
     FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id),
     FOREIGN KEY (att_error_desc_id) REFERENCES att_error_desc (att_error_desc_id)
 );
 
-COMMENT ON TABLE att_scalar_devshort_rw IS 'Scalar Short ReadWrite Values Table';
-CREATE INDEX IF NOT EXISTS att_scalar_devshort_rw_att_conf_id_idx ON att_scalar_devshort_rw (att_conf_id);
-CREATE INDEX IF NOT EXISTS att_scalar_devshort_rw_att_conf_id_data_time_idx ON att_scalar_devshort_rw (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_scalar_devshort_rw', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
+COMMENT ON TABLE att_scalar_devshort IS 'Scalar Short Values Table';
+CREATE INDEX IF NOT EXISTS att_scalar_devshort_att_conf_id_idx ON att_scalar_devshort (att_conf_id);
+CREATE INDEX IF NOT EXISTS att_scalar_devshort_att_conf_id_data_time_idx ON att_scalar_devshort (att_conf_id,data_time DESC);
+SELECT create_hypertable('att_scalar_devshort', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
 
-CREATE TABLE IF NOT EXISTS att_array_devshort_ro (
+CREATE TABLE IF NOT EXISTS att_array_devshort (
     att_conf_id integer NOT NULL,
     data_time timestamp with time zone NOT NULL,
-    recv_time timestamp with time zone,
-    insert_time timestamp with time zone,
-    value_r smallint[],
-    quality smallint,
-    att_error_desc_id integer,
-    PRIMARY KEY (att_conf_id, data_time),
-    FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id),
-    FOREIGN KEY (att_error_desc_id) REFERENCES att_error_desc (att_error_desc_id)
-);
-
-COMMENT ON TABLE att_array_devshort_ro IS 'Array Short ReadOnly Values Table';
-CREATE INDEX IF NOT EXISTS att_array_devshort_ro_att_conf_id_idx ON att_array_devshort_ro (att_conf_id);
-CREATE INDEX IF NOT EXISTS att_array_devshort_ro_att_conf_id_data_time_idx ON att_array_devshort_ro (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_array_devshort_ro', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
-
-CREATE TABLE IF NOT EXISTS att_array_devshort_rw (
-    att_conf_id integer NOT NULL,
-    data_time timestamp with time zone NOT NULL,
-    recv_time timestamp with time zone,
-    insert_time timestamp with time zone,
     value_r smallint[],
     value_w smallint[],
     quality smallint,
     att_error_desc_id integer,
+    details json,
     PRIMARY KEY (att_conf_id, data_time),
     FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id),
     FOREIGN KEY (att_error_desc_id) REFERENCES att_error_desc (att_error_desc_id)
 );
 
-COMMENT ON TABLE att_array_devshort_rw IS 'Array Short ReadWrite Values Table';
-CREATE INDEX IF NOT EXISTS att_array_devshort_rw_att_conf_id_idx ON att_array_devshort_rw (att_conf_id);
-CREATE INDEX IF NOT EXISTS att_array_devshort_rw_att_conf_id_data_time_idx ON att_array_devshort_rw (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_array_devshort_rw', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
+COMMENT ON TABLE att_array_devshort IS 'Array Short Values Table';
+CREATE INDEX IF NOT EXISTS att_array_devshort_att_conf_id_idx ON att_array_devshort (att_conf_id);
+CREATE INDEX IF NOT EXISTS att_array_devshort_att_conf_id_data_time_idx ON att_array_devshort (att_conf_id,data_time DESC);
+SELECT create_hypertable('att_array_devshort', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
 
-CREATE TABLE IF NOT EXISTS att_scalar_devushort_ro (
+CREATE TABLE IF NOT EXISTS att_scalar_devushort (
     att_conf_id integer NOT NULL,
     data_time timestamp with time zone NOT NULL,
-    recv_time timestamp with time zone,
-    insert_time timestamp with time zone,
-    value_r ushort,
-    quality smallint,
-    att_error_desc_id integer,
-    PRIMARY KEY (att_conf_id, data_time),
-    FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id),
-    FOREIGN KEY (att_error_desc_id) REFERENCES att_error_desc (att_error_desc_id)
-);
-
-COMMENT ON TABLE att_scalar_devushort_ro IS 'Scalar UShort ReadOnly Values Table';
-CREATE INDEX IF NOT EXISTS att_scalar_devushort_ro_att_conf_id_idx ON att_scalar_devushort_ro (att_conf_id);
-CREATE INDEX IF NOT EXISTS att_scalar_devushort_ro_att_conf_id_data_time_idx ON att_scalar_devushort_ro (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_scalar_devushort_ro', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
-
-CREATE TABLE IF NOT EXISTS att_scalar_devushort_rw (
-    att_conf_id integer NOT NULL,
-    data_time timestamp with time zone NOT NULL,
-    recv_time timestamp with time zone,
-    insert_time timestamp with time zone,
     value_r ushort,
     value_w ushort,
     quality smallint,
     att_error_desc_id integer,
+    details json,
     PRIMARY KEY (att_conf_id, data_time),
     FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id),
     FOREIGN KEY (att_error_desc_id) REFERENCES att_error_desc (att_error_desc_id)
 );
 
-COMMENT ON TABLE att_scalar_devushort_rw IS 'Scalar UShort ReadWrite Values Table';
-CREATE INDEX IF NOT EXISTS att_scalar_devushort_rw_att_conf_id_idx ON att_scalar_devushort_rw (att_conf_id);
-CREATE INDEX IF NOT EXISTS att_scalar_devushort_rw_att_conf_id_data_time_idx ON att_scalar_devushort_rw (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_scalar_devushort_rw', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
+COMMENT ON TABLE att_scalar_devushort IS 'Scalar UShort Values Table';
+CREATE INDEX IF NOT EXISTS att_scalar_devushort_att_conf_id_idx ON att_scalar_devushort (att_conf_id);
+CREATE INDEX IF NOT EXISTS att_scalar_devushort_att_conf_id_data_time_idx ON att_scalar_devushort (att_conf_id,data_time DESC);
+SELECT create_hypertable('att_scalar_devushort', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
 
-CREATE TABLE IF NOT EXISTS att_array_devushort_ro (
+CREATE TABLE IF NOT EXISTS att_array_devushort (
     att_conf_id integer NOT NULL,
     data_time timestamp with time zone NOT NULL,
-    recv_time timestamp with time zone,
-    insert_time timestamp with time zone,
-    value_r ushort[],
-    quality smallint,
-    att_error_desc_id integer,
-    PRIMARY KEY (att_conf_id, data_time),
-    FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id),
-    FOREIGN KEY (att_error_desc_id) REFERENCES att_error_desc (att_error_desc_id)
-);
-
-COMMENT ON TABLE att_array_devushort_ro IS 'Array UShort ReadOnly Values Table';
-CREATE INDEX IF NOT EXISTS att_array_devushort_ro_att_conf_id_idx ON att_array_devushort_ro (att_conf_id);
-CREATE INDEX IF NOT EXISTS att_array_devushort_ro_att_conf_id_data_time_idx ON att_array_devushort_ro (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_array_devushort_ro', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
-
-CREATE TABLE IF NOT EXISTS att_array_devushort_rw (
-    att_conf_id integer NOT NULL,
-    data_time timestamp with time zone NOT NULL,
-    recv_time timestamp with time zone,
-    insert_time timestamp with time zone,
     value_r ushort[],
     value_w ushort[],
     quality smallint,
     att_error_desc_id integer,
+    details json,
     PRIMARY KEY (att_conf_id, data_time),
     FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id),
     FOREIGN KEY (att_error_desc_id) REFERENCES att_error_desc (att_error_desc_id)
 );
 
-COMMENT ON TABLE att_array_devushort_rw IS 'Array UShort ReadWrite Values Table';
-CREATE INDEX IF NOT EXISTS att_array_devushort_rw_att_conf_id_idx ON att_array_devushort_rw (att_conf_id);
-CREATE INDEX IF NOT EXISTS att_array_devushort_rw_att_conf_id_data_time_idx ON att_array_devushort_rw (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_array_devushort_rw', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
+COMMENT ON TABLE att_array_devushort IS 'Array UShort Values Table';
+CREATE INDEX IF NOT EXISTS att_array_devushort_att_conf_id_idx ON att_array_devushort (att_conf_id);
+CREATE INDEX IF NOT EXISTS att_array_devushort_att_conf_id_data_time_idx ON att_array_devushort (att_conf_id,data_time DESC);
+SELECT create_hypertable('att_array_devushort', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
 
-CREATE TABLE IF NOT EXISTS att_scalar_devlong_ro (
+CREATE TABLE IF NOT EXISTS att_scalar_devlong (
     att_conf_id integer NOT NULL,
     data_time timestamp with time zone NOT NULL,
-    recv_time timestamp with time zone,
-    insert_time timestamp with time zone,
-    value_r integer,
-    quality smallint,
-    att_error_desc_id integer,
-    PRIMARY KEY (att_conf_id, data_time),
-    FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id),
-    FOREIGN KEY (att_error_desc_id) REFERENCES att_error_desc (att_error_desc_id)
-);
-
-COMMENT ON TABLE att_scalar_devlong_ro IS 'Scalar Long ReadOnly Values Table';
-CREATE INDEX IF NOT EXISTS att_scalar_devlong_ro_att_conf_id_idx ON att_scalar_devlong_ro (att_conf_id);
-CREATE INDEX IF NOT EXISTS att_scalar_devlong_ro_att_conf_id_data_time_idx ON att_scalar_devlong_ro (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_scalar_devlong_ro', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
-
-CREATE TABLE IF NOT EXISTS att_scalar_devlong_rw (
-    att_conf_id integer NOT NULL,
-    data_time timestamp with time zone NOT NULL,
-    recv_time timestamp with time zone,
-    insert_time timestamp with time zone,
     value_r integer,
     value_w integer,
     quality smallint,
     att_error_desc_id integer,
+    details json,
     PRIMARY KEY (att_conf_id, data_time),
     FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id),
     FOREIGN KEY (att_error_desc_id) REFERENCES att_error_desc (att_error_desc_id)
 );
 
-COMMENT ON TABLE att_scalar_devlong_rw IS 'Scalar Long ReadWrite Values Table';
-CREATE INDEX IF NOT EXISTS att_scalar_devlong_rw_att_conf_id_idx ON att_scalar_devlong_rw (att_conf_id);
-CREATE INDEX IF NOT EXISTS att_scalar_devlong_rw_att_conf_id_data_time_idx ON att_scalar_devlong_rw (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_scalar_devlong_rw', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
+COMMENT ON TABLE att_scalar_devlong IS 'Scalar Long Values Table';
+CREATE INDEX IF NOT EXISTS att_scalar_devlong_att_conf_id_idx ON att_scalar_devlong (att_conf_id);
+CREATE INDEX IF NOT EXISTS att_scalar_devlong_att_conf_id_data_time_idx ON att_scalar_devlong (att_conf_id,data_time DESC);
+SELECT create_hypertable('att_scalar_devlong', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
 
-CREATE TABLE IF NOT EXISTS att_array_devlong_ro (
+CREATE TABLE IF NOT EXISTS att_array_devlong (
     att_conf_id integer NOT NULL,
     data_time timestamp with time zone NOT NULL,
-    recv_time timestamp with time zone,
-    insert_time timestamp with time zone,
-    value_r integer[],
-    quality smallint,
-    att_error_desc_id integer,
-    PRIMARY KEY (att_conf_id, data_time),
-    FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id),
-    FOREIGN KEY (att_error_desc_id) REFERENCES att_error_desc (att_error_desc_id)
-);
-
-COMMENT ON TABLE att_array_devlong_ro IS 'Array Long ReadOnly Values Table';
-CREATE INDEX IF NOT EXISTS att_array_devlong_ro_att_conf_id_idx ON att_array_devlong_ro (att_conf_id);
-CREATE INDEX IF NOT EXISTS att_array_devlong_ro_att_conf_id_data_time_idx ON att_array_devlong_ro (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_array_devlong_ro', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
-
-CREATE TABLE IF NOT EXISTS att_array_devlong_rw (
-    att_conf_id integer NOT NULL,
-    data_time timestamp with time zone NOT NULL,
-    recv_time timestamp with time zone,
-    insert_time timestamp with time zone,
     value_r integer[],
     value_w integer[],
     quality smallint,
     att_error_desc_id integer,
+    details json,
     PRIMARY KEY (att_conf_id, data_time),
     FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id),
     FOREIGN KEY (att_error_desc_id) REFERENCES att_error_desc (att_error_desc_id)
 );
 
-COMMENT ON TABLE att_array_devlong_rw IS 'Array Long ReadWrite Values Table';
-CREATE INDEX IF NOT EXISTS att_array_devlong_rw_att_conf_id_idx ON att_array_devlong_rw (att_conf_id);
-CREATE INDEX IF NOT EXISTS att_array_devlong_rw_att_conf_id_data_time_idx ON att_array_devlong_rw (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_array_devlong_rw', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
+COMMENT ON TABLE att_array_devlong IS 'Array Long Values Table';
+CREATE INDEX IF NOT EXISTS att_array_devlong_att_conf_id_idx ON att_array_devlong (att_conf_id);
+CREATE INDEX IF NOT EXISTS att_array_devlong_att_conf_id_data_time_idx ON att_array_devlong (att_conf_id,data_time DESC);
+SELECT create_hypertable('att_array_devlong', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
 
-CREATE TABLE IF NOT EXISTS att_scalar_devulong_ro (
+CREATE TABLE IF NOT EXISTS att_scalar_devulong (
     att_conf_id integer NOT NULL,
     data_time timestamp with time zone NOT NULL,
-    recv_time timestamp with time zone,
-    insert_time timestamp with time zone,
-    value_r ulong,
-    quality smallint,
-    att_error_desc_id integer,
-    PRIMARY KEY (att_conf_id, data_time),
-    FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id),
-    FOREIGN KEY (att_error_desc_id) REFERENCES att_error_desc (att_error_desc_id)
-);
-
-COMMENT ON TABLE att_scalar_devulong_ro IS 'Scalar ULong ReadOnly Values Table';
-CREATE INDEX IF NOT EXISTS att_scalar_devulong_ro_att_conf_id_idx ON att_scalar_devulong_ro (att_conf_id);
-CREATE INDEX IF NOT EXISTS att_scalar_devulong_ro_att_conf_id_data_time_idx ON att_scalar_devulong_ro (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_scalar_devulong_ro', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
-
-CREATE TABLE IF NOT EXISTS att_scalar_devulong_rw (
-    att_conf_id integer NOT NULL,
-    data_time timestamp with time zone NOT NULL,
-    recv_time timestamp with time zone,
-    insert_time timestamp with time zone,
     value_r ulong,
     value_w ulong,
     quality smallint,
     att_error_desc_id integer,
+    details json,
     PRIMARY KEY (att_conf_id, data_time),
     FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id),
     FOREIGN KEY (att_error_desc_id) REFERENCES att_error_desc (att_error_desc_id)
 );
 
-COMMENT ON TABLE att_scalar_devulong_rw IS 'Scalar ULong ReadWrite Values Table';
-CREATE INDEX IF NOT EXISTS att_scalar_devulong_rw_att_conf_id_idx ON att_scalar_devulong_rw (att_conf_id);
-CREATE INDEX IF NOT EXISTS att_scalar_devulong_rw_att_conf_id_data_time_idx ON att_scalar_devulong_rw (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_scalar_devulong_rw', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
+COMMENT ON TABLE att_scalar_devulong IS 'Scalar ULong Values Table';
+CREATE INDEX IF NOT EXISTS att_scalar_devulong_att_conf_id_idx ON att_scalar_devulong (att_conf_id);
+CREATE INDEX IF NOT EXISTS att_scalar_devulong_att_conf_id_data_time_idx ON att_scalar_devulong (att_conf_id,data_time DESC);
+SELECT create_hypertable('att_scalar_devulong', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
 
-CREATE TABLE IF NOT EXISTS att_array_devulong_ro (
+CREATE TABLE IF NOT EXISTS att_array_devulong (
     att_conf_id integer NOT NULL,
     data_time timestamp with time zone NOT NULL,
-    recv_time timestamp with time zone,
-    insert_time timestamp with time zone,
-    value_r ulong[],
-    quality smallint,
-    att_error_desc_id integer,
-    PRIMARY KEY (att_conf_id, data_time),
-    FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id),
-    FOREIGN KEY (att_error_desc_id) REFERENCES att_error_desc (att_error_desc_id)
-);
-
-COMMENT ON TABLE att_array_devulong_ro IS 'Array ULong ReadOnly Values Table';
-CREATE INDEX IF NOT EXISTS att_array_devulong_ro_att_conf_id_idx ON att_array_devulong_ro (att_conf_id);
-CREATE INDEX IF NOT EXISTS att_array_devulong_ro_att_conf_id_data_time_idx ON att_array_devulong_ro (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_array_devulong_ro', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
-
-CREATE TABLE IF NOT EXISTS att_array_devulong_rw (
-    att_conf_id integer NOT NULL,
-    data_time timestamp with time zone NOT NULL,
-    recv_time timestamp with time zone,
-    insert_time timestamp with time zone,
     value_r ulong[],
     value_w ulong[],
     quality smallint,
     att_error_desc_id integer,
+    details json,
     PRIMARY KEY (att_conf_id, data_time),
     FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id),
     FOREIGN KEY (att_error_desc_id) REFERENCES att_error_desc (att_error_desc_id)
 );
 
-COMMENT ON TABLE att_array_devulong_rw IS 'Array ULong ReadWrite Values Table';
-CREATE INDEX IF NOT EXISTS att_array_devulong_rw_att_conf_id_idx ON att_array_devulong_rw (att_conf_id);
-CREATE INDEX IF NOT EXISTS att_array_devulong_rw_att_conf_id_data_time_idx ON att_array_devulong_rw (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_array_devulong_rw', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
+COMMENT ON TABLE att_array_devulong IS 'Array ULong Values Table';
+CREATE INDEX IF NOT EXISTS att_array_devulong_att_conf_id_idx ON att_array_devulong (att_conf_id);
+CREATE INDEX IF NOT EXISTS att_array_devulong_att_conf_id_data_time_idx ON att_array_devulong (att_conf_id,data_time DESC);
+SELECT create_hypertable('att_array_devulong', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
 
-CREATE TABLE IF NOT EXISTS att_scalar_devlong64_ro (
+CREATE TABLE IF NOT EXISTS att_scalar_devlong64 (
     att_conf_id integer NOT NULL,
     data_time timestamp with time zone NOT NULL,
-    recv_time timestamp with time zone,
-    insert_time timestamp with time zone,
-    value_r bigint,
-    quality smallint,
-    att_error_desc_id integer,
-    PRIMARY KEY (att_conf_id, data_time),
-    FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id),
-    FOREIGN KEY (att_error_desc_id) REFERENCES att_error_desc (att_error_desc_id)
-);
-
-COMMENT ON TABLE att_scalar_devlong64_ro IS 'Scalar Long64 ReadOnly Values Table';
-CREATE INDEX IF NOT EXISTS att_scalar_devlong64_ro_att_conf_id_idx ON att_scalar_devlong64_ro (att_conf_id);
-CREATE INDEX IF NOT EXISTS att_scalar_devlong64_ro_att_conf_id_data_time_idx ON att_scalar_devlong64_ro (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_scalar_devlong64_ro', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
-
-CREATE TABLE IF NOT EXISTS att_scalar_devlong64_rw (
-    att_conf_id integer NOT NULL,
-    data_time timestamp with time zone NOT NULL,
-    recv_time timestamp with time zone,
-    insert_time timestamp with time zone,
     value_r bigint,
     value_w bigint,
     quality smallint,
     att_error_desc_id integer,
+    details json,
     PRIMARY KEY (att_conf_id, data_time),
     FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id),
     FOREIGN KEY (att_error_desc_id) REFERENCES att_error_desc (att_error_desc_id)
 );
 
-COMMENT ON TABLE att_scalar_devlong64_rw IS 'Scalar Long64 ReadWrite Values Table';
-CREATE INDEX IF NOT EXISTS att_scalar_devlong64_rw_att_conf_id_idx ON att_scalar_devlong64_rw (att_conf_id);
-CREATE INDEX IF NOT EXISTS att_scalar_devlong64_rw_att_conf_id_data_time_idx ON att_scalar_devlong64_rw (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_scalar_devlong64_rw', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
+COMMENT ON TABLE att_scalar_devlong64 IS 'Scalar Long64 Values Table';
+CREATE INDEX IF NOT EXISTS att_scalar_devlong64_att_conf_id_idx ON att_scalar_devlong64 (att_conf_id);
+CREATE INDEX IF NOT EXISTS att_scalar_devlong64_att_conf_id_data_time_idx ON att_scalar_devlong64 (att_conf_id,data_time DESC);
+SELECT create_hypertable('att_scalar_devlong64', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
 
-CREATE TABLE IF NOT EXISTS att_array_devlong64_ro (
+CREATE TABLE IF NOT EXISTS att_array_devlong64 (
     att_conf_id integer NOT NULL,
     data_time timestamp with time zone NOT NULL,
-    recv_time timestamp with time zone,
-    insert_time timestamp with time zone,
-    value_r bigint[],
-    quality smallint,
-    att_error_desc_id integer,
-    PRIMARY KEY (att_conf_id, data_time),
-    FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id),
-    FOREIGN KEY (att_error_desc_id) REFERENCES att_error_desc (att_error_desc_id)
-);
-
-COMMENT ON TABLE att_array_devlong64_ro IS 'Array Long64 ReadOnly Values Table';
-CREATE INDEX IF NOT EXISTS att_array_devlong64_ro_att_conf_id_idx ON att_array_devlong64_ro (att_conf_id);
-CREATE INDEX IF NOT EXISTS att_array_devlong64_ro_att_conf_id_data_time_idx ON att_array_devlong64_ro (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_array_devlong64_ro', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
-
-CREATE TABLE IF NOT EXISTS att_array_devlong64_rw (
-    att_conf_id integer NOT NULL,
-    data_time timestamp with time zone NOT NULL,
-    recv_time timestamp with time zone,
-    insert_time timestamp with time zone,
     value_r bigint[],
     value_w bigint[],
     quality smallint,
     att_error_desc_id integer,
+    details json,
     PRIMARY KEY (att_conf_id, data_time),
     FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id),
     FOREIGN KEY (att_error_desc_id) REFERENCES att_error_desc (att_error_desc_id)
 );
 
-COMMENT ON TABLE att_array_devlong64_rw IS 'Array Long64 ReadWrite Values Table';
-CREATE INDEX IF NOT EXISTS att_array_devlong64_rw_att_conf_id_idx ON att_array_devlong64_rw (att_conf_id);
-CREATE INDEX IF NOT EXISTS att_array_devlong64_rw_att_conf_id_data_time_idx ON att_array_devlong64_rw (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_array_devlong64_rw', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
+COMMENT ON TABLE att_array_devlong64 IS 'Array Long64 Values Table';
+CREATE INDEX IF NOT EXISTS att_array_devlong64_att_conf_id_idx ON att_array_devlong64 (att_conf_id);
+CREATE INDEX IF NOT EXISTS att_array_devlong64_att_conf_id_data_time_idx ON att_array_devlong64 (att_conf_id,data_time DESC);
+SELECT create_hypertable('att_array_devlong64', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
 
-CREATE TABLE IF NOT EXISTS att_scalar_devulong64_ro (
+CREATE TABLE IF NOT EXISTS att_scalar_devulong64 (
     att_conf_id integer NOT NULL,
     data_time timestamp with time zone NOT NULL,
-    recv_time timestamp with time zone,
-    insert_time timestamp with time zone,
-    value_r ulong64,
-    quality smallint,
-    att_error_desc_id integer,
-    PRIMARY KEY (att_conf_id, data_time),
-    FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id),
-    FOREIGN KEY (att_error_desc_id) REFERENCES att_error_desc (att_error_desc_id)
-);
-
-COMMENT ON TABLE att_scalar_devulong64_ro IS 'Scalar ULong64 ReadOnly Values Table';
-CREATE INDEX IF NOT EXISTS att_scalar_devulong64_ro_att_conf_id_idx ON att_scalar_devulong64_ro (att_conf_id);
-CREATE INDEX IF NOT EXISTS att_scalar_devulong64_ro_att_conf_id_data_time_idx ON att_scalar_devulong64_ro (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_scalar_devulong64_ro', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
-
-CREATE TABLE IF NOT EXISTS att_scalar_devulong64_rw (
-    att_conf_id integer NOT NULL,
-    data_time timestamp with time zone NOT NULL,
-    recv_time timestamp with time zone,
-    insert_time timestamp with time zone,
     value_r ulong64,
     value_w ulong64,
     quality smallint,
     att_error_desc_id integer,
+    details json,
     PRIMARY KEY (att_conf_id, data_time),
     FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id),
     FOREIGN KEY (att_error_desc_id) REFERENCES att_error_desc (att_error_desc_id)
 );
 
-COMMENT ON TABLE att_scalar_devulong64_rw IS 'Scalar ULong64 ReadWrite Values Table';
-CREATE INDEX IF NOT EXISTS att_scalar_devulong64_rw_att_conf_id_idx ON att_scalar_devulong64_rw (att_conf_id);
-CREATE INDEX IF NOT EXISTS att_scalar_devulong64_rw_att_conf_id_data_time_idx ON att_scalar_devulong64_rw (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_scalar_devulong64_rw', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
+COMMENT ON TABLE att_scalar_devulong64 IS 'Scalar ULong64 Values Table';
+CREATE INDEX IF NOT EXISTS att_scalar_devulong64_att_conf_id_idx ON att_scalar_devulong64 (att_conf_id);
+CREATE INDEX IF NOT EXISTS att_scalar_devulong64_att_conf_id_data_time_idx ON att_scalar_devulong64 (att_conf_id,data_time DESC);
+SELECT create_hypertable('att_scalar_devulong64', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
 
-CREATE TABLE IF NOT EXISTS att_array_devulong64_ro (
+CREATE TABLE IF NOT EXISTS att_array_devulong64 (
     att_conf_id integer NOT NULL,
     data_time timestamp with time zone NOT NULL,
-    recv_time timestamp with time zone,
-    insert_time timestamp with time zone,
-    value_r ulong64[],
-    quality smallint,
-    att_error_desc_id integer,
-    PRIMARY KEY (att_conf_id, data_time),
-    FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id),
-    FOREIGN KEY (att_error_desc_id) REFERENCES att_error_desc (att_error_desc_id)
-);
-
-COMMENT ON TABLE att_array_devulong64_ro IS 'Array ULong64 ReadOnly Values Table';
-CREATE INDEX IF NOT EXISTS att_array_devulong64_ro_att_conf_id_idx ON att_array_devulong64_ro (att_conf_id);
-CREATE INDEX IF NOT EXISTS att_array_devulong64_ro_att_conf_id_data_time_idx ON att_array_devulong64_ro (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_array_devulong64_ro', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
-
-CREATE TABLE IF NOT EXISTS att_array_devulong64_rw (
-    att_conf_id integer NOT NULL,
-    data_time timestamp with time zone NOT NULL,
-    recv_time timestamp with time zone,
-    insert_time timestamp with time zone,
     value_r ulong64[],
     value_w ulong64[],
     quality smallint,
     att_error_desc_id integer,
+    details json,
     PRIMARY KEY (att_conf_id, data_time),
     FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id),
     FOREIGN KEY (att_error_desc_id) REFERENCES att_error_desc (att_error_desc_id)
 );
 
-COMMENT ON TABLE att_array_devulong64_rw IS 'Array ULong64 ReadWrite Values Table';
-CREATE INDEX IF NOT EXISTS att_array_devulong64_rw_att_conf_id_idx ON att_array_devulong64_rw (att_conf_id);
-CREATE INDEX IF NOT EXISTS att_array_devulong64_rw_att_conf_id_data_time_idx ON att_array_devulong64_rw (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_array_devulong64_rw', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
+COMMENT ON TABLE att_array_devulong64 IS 'Array ULong64 Values Table';
+CREATE INDEX IF NOT EXISTS att_array_devulong64_att_conf_id_idx ON att_array_devulong64 (att_conf_id);
+CREATE INDEX IF NOT EXISTS att_array_devulong64_att_conf_id_data_time_idx ON att_array_devulong64 (att_conf_id,data_time DESC);
+SELECT create_hypertable('att_array_devulong64', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
 
-CREATE TABLE IF NOT EXISTS att_scalar_devfloat_ro (
+CREATE TABLE IF NOT EXISTS att_scalar_devfloat (
     att_conf_id integer NOT NULL,
     data_time timestamp with time zone NOT NULL,
-    recv_time timestamp with time zone,
-    insert_time timestamp with time zone,
-    value_r real,
-    quality smallint,
-    att_error_desc_id integer,
-    PRIMARY KEY (att_conf_id, data_time),
-    FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id),
-    FOREIGN KEY (att_error_desc_id) REFERENCES att_error_desc (att_error_desc_id)
-);
-
-COMMENT ON TABLE att_scalar_devfloat_ro IS 'Scalar Float ReadOnly Values Table';
-CREATE INDEX IF NOT EXISTS att_scalar_devfloat_ro_att_conf_id_idx ON att_scalar_devfloat_ro (att_conf_id);
-CREATE INDEX IF NOT EXISTS att_scalar_devfloat_ro_att_conf_id_data_time_idx ON att_scalar_devfloat_ro (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_scalar_devfloat_ro', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
-
-CREATE TABLE IF NOT EXISTS att_scalar_devfloat_rw (
-    att_conf_id integer NOT NULL,
-    data_time timestamp with time zone NOT NULL,
-    recv_time timestamp with time zone,
-    insert_time timestamp with time zone,
     value_r real,
     value_w real,
     quality smallint,
     att_error_desc_id integer,
+    details json,
     PRIMARY KEY (att_conf_id, data_time),
     FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id),
     FOREIGN KEY (att_error_desc_id) REFERENCES att_error_desc (att_error_desc_id)
 );
 
-COMMENT ON TABLE att_scalar_devfloat_rw IS 'Scalar Float ReadWrite Values Table';
-CREATE INDEX IF NOT EXISTS att_scalar_devfloat_rw_att_conf_id_idx ON att_scalar_devfloat_rw (att_conf_id);
-CREATE INDEX IF NOT EXISTS att_scalar_devfloat_rw_att_conf_id_data_time_idx ON att_scalar_devfloat_rw (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_scalar_devfloat_rw', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
+COMMENT ON TABLE att_scalar_devfloat IS 'Scalar Float Values Table';
+CREATE INDEX IF NOT EXISTS att_scalar_devfloat_att_conf_id_idx ON att_scalar_devfloat (att_conf_id);
+CREATE INDEX IF NOT EXISTS att_scalar_devfloat_att_conf_id_data_time_idx ON att_scalar_devfloat (att_conf_id,data_time DESC);
+SELECT create_hypertable('att_scalar_devfloat', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
 
-CREATE TABLE IF NOT EXISTS att_array_devfloat_ro (
+CREATE TABLE IF NOT EXISTS att_array_devfloat (
     att_conf_id integer NOT NULL,
     data_time timestamp with time zone NOT NULL,
-    recv_time timestamp with time zone,
-    insert_time timestamp with time zone,
-    value_r real[],
-    quality smallint,
-    att_error_desc_id integer,
-    PRIMARY KEY (att_conf_id, data_time),
-    FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id),
-    FOREIGN KEY (att_error_desc_id) REFERENCES att_error_desc (att_error_desc_id)
-);
-
-COMMENT ON TABLE att_array_devfloat_ro IS 'Array Float ReadOnly Values Table';
-CREATE INDEX IF NOT EXISTS att_array_devfloat_ro_att_conf_id_idx ON att_array_devfloat_ro (att_conf_id);
-CREATE INDEX IF NOT EXISTS att_array_devfloat_ro_att_conf_id_data_time_idx ON att_array_devfloat_ro (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_array_devfloat_ro', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
-
-CREATE TABLE IF NOT EXISTS att_array_devfloat_rw (
-    att_conf_id integer NOT NULL,
-    data_time timestamp with time zone NOT NULL,
-    recv_time timestamp with time zone,
-    insert_time timestamp with time zone,
     value_r real[],
     value_w real[],
     quality smallint,
     att_error_desc_id integer,
+    details json,
     PRIMARY KEY (att_conf_id, data_time),
     FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id),
     FOREIGN KEY (att_error_desc_id) REFERENCES att_error_desc (att_error_desc_id)
 );
 
-COMMENT ON TABLE att_array_devfloat_rw IS 'Array Float ReadWrite Values Table';
-CREATE INDEX IF NOT EXISTS att_array_devfloat_rw_att_conf_id_idx ON att_array_devfloat_rw (att_conf_id);
-CREATE INDEX IF NOT EXISTS att_array_devfloat_rw_att_conf_id_data_time_idx ON att_array_devfloat_rw (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_array_devfloat_rw', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
+COMMENT ON TABLE att_array_devfloat IS 'Array Float Values Table';
+CREATE INDEX IF NOT EXISTS att_array_devfloat_att_conf_id_idx ON att_array_devfloat (att_conf_id);
+CREATE INDEX IF NOT EXISTS att_array_devfloat_att_conf_id_data_time_idx ON att_array_devfloat (att_conf_id,data_time DESC);
+SELECT create_hypertable('att_array_devfloat', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
 
-CREATE TABLE IF NOT EXISTS att_scalar_devdouble_ro (
+CREATE TABLE IF NOT EXISTS att_scalar_devdouble (
     att_conf_id integer NOT NULL,
     data_time timestamp with time zone NOT NULL,
-    recv_time timestamp with time zone,
-    insert_time timestamp with time zone,
-    value_r double precision,
-    quality smallint,
-    att_error_desc_id integer,
-    PRIMARY KEY (att_conf_id, data_time),
-    FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id),
-    FOREIGN KEY (att_error_desc_id) REFERENCES att_error_desc (att_error_desc_id)
-);
-
-COMMENT ON TABLE att_scalar_devdouble_ro IS 'Scalar Double ReadOnly Values Table';
-CREATE INDEX IF NOT EXISTS att_scalar_devdouble_ro_att_conf_id_idx ON att_scalar_devdouble_ro (att_conf_id);
-CREATE INDEX IF NOT EXISTS att_scalar_devdouble_ro_att_conf_id_data_time_idx ON att_scalar_devdouble_ro (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_scalar_devdouble_ro', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
-
-CREATE TABLE IF NOT EXISTS att_scalar_devdouble_rw (
-    att_conf_id integer NOT NULL,
-    data_time timestamp with time zone NOT NULL,
-    recv_time timestamp with time zone,
-    insert_time timestamp with time zone,
     value_r double precision,
     value_w double precision,
     quality smallint,
     att_error_desc_id integer,
+    details json,
     PRIMARY KEY (att_conf_id, data_time),
     FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id),
     FOREIGN KEY (att_error_desc_id) REFERENCES att_error_desc (att_error_desc_id)
 );
 
-COMMENT ON TABLE att_scalar_devdouble_rw IS 'Scalar Double ReadWrite Values Table';
-CREATE INDEX IF NOT EXISTS att_scalar_devdouble_rw_att_conf_id_idx ON att_scalar_devdouble_rw (att_conf_id);
-CREATE INDEX IF NOT EXISTS att_scalar_devdouble_rw_att_conf_id_data_time_idx ON att_scalar_devdouble_rw (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_scalar_devdouble_rw', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
+COMMENT ON TABLE att_scalar_devdouble IS 'Scalar Double Values Table';
+CREATE INDEX IF NOT EXISTS att_scalar_devdouble_att_conf_id_idx ON att_scalar_devdouble (att_conf_id);
+CREATE INDEX IF NOT EXISTS att_scalar_devdouble_att_conf_id_data_time_idx ON att_scalar_devdouble (att_conf_id,data_time DESC);
+SELECT create_hypertable('att_scalar_devdouble', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
 
-CREATE TABLE IF NOT EXISTS att_array_devdouble_ro (
+CREATE TABLE IF NOT EXISTS att_array_devdouble (
     att_conf_id integer NOT NULL,
     data_time timestamp with time zone NOT NULL,
-    recv_time timestamp with time zone,
-    insert_time timestamp with time zone,
-    value_r double precision[],
-    quality smallint,
-    att_error_desc_id integer,
-    PRIMARY KEY (att_conf_id, data_time),
-    FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id),
-    FOREIGN KEY (att_error_desc_id) REFERENCES att_error_desc (att_error_desc_id)
-);
-
-COMMENT ON TABLE att_array_devdouble_ro IS 'Array Double ReadOnly Values Table';
-CREATE INDEX IF NOT EXISTS att_array_devdouble_ro_att_conf_id_idx ON att_array_devdouble_ro (att_conf_id);
-CREATE INDEX IF NOT EXISTS att_array_devdouble_ro_att_conf_id_data_time_idx ON att_array_devdouble_ro (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_array_devdouble_ro', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
-
-CREATE TABLE IF NOT EXISTS att_array_devdouble_rw (
-    att_conf_id integer NOT NULL,
-    data_time timestamp with time zone NOT NULL,
-    recv_time timestamp with time zone,
-    insert_time timestamp with time zone,
     value_r double precision[],
     value_w double precision[],
     quality smallint,
     att_error_desc_id integer,
+    details json,
     PRIMARY KEY (att_conf_id, data_time),
     FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id),
     FOREIGN KEY (att_error_desc_id) REFERENCES att_error_desc (att_error_desc_id)
 );
 
-COMMENT ON TABLE att_array_devdouble_rw IS 'Array Double ReadWrite Values Table';
-CREATE INDEX IF NOT EXISTS att_array_devdouble_rw_att_conf_id_idx ON att_array_devdouble_rw (att_conf_id);
-CREATE INDEX IF NOT EXISTS att_array_devdouble_rw_att_conf_id_data_time_idx ON att_array_devdouble_rw (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_array_devdouble_rw', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
+COMMENT ON TABLE att_array_devdouble IS 'Array Double Values Table';
+CREATE INDEX IF NOT EXISTS att_array_devdouble_att_conf_id_idx ON att_array_devdouble (att_conf_id);
+CREATE INDEX IF NOT EXISTS att_array_devdouble_att_conf_id_data_time_idx ON att_array_devdouble (att_conf_id,data_time DESC);
+SELECT create_hypertable('att_array_devdouble', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
 
-CREATE TABLE IF NOT EXISTS att_scalar_devstring_ro (
+CREATE TABLE IF NOT EXISTS att_scalar_devstring (
     att_conf_id integer NOT NULL,
     data_time timestamp with time zone NOT NULL,
-    recv_time timestamp with time zone,
-    insert_time timestamp with time zone,
-    value_r text,
-    quality smallint,
-    att_error_desc_id integer,
-    PRIMARY KEY (att_conf_id, data_time),
-    FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id),
-    FOREIGN KEY (att_error_desc_id) REFERENCES att_error_desc (att_error_desc_id)
-);
-
-COMMENT ON TABLE att_scalar_devstring_ro IS 'Scalar String ReadOnly Values Table';
-CREATE INDEX IF NOT EXISTS att_scalar_devstring_ro_att_conf_id_idx ON att_scalar_devstring_ro (att_conf_id);
-CREATE INDEX IF NOT EXISTS att_scalar_devstring_ro_att_conf_id_data_time_idx ON att_scalar_devstring_ro (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_scalar_devstring_ro', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
-
-CREATE TABLE IF NOT EXISTS att_scalar_devstring_rw (
-    att_conf_id integer NOT NULL,
-    data_time timestamp with time zone NOT NULL,
-    recv_time timestamp with time zone,
-    insert_time timestamp with time zone,
     value_r text,
     value_w text,
     quality smallint,
     att_error_desc_id integer,
+    details json,
     PRIMARY KEY (att_conf_id, data_time),
     FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id),
     FOREIGN KEY (att_error_desc_id) REFERENCES att_error_desc (att_error_desc_id)
 );
 
-COMMENT ON TABLE att_scalar_devstring_rw IS 'Scalar String ReadWrite Values Table';
-CREATE INDEX IF NOT EXISTS att_scalar_devstring_rw_att_conf_id_idx ON att_scalar_devstring_rw (att_conf_id);
-CREATE INDEX IF NOT EXISTS att_scalar_devstring_rw_att_conf_id_data_time_idx ON att_scalar_devstring_rw (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_scalar_devstring_rw', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
+COMMENT ON TABLE att_scalar_devstring IS 'Scalar String Values Table';
+CREATE INDEX IF NOT EXISTS att_scalar_devstring_att_conf_id_idx ON att_scalar_devstring (att_conf_id);
+CREATE INDEX IF NOT EXISTS att_scalar_devstring_att_conf_id_data_time_idx ON att_scalar_devstring (att_conf_id,data_time DESC);
+SELECT create_hypertable('att_scalar_devstring', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
 
-CREATE TABLE IF NOT EXISTS att_array_devstring_ro (
+CREATE TABLE IF NOT EXISTS att_array_devstring (
     att_conf_id integer NOT NULL,
     data_time timestamp with time zone NOT NULL,
-    recv_time timestamp with time zone,
-    insert_time timestamp with time zone,
-    value_r text[],
-    quality smallint,
-    att_error_desc_id integer,
-    PRIMARY KEY (att_conf_id, data_time),
-    FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id),
-    FOREIGN KEY (att_error_desc_id) REFERENCES att_error_desc (att_error_desc_id)
-);
-
-COMMENT ON TABLE att_array_devstring_ro IS 'Array String ReadOnly Values Table';
-CREATE INDEX IF NOT EXISTS att_array_devstring_ro_att_conf_id_idx ON att_array_devstring_ro (att_conf_id);
-CREATE INDEX IF NOT EXISTS att_array_devstring_ro_att_conf_id_data_time_idx ON att_array_devstring_ro (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_array_devstring_ro', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
-
-CREATE TABLE IF NOT EXISTS att_array_devstring_rw (
-    att_conf_id integer NOT NULL,
-    data_time timestamp with time zone NOT NULL,
-    recv_time timestamp with time zone,
-    insert_time timestamp with time zone,
     value_r text[],
     value_w text[],
     quality smallint,
     att_error_desc_id integer,
+    details json,
     PRIMARY KEY (att_conf_id, data_time),
     FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id),
     FOREIGN KEY (att_error_desc_id) REFERENCES att_error_desc (att_error_desc_id)
 );
 
-COMMENT ON TABLE att_array_devstring_rw IS 'Array String ReadWrite Values Table';
-CREATE INDEX IF NOT EXISTS att_array_devstring_rw_att_conf_id_idx ON att_array_devstring_rw (att_conf_id);
-CREATE INDEX IF NOT EXISTS att_array_devstring_rw_att_conf_id_data_time_idx ON att_array_devstring_rw (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_array_devstring_rw', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
+COMMENT ON TABLE att_array_devstring IS 'Array String Values Table';
+CREATE INDEX IF NOT EXISTS att_array_devstring_att_conf_id_idx ON att_array_devstring (att_conf_id);
+CREATE INDEX IF NOT EXISTS att_array_devstring_att_conf_id_data_time_idx ON att_array_devstring (att_conf_id,data_time DESC);
+SELECT create_hypertable('att_array_devstring', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
 
-CREATE TABLE IF NOT EXISTS att_scalar_devstate_ro (
+CREATE TABLE IF NOT EXISTS att_scalar_devstate (
     att_conf_id integer NOT NULL,
     data_time timestamp with time zone NOT NULL,
-    recv_time timestamp with time zone,
-    insert_time timestamp with time zone,
-    value_r integer,
-    quality smallint,
-    att_error_desc_id integer,
-    PRIMARY KEY (att_conf_id, data_time),
-    FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id),
-    FOREIGN KEY (att_error_desc_id) REFERENCES att_error_desc (att_error_desc_id)
-);
-
-COMMENT ON TABLE att_scalar_devstate_ro IS 'Scalar State ReadOnly Values Table';
-CREATE INDEX IF NOT EXISTS att_scalar_devstate_ro_att_conf_id_idx ON att_scalar_devstate_ro (att_conf_id);
-CREATE INDEX IF NOT EXISTS att_scalar_devstate_ro_att_conf_id_data_time_idx ON att_scalar_devstate_ro (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_scalar_devstate_ro', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
-
-CREATE TABLE IF NOT EXISTS att_scalar_devstate_rw (
-    att_conf_id integer NOT NULL,
-    data_time timestamp with time zone NOT NULL,
-    recv_time timestamp with time zone,
-    insert_time timestamp with time zone,
     value_r integer,
     value_w integer,
     quality smallint,
     att_error_desc_id integer,
+    details json,
     PRIMARY KEY (att_conf_id, data_time),
     FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id),
     FOREIGN KEY (att_error_desc_id) REFERENCES att_error_desc (att_error_desc_id)
 );
 
-COMMENT ON TABLE att_scalar_devstate_rw IS 'Scalar State ReadWrite Values Table';
-CREATE INDEX IF NOT EXISTS att_scalar_devstate_rw_att_conf_id_idx ON att_scalar_devstate_rw (att_conf_id);
-CREATE INDEX IF NOT EXISTS att_scalar_devstate_rw_att_conf_id_data_time_idx ON att_scalar_devstate_rw (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_scalar_devstate_rw', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
+COMMENT ON TABLE att_scalar_devstate IS 'Scalar State Values Table';
+CREATE INDEX IF NOT EXISTS att_scalar_devstate_att_conf_id_idx ON att_scalar_devstate (att_conf_id);
+CREATE INDEX IF NOT EXISTS att_scalar_devstate_att_conf_id_data_time_idx ON att_scalar_devstate (att_conf_id,data_time DESC);
+SELECT create_hypertable('att_scalar_devstate', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
 
-CREATE TABLE IF NOT EXISTS att_array_devstate_ro (
+CREATE TABLE IF NOT EXISTS att_array_devstate (
     att_conf_id integer NOT NULL,
     data_time timestamp with time zone NOT NULL,
-    recv_time timestamp with time zone,
-    insert_time timestamp with time zone,
-    value_r integer[],
-    quality smallint,
-    att_error_desc_id integer,
-    PRIMARY KEY (att_conf_id, data_time),
-    FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id),
-    FOREIGN KEY (att_error_desc_id) REFERENCES att_error_desc (att_error_desc_id)
-);
-
-COMMENT ON TABLE att_array_devstate_ro IS 'Array State ReadOnly Values Table';
-CREATE INDEX IF NOT EXISTS att_array_devstate_ro_att_conf_id_idx ON att_array_devstate_ro (att_conf_id);
-CREATE INDEX IF NOT EXISTS att_array_devstate_ro_att_conf_id_data_time_idx ON att_array_devstate_ro (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_array_devstate_ro', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
-
-CREATE TABLE IF NOT EXISTS att_array_devstate_rw (
-    att_conf_id integer NOT NULL,
-    data_time timestamp with time zone NOT NULL,
-    recv_time timestamp with time zone,
-    insert_time timestamp with time zone,
     value_r integer[],
     value_w integer[],
     quality smallint,
     att_error_desc_id integer,
+    details json,
     PRIMARY KEY (att_conf_id, data_time),
     FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id),
     FOREIGN KEY (att_error_desc_id) REFERENCES att_error_desc (att_error_desc_id)
 );
 
-COMMENT ON TABLE att_array_devstate_rw IS 'Array State ReadWrite Values Table';
-CREATE INDEX IF NOT EXISTS att_array_devstate_rw_att_conf_id_idx ON att_array_devstate_rw (att_conf_id);
-CREATE INDEX IF NOT EXISTS att_array_devstate_rw_att_conf_id_data_time_idx ON att_array_devstate_rw (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_array_devstate_rw', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
+COMMENT ON TABLE att_array_devstate IS 'Array State Values Table';
+CREATE INDEX IF NOT EXISTS att_array_devstate_att_conf_id_idx ON att_array_devstate (att_conf_id);
+CREATE INDEX IF NOT EXISTS att_array_devstate_att_conf_id_data_time_idx ON att_array_devstate (att_conf_id,data_time DESC);
+SELECT create_hypertable('att_array_devstate', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
 
-CREATE TABLE IF NOT EXISTS att_scalar_devenum_ro (
+CREATE TABLE IF NOT EXISTS att_scalar_devencoded (
     att_conf_id integer NOT NULL,
     data_time timestamp with time zone NOT NULL,
-    recv_time timestamp with time zone,
-    insert_time timestamp with time zone,
-    value_r integer,
-    quality smallint,
-    att_error_desc_id integer,
-    PRIMARY KEY (att_conf_id, data_time),
-    FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id),
-    FOREIGN KEY (att_error_desc_id) REFERENCES att_error_desc (att_error_desc_id)
-);
-
-COMMENT ON TABLE att_scalar_devenum_ro IS 'Scalar Enum ReadOnly Values Table';
-CREATE INDEX IF NOT EXISTS att_scalar_devenum_ro_att_conf_id_idx ON att_scalar_devenum_ro (att_conf_id);
-CREATE INDEX IF NOT EXISTS att_scalar_devenum_ro_att_conf_id_data_time_idx ON att_scalar_devenum_ro (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_scalar_devenum_ro', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
-
-CREATE TABLE IF NOT EXISTS att_scalar_devenum_rw (
-    att_conf_id integer NOT NULL,
-    data_time timestamp with time zone NOT NULL,
-    recv_time timestamp with time zone,
-    insert_time timestamp with time zone,
-    value_r integer,
-    value_w integer,
-    quality smallint,
-    att_error_desc_id integer,
-    PRIMARY KEY (att_conf_id, data_time),
-    FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id),
-    FOREIGN KEY (att_error_desc_id) REFERENCES att_error_desc (att_error_desc_id)
-);
-
-COMMENT ON TABLE att_scalar_devenum_rw IS 'Scalar Enum ReadWrite Values Table';
-CREATE INDEX IF NOT EXISTS att_scalar_devenum_rw_att_conf_id_idx ON att_scalar_devenum_rw (att_conf_id);
-CREATE INDEX IF NOT EXISTS att_scalar_devenum_rw_att_conf_id_data_time_idx ON att_scalar_devenum_rw (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_scalar_devenum_rw', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
-
-CREATE TABLE IF NOT EXISTS att_array_devenum_ro (
-    att_conf_id integer NOT NULL,
-    data_time timestamp with time zone NOT NULL,
-    recv_time timestamp with time zone,
-    insert_time timestamp with time zone,
-    value_r integer[],
-    quality smallint,
-    att_error_desc_id integer,
-    PRIMARY KEY (att_conf_id, data_time),
-    FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id),
-    FOREIGN KEY (att_error_desc_id) REFERENCES att_error_desc (att_error_desc_id)
-);
-
-COMMENT ON TABLE att_array_devenum_ro IS 'Array Enum ReadOnly Values Table';
-CREATE INDEX IF NOT EXISTS att_array_devenum_ro_att_conf_id_idx ON att_array_devenum_ro (att_conf_id);
-CREATE INDEX IF NOT EXISTS att_array_devenum_ro_att_conf_id_data_time_idx ON att_array_devenum_ro (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_array_devenum_ro', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
-
-CREATE TABLE IF NOT EXISTS att_array_devenum_rw (
-    att_conf_id integer NOT NULL,
-    data_time timestamp with time zone NOT NULL,
-    recv_time timestamp with time zone,
-    insert_time timestamp with time zone,
-    value_r integer[],
-    value_w integer[],
-    quality smallint,
-    att_error_desc_id integer,
-    PRIMARY KEY (att_conf_id, data_time),
-    FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id),
-    FOREIGN KEY (att_error_desc_id) REFERENCES att_error_desc (att_error_desc_id)
-);
-
-COMMENT ON TABLE att_array_devenum_rw IS 'Array Enum ReadWrite Values Table';
-CREATE INDEX IF NOT EXISTS att_array_devenum_rw_att_conf_id_idx ON att_array_devenum_rw (att_conf_id);
-CREATE INDEX IF NOT EXISTS att_array_devenum_rw_att_conf_id_data_time_idx ON att_array_devenum_rw (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_array_devenum_rw', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
-
-CREATE TABLE IF NOT EXISTS att_scalar_devencoded_ro (
-    att_conf_id integer NOT NULL,
-    data_time timestamp with time zone NOT NULL,
-    recv_time timestamp with time zone,
-    insert_time timestamp with time zone,
-    value_r bytea,
-    quality smallint,
-    att_error_desc_id integer,
-    PRIMARY KEY (att_conf_id, data_time),
-    FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id),
-    FOREIGN KEY (att_error_desc_id) REFERENCES att_error_desc (att_error_desc_id)
-);
-COMMENT ON TABLE att_scalar_devenum_ro IS 'Scalar DevEncoded ReadOnly Values Table';
-CREATE INDEX IF NOT EXISTS att_scalar_devencoded_ro_att_conf_id_idx ON att_scalar_devencoded_ro (att_conf_id);
-CREATE INDEX IF NOT EXISTS att_scalar_devencoded_ro_att_conf_id_data_time_idx ON att_scalar_devencoded_ro (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_scalar_devencoded_ro', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
-
-CREATE TABLE IF NOT EXISTS att_scalar_devencoded_rw (
-    att_conf_id integer NOT NULL,
-    data_time timestamp with time zone NOT NULL,
-    recv_time timestamp with time zone,
-    insert_time timestamp with time zone,
     value_r bytea,
     value_w bytea,
     quality smallint,
     att_error_desc_id integer,
+    details json,
     PRIMARY KEY (att_conf_id, data_time),
     FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id),
     FOREIGN KEY (att_error_desc_id) REFERENCES att_error_desc (att_error_desc_id)
 );
-COMMENT ON TABLE att_scalar_devenum_rw IS 'Scalar DevEncoded ReadWrite Values Table';
-CREATE INDEX IF NOT EXISTS att_scalar_devencoded_rw_att_conf_id_idx ON att_scalar_devencoded_rw (att_conf_id);
-CREATE INDEX IF NOT EXISTS att_scalar_devencoded_rw_att_conf_id_data_time_idx ON att_scalar_devencoded_rw (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_scalar_devencoded_rw', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
+COMMENT ON TABLE att_scalar_devencoded IS 'Scalar DevEncoded Values Table';
+CREATE INDEX IF NOT EXISTS att_scalar_devencoded_att_conf_id_idx ON att_scalar_devencoded (att_conf_id);
+CREATE INDEX IF NOT EXISTS att_scalar_devencoded_att_conf_id_data_time_idx ON att_scalar_devencoded (att_conf_id,data_time DESC);
+SELECT create_hypertable('att_scalar_devencoded', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
 
-CREATE TABLE IF NOT EXISTS att_array_devencoded_ro (
+CREATE TABLE IF NOT EXISTS att_array_devencoded (
     att_conf_id integer NOT NULL,
     data_time timestamp with time zone NOT NULL,
-    recv_time timestamp with time zone,
-    insert_time timestamp with time zone,
-    value_r bytea[],
-    quality smallint,
-    att_error_desc_id integer,
-    PRIMARY KEY (att_conf_id, data_time),
-    FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id),
-    FOREIGN KEY (att_error_desc_id) REFERENCES att_error_desc (att_error_desc_id)
-);
-COMMENT ON TABLE att_array_devenum_ro IS 'Array DevEncoded ReadOnly Values Table';
-CREATE INDEX IF NOT EXISTS att_array_devencoded_ro_att_conf_id_idx ON att_array_devencoded_ro (att_conf_id);
-CREATE INDEX IF NOT EXISTS att_array_devencoded_ro_att_conf_id_data_time_idx ON att_array_devencoded_ro (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_array_devencoded_ro', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
-
-CREATE TABLE IF NOT EXISTS att_array_devencoded_rw (
-    att_conf_id integer NOT NULL,
-    data_time timestamp with time zone NOT NULL,
-    recv_time timestamp with time zone,
-    insert_time timestamp with time zone,
     value_r bytea[],
     value_w bytea[],
     quality smallint,
     att_error_desc_id integer,
+    details json,
     PRIMARY KEY (att_conf_id, data_time),
     FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id),
     FOREIGN KEY (att_error_desc_id) REFERENCES att_error_desc (att_error_desc_id)
 );
-COMMENT ON TABLE att_array_devenum_rw IS 'Array DevEncoded ReadWrite Values Table';
-CREATE INDEX IF NOT EXISTS att_array_devencoded_rw_att_conf_id_idx ON att_array_devencoded_rw (att_conf_id);
-CREATE INDEX IF NOT EXISTS att_array_devencoded_rw_att_conf_id_data_time_idx ON att_array_devencoded_rw (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_array_devencoded_rw', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
+COMMENT ON TABLE att_array_devencoded IS 'Array DevEncoded Values Table';
+CREATE INDEX IF NOT EXISTS att_array_devencoded_att_conf_id_idx ON att_array_devencoded (att_conf_id);
+CREATE INDEX IF NOT EXISTS att_array_devencoded_att_conf_id_data_time_idx ON att_array_devencoded (att_conf_id,data_time DESC);
+SELECT create_hypertable('att_array_devencoded', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
+
+-- The Enum tables are unique in that they store a value and text label for 
+-- each data point
+CREATE TABLE IF NOT EXISTS att_scalar_devenum (
+    att_conf_id integer NOT NULL,
+    data_time timestamp with time zone NOT NULL,
+    value_r_label text,
+    value_r smallint,
+    value_w_label text,
+    value_w smallint,
+    quality smallint,
+    att_error_desc_id integer,
+    details json,
+    PRIMARY KEY (att_conf_id, data_time),
+    FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id),
+    FOREIGN KEY (att_error_desc_id) REFERENCES att_error_desc (att_error_desc_id)
+);
+
+COMMENT ON TABLE att_scalar_devenum IS 'Scalar Enum Values Table';
+CREATE INDEX IF NOT EXISTS att_scalar_devenum_att_conf_id_idx ON att_scalar_devenum (att_conf_id);
+CREATE INDEX IF NOT EXISTS att_scalar_devenum_att_conf_id_data_time_idx ON att_scalar_devenum (att_conf_id,data_time DESC);
+SELECT create_hypertable('att_scalar_devenum', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
+
+CREATE TABLE IF NOT EXISTS att_array_devenum (
+    att_conf_id integer NOT NULL,
+    data_time timestamp with time zone NOT NULL,
+    value_r_label text[],
+    value_r smallint[],
+    value_w_label text[],
+    value_w smallint[],
+    quality smallint,
+    att_error_desc_id integer,
+    details json,
+    PRIMARY KEY (att_conf_id, data_time),
+    FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id),
+    FOREIGN KEY (att_error_desc_id) REFERENCES att_error_desc (att_error_desc_id)
+);
+
+COMMENT ON TABLE att_array_devenum IS 'Array Enum Values Table';
+CREATE INDEX IF NOT EXISTS att_array_devenum_att_conf_id_idx ON att_array_devenum (att_conf_id);
+CREATE INDEX IF NOT EXISTS att_array_devenum_att_conf_id_data_time_idx ON att_array_devenum (att_conf_id,data_time DESC);
+SELECT create_hypertable('att_array_devenum', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
