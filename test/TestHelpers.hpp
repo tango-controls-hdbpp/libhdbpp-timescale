@@ -37,7 +37,7 @@ namespace psql_conn_test
     {
         // connection strings
         const std::string ConnectionString = "user=postgres password=password host=hdb1";
-        const std::string HdbppConnectionString = "user=postgres password=password host=hdb1 dbname=hdbpp_test";
+        const std::string HdbppConnectionString = "user=postgres password=password host=hdb1 dbname=hdbpp_test_dev";
     } // namespace postgres_db
 } // namespace psql_conn_test
 
@@ -66,7 +66,8 @@ namespace attr_name
 
 namespace attr_info
 {
-    const std::string AttrInfoDescription = "Description about attribute, its \"quoted\",  and 'quoted', yet does it work?";
+    const std::string AttrInfoDescription =
+        "Description about attribute, its \"quoted\",  and 'quoted', yet does it work?";
     const std::string AttrInfoLabel = "Label";
     const std::string AttrInfoUnit = "Unit %";
     const std::string AttrInfoStandardUnit = "Standard Unit";

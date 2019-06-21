@@ -45,16 +45,8 @@ namespace pqxx_conn
         {
             static void run(std::unique_ptr<std::vector<std::string>> &value, pqxx::work &tx)
             {
-                cout << "dump " << endl;
-                
-                for (auto &str : *value) 
-                    cout << str << " ";
-
-                for (auto &str : *value) 
+                for (auto &str : *value)
                     str = tx.quote(str);
-
-                for (auto &str : *value) 
-                    cout << str << " ";
             }
         };
 

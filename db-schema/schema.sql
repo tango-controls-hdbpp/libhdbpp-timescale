@@ -1,8 +1,8 @@
-DROP DATABASE IF EXISTS hdbpp_test;
+DROP DATABASE IF EXISTS hdbpp;
 
 -- Create the hdb database and use it
-CREATE DATABASE hdbpp_test;
-\c hdbpp_test
+CREATE DATABASE hdbpp;
+\c hdbpp
 
 -- Add the timescaledb extension (Important)
 CREATE EXTENSION IF NOT EXISTS timescaledb CASCADE;

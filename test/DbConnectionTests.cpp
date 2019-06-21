@@ -759,9 +759,9 @@ TEST_CASE("Storing event data of all Tango type combinations in the database",
     psql_conn_test::clearTable(test_conn, CONF_TABLE_NAME);
 
     vector<unsigned int> types {
-//        Tango::DEV_BOOLEAN,
-  //      Tango::DEV_DOUBLE,
-    //    Tango::DEV_FLOAT,
+        //        Tango::DEV_BOOLEAN,
+        //      Tango::DEV_DOUBLE,
+        //    Tango::DEV_FLOAT,
         Tango::DEV_STRING,
         Tango::DEV_LONG,
         Tango::DEV_ULONG,
@@ -772,7 +772,7 @@ TEST_CASE("Storing event data of all Tango type combinations in the database",
         Tango::DEV_UCHAR,
         Tango::DEV_STATE,
         //Tango::DEV_ENCODED, Tango::DEV_ENUM
-        };
+    };
 
     vector<Tango::AttrWriteType> write_types {Tango::READ, Tango::WRITE, Tango::READ_WRITE, Tango::READ_WITH_WRITE};
     vector<Tango::AttrDataFormat> format_types {Tango::SCALAR, Tango::SPECTRUM};
@@ -793,8 +793,9 @@ TEST_CASE("Storing event data of all Tango type combinations in the database",
                     switch (traits.type())
                     {
                         case Tango::DEV_BOOLEAN:
-                            psql_conn_test::checkStoreTestEventData(
-                                test_conn, traits, psql_conn_test::storeTestEventData<Tango::DEV_BOOLEAN>(conn, traits));
+                            psql_conn_test::checkStoreTestEventData(test_conn,
+                                traits,
+                                psql_conn_test::storeTestEventData<Tango::DEV_BOOLEAN>(conn, traits));
 
                             break;
 

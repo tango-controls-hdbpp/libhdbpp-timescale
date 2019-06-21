@@ -198,8 +198,6 @@ public:
             last_position = position + 3;
             position = in.find(sep, position + 1);
         }
-
-        std::cout << "ITS " << str << std::endl;
     }
 
     static std::string to_string(const std::vector<std::string> &value)
