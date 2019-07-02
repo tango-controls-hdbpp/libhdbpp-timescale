@@ -58,7 +58,7 @@ namespace pqxx_conn
         }
         catch (const pqxx::broken_connection &ex)
         {
-            string msg {"Failed to connect database. Ensure paramters are correct and database is running"};
+            string msg {"Failed to connect to database. Ensure parameters are correct and database is running"};
 
             _logger->error("Error: Connecting to postgres database with connect string: \"{}\"", connect_string);
             _logger->error("Caught error: \"{}\"", ex.what());
@@ -529,7 +529,7 @@ namespace pqxx_conn
         if (!_conf_id_cache->valueExists(full_attr_name))
         {
             string msg {"This attribute [" + full_attr_name +
-                "] does nit exists in the database. Unable to work with this attribute until its added."};
+                "] does not exist in the database. Unable to work with this attribute until it is added."};
 
             _logger->error("Error: The attribute does not exist in the database, add it first.");
             _logger->error("Attribute details. Name: {} traits: {}", full_attr_name);
