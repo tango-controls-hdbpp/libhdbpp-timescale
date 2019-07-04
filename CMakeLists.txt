@@ -87,6 +87,10 @@ set_target_properties(pqxx_shared
     PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 
+set_target_properties(pqxx_static
+    PROPERTIES
+    POSITION_INDEPENDENT_CODE 1)
+
 # Code Analysis -----------------------------------
 if(HDBPP_TDB_ENABLE_CLANG)
     set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -113,7 +117,7 @@ add_subdirectory(src)
 add_library(libhdbpp_timescale_shared_library SHARED ${SRC_FILES})
 
 target_link_libraries(libhdbpp_timescale_shared_library 
-    PUBLIC ${TDB_FOUND_LIBRARIES} pqxx_shared libhdbpp_headers spdlog Threads::Threads
+    PUBLIC ${TDB_FOUND_LIBRARIES} pqxx_static libhdbpp_headers spdlog Threads::Threads
     PRIVATE TangoInterfaceLibrary)
 
 target_include_directories(libhdbpp_timescale_shared_library 

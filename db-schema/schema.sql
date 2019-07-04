@@ -85,6 +85,7 @@ CREATE TABLE IF NOT EXISTS att_conf (
     member text NOT NULL DEFAULT '',
     name text NOT NULL DEFAULT '',
     ttl int,
+    hide boolean DEFAULT false,
     PRIMARY KEY (att_conf_id),
     FOREIGN KEY (att_conf_type_id) REFERENCES att_conf_type (att_conf_type_id),
     FOREIGN KEY (att_conf_format_id) REFERENCES att_conf_format (att_conf_format_id),

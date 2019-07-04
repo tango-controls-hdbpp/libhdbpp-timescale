@@ -72,7 +72,7 @@ HdbppTxHistoryEvent<Conn> &HdbppTxHistoryEvent<Conn>::withEvent(unsigned char ev
     // without the need to decode a byte into a meaningful value.
     switch (event)
     {
-        case libhdbpp_compatibility::HdbppInsert: _event = events::InsertEvent; break;
+        case libhdbpp_compatibility::HdbppInsert: _event = events::AddEvent; break;
         case libhdbpp_compatibility::HdbppStart: _event = events::StartEvent; break;
         case libhdbpp_compatibility::HdbppStop: _event = events::StopEvent; break;
         case libhdbpp_compatibility::HdbppRemove: _event = events::RemoveEvent; break;

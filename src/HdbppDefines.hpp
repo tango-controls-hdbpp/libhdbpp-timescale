@@ -42,10 +42,10 @@ namespace libhdbpp_compatibility
 namespace events
 {
     // attribute history events as strings, these are used in the storage system
-    const std::string InsertEvent = "add";
-    const std::string StartEvent = "start";
-    const std::string StopEvent = "stop";
-    const std::string RemoveEvent = "remove";
+    const std::string AddEvent = "add"; // represents a attribute added to the system
+    const std::string StartEvent = "start"; // represents when the attribute starts sending data
+    const std::string StopEvent = "stop"; // represents when the attribute stops sending data
+    const std::string RemoveEvent = "remove"; // represents a attribute removed from the system
     const std::string InsertParamEvent = "insert_param";
     const std::string UpdateTTLEvent = "update_ttl";
     const std::string PauseEvent = "pause";

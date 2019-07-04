@@ -148,13 +148,21 @@ void HdbppTimescaleDb::insert_Attr(Tango::EventData *event_data, HdbEventDataTyp
     {
         spdlog::trace("Event type is error for attribute: {}", event_data->attr_name);
 
+        // now time data is passed for errors, so create some
+        struct timeval tv;
+        struct Tango::TimeVal tango_tv;
+        gettimeofday(&tv, NULL);
+        tango_tv.tv_sec = tv.tv_sec;
+        tango_tv.tv_usec = tv.tv_usec;
+        tango_tv.tv_nsec = 0;
+
         Conn->createTx<HdbppTxDataEventError>()
             .withName(event_data->attr_name)
             .withTraits(static_cast<Tango::AttrWriteType>(event_data_type.write_type),
                 static_cast<Tango::AttrDataFormat>(event_data_type.data_format),
                 event_data_type.data_type)
             .withError(string(event_data->errors[0].desc))
-            .withEventTime(event_data->attr_value->get_date())
+            .withEventTime(tango_tv)
             .withQuality(event_data->attr_value->get_quality())
             .store();
     }
@@ -208,8 +216,8 @@ void HdbppTimescaleDb::configure_Attr(
         .withTraits(static_cast<Tango::AttrWriteType>(write_type), static_cast<Tango::AttrDataFormat>(format), type)
         .store();
 
-    // add a start event
-    Conn->createTx<HdbppTxHistoryEvent>().withName(fqdn_attr_name).withEvent(events::StartEvent).store();
+    // add an add event
+    Conn->createTx<HdbppTxHistoryEvent>().withName(fqdn_attr_name).withEvent(events::AddEvent).store();
 }
 
 //=============================================================================

@@ -82,7 +82,7 @@ SCENARIO("Construct and store HdbppTxHistoryEvent data without error", "[hdbpp-t
 
         WHEN("Passing a valid configuration with method chaining")
         {
-            tx.withName(TestAttrFQDName).withEvent(events::InsertEvent);
+            tx.withName(TestAttrFQDName).withEvent(events::AddEvent);
 
             THEN("Storing the transaction does not raise an exception")
             {
@@ -96,7 +96,7 @@ SCENARIO("Construct and store HdbppTxHistoryEvent data without error", "[hdbpp-t
                 THEN("The data is the same as that passed via method chaining")
                 {
                     REQUIRE(conn.att_name == TestAttrFinalName);
-                    REQUIRE(conn.att_last_event == events::InsertEvent);
+                    REQUIRE(conn.att_last_event == events::AddEvent);
                 }
             }
         }
@@ -126,7 +126,7 @@ SCENARIO("When attempting to store invalid HdbppTxHistoryEvent states, errors ar
                 }
                 AND_WHEN("Setting a valid event and trying to store again")
                 {
-                    tx.withEvent(events::InsertEvent);
+                    tx.withEvent(events::AddEvent);
 
                     THEN("No exception is raised")
                     {
@@ -140,7 +140,7 @@ SCENARIO("When attempting to store invalid HdbppTxHistoryEvent states, errors ar
         {
             conn.disconnect();
             REQUIRE(conn.isClosed());
-            REQUIRE_NOTHROW(tx.withName(TestAttrFQDName).withEvent(events::InsertEvent));
+            REQUIRE_NOTHROW(tx.withName(TestAttrFQDName).withEvent(events::AddEvent));
 
             THEN("An exception is raised")
             {
@@ -175,7 +175,7 @@ SCENARIO("HdbppTxHistoryEvent's overloaded functions return identical results wi
             tx2.withName(TestAttrFQDName);
 
             REQUIRE_NOTHROW(tx1.withEvent(libhdbpp_compatibility::HdbppInsert));
-            REQUIRE_NOTHROW(tx2.withEvent(events::InsertEvent));
+            REQUIRE_NOTHROW(tx2.withEvent(events::AddEvent));
 
             THEN("The events are the same after storing")
             {
@@ -228,43 +228,43 @@ SCENARIO("All event conversions result in correct events at store time", "[hdbpp
         {
             REQUIRE_NOTHROW(tx.withEvent(libhdbpp_compatibility::HdbppInsert).store());
 
-            THEN("InsertEvent is recorded at store time") { REQUIRE(conn.att_last_event == events::InsertEvent); }
+            THEN("AddEvent is recorded at store time") { REQUIRE(conn.att_last_event == events::AddEvent); }
         }
         WHEN("Attempting to store event libhdbpp_compatibility::HdbppStart")
         {
             REQUIRE_NOTHROW(tx.withEvent(libhdbpp_compatibility::HdbppStart).store());
 
-            THEN("InsertEvent is recorded at store time") { REQUIRE(conn.att_last_event == events::StartEvent); }
+            THEN("AddEvent is recorded at store time") { REQUIRE(conn.att_last_event == events::StartEvent); }
         }
         WHEN("Attempting to store event libhdbpp_compatibility::HdbppStop")
         {
             REQUIRE_NOTHROW(tx.withEvent(libhdbpp_compatibility::HdbppStop).store());
 
-            THEN("InsertEvent is recorded at store time") { REQUIRE(conn.att_last_event == events::StopEvent); }
+            THEN("AddEvent is recorded at store time") { REQUIRE(conn.att_last_event == events::StopEvent); }
         }
         WHEN("Attempting to store event libhdbpp_compatibility::HdbppRemove")
         {
             REQUIRE_NOTHROW(tx.withEvent(libhdbpp_compatibility::HdbppRemove).store());
 
-            THEN("InsertEvent is recorded at store time") { REQUIRE(conn.att_last_event == events::RemoveEvent); }
+            THEN("AddEvent is recorded at store time") { REQUIRE(conn.att_last_event == events::RemoveEvent); }
         }
         WHEN("Attempting to store event libhdbpp_compatibility::HdbppInsertParam")
         {
             REQUIRE_NOTHROW(tx.withEvent(libhdbpp_compatibility::HdbppInsertParam).store());
 
-            THEN("InsertEvent is recorded at store time") { REQUIRE(conn.att_last_event == events::InsertParamEvent); }
+            THEN("AddEvent is recorded at store time") { REQUIRE(conn.att_last_event == events::InsertParamEvent); }
         }
         WHEN("Attempting to store event libhdbpp_compatibility::HdbppPause")
         {
             REQUIRE_NOTHROW(tx.withEvent(libhdbpp_compatibility::HdbppPause).store());
 
-            THEN("InsertEvent is recorded at store time") { REQUIRE(conn.att_last_event == events::PauseEvent); }
+            THEN("AddEvent is recorded at store time") { REQUIRE(conn.att_last_event == events::PauseEvent); }
         }
         WHEN("Attempting to store event libhdbpp_compatibility::HdbppUpdateTTL")
         {
             REQUIRE_NOTHROW(tx.withEvent(libhdbpp_compatibility::HdbppUpdateTTL).store());
 
-            THEN("InsertEvent is recorded at store time") { REQUIRE(conn.att_last_event == events::UpdateTTLEvent); }
+            THEN("AddEvent is recorded at store time") { REQUIRE(conn.att_last_event == events::UpdateTTLEvent); }
         }
     }
 }
