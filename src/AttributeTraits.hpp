@@ -48,7 +48,7 @@ public:
     AttributeTraits(AttributeTraits &&) = default;
     ~AttributeTraits() = default;
 
-    AttributeTraits(Tango::AttrWriteType write_type, Tango::AttrDataFormat format, unsigned int data_type) :
+    AttributeTraits(Tango::AttrWriteType write_type, Tango::AttrDataFormat format, Tango::CmdArgType data_type) :
         _attr_write_type(write_type),
         _attr_format(format),
         _attr_type(data_type)
@@ -66,7 +66,7 @@ public:
     bool hasReadData() const noexcept { return isReadOnly() || isReadWrite() || isReadWithWrite(); }
     bool hasWriteData() const noexcept { return isWriteOnly() || isReadWrite() || isReadWithWrite(); }
 
-    unsigned int type() const noexcept { return _attr_type; }
+    Tango::CmdArgType type() const noexcept { return _attr_type; }
     Tango::AttrWriteType writeType() const noexcept { return _attr_write_type; }
     Tango::AttrDataFormat formatType() const noexcept { return _attr_format; }
 
@@ -83,9 +83,9 @@ public:
     void print(std::ostream &os) const;
 
 private:
-    Tango::AttrWriteType _attr_write_type;
-    Tango::AttrDataFormat _attr_format;
-    unsigned int _attr_type;
+    Tango::AttrWriteType _attr_write_type = Tango::WT_UNKNOWN;
+    Tango::AttrDataFormat _attr_format = Tango::FMT_UNKNOWN;
+    Tango::CmdArgType _attr_type = Tango::DATA_TYPE_UNKNOWN;
 };
 
 } // namespace hdbpp

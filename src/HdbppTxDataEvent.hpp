@@ -134,7 +134,7 @@ template<typename Conn>
 template<typename T>
 void HdbppTxDataEvent<Conn>::doStore()
 {
-    auto value = [this](auto extractor, bool has_data) {
+    auto value = [this](auto extractor, bool has_data, const std::string &write_type) {
         // this is the return, a unique ptr potentially with a vector in
         auto value = make_unique<std::vector<T>>();
 
@@ -149,8 +149,8 @@ void HdbppTxDataEvent<Conn>::doStore()
             if (!extractor(*value))
             {
                 std::string msg {"Failed to extract the attribute data for attribute: [" +
-                    Base::attributeName().fullAttributeName() + "] and off type: [" +
-                    std::to_string(Base::attributeTraits().type()) + "]"};
+                    Base::attributeName().fullAttributeName() + "]. Type: [" +
+                    std::to_string(Base::attributeTraits().type()) + "], and write type [" + write_type + "]"};
 
                 spdlog::error("Error: {}", msg);
                 Tango::Except::throw_exception("Runtime Error", msg, LOCATION_INFO);
@@ -159,13 +159,16 @@ void HdbppTxDataEvent<Conn>::doStore()
         // log some more unusual conditions
         else if (Base::quality() == Tango::ATTR_INVALID)
         {
-            spdlog::trace("Quality is {} for attribute: [{}], no data extracted",
+            spdlog::trace("Quality is {} for attribute: [{}] (write type: {}), no data extracted",
                 Base::quality(),
-                Base::attributeName().fqdnAttributeName());
+                Base::attributeName().fqdnAttributeName(),
+                write_type);
         }
         else if (_dev_attr->is_empty())
         {
-            spdlog::trace("Attribute [{}] empty, no data extracted", Base::attributeName().fqdnAttributeName());
+            spdlog::debug("Attribute [{}] (write type: {}), empty, no data extracted",
+                Base::attributeName().fqdnAttributeName(),
+                write_type);
         }
 
         // release ownership of the unique_ptr back to the caller
@@ -178,10 +181,12 @@ void HdbppTxDataEvent<Conn>::doStore()
         HdbppTxBase<Conn>::attrNameForStorage(Base::attributeName()),
         Base::eventTime(),
         Base::quality(),
-        std::move(value(
-            [this](std::vector<T> &v) { return _dev_attr->extract_read(v); }, Base::attributeTraits().hasReadData())),
-        std::move(value(
-            [this](std::vector<T> &v) { return _dev_attr->extract_set(v); }, Base::attributeTraits().hasWriteData())),
+        std::move(value([this](std::vector<T> &v) { return _dev_attr->extract_read(v); },
+            Base::attributeTraits().hasReadData(),
+            "read")),
+        std::move(value([this](std::vector<T> &v) { return _dev_attr->extract_set(v); },
+            Base::attributeTraits().hasWriteData(),
+            "write")),
         Base::attributeTraits());
 }
 

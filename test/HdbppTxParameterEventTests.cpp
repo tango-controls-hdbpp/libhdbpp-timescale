@@ -59,10 +59,10 @@ class MockConnection : public ConnectionBase, public HdbppTxFactory<MockConnecti
 {
 public:
     // Enforced connection API from ConnectionBase
-    void connect(const string &) override { _conn_state = true; }
+    void connect(const string & /* connect_str */) override { _conn_state = true; }
     void disconnect() override { _conn_state = false; }
-    bool isOpen() const noexcept { return _conn_state; }
-    bool isClosed() const noexcept { return !isOpen(); }
+    bool isOpen() const noexcept override { return _conn_state; }
+    bool isClosed() const noexcept override { return !isOpen(); }
 
     // storage API
     void storeParameterEvent(const std::string &full_attr_name,
@@ -119,11 +119,13 @@ SCENARIO("Construct and store HdbppTxParameterEvent data without error", "[hdbpp
 {
     hdbpp_param_test::MockConnection conn;
 
-    struct timeval tv;
-    struct Tango::TimeVal tango_tv;
+    struct timeval tv
+    {};
+    struct Tango::TimeVal tango_tv
+    {};
 
     // ugly, how is this dealt with in Tango!?!
-    gettimeofday(&tv, NULL);
+    gettimeofday(&tv, nullptr);
     tango_tv.tv_sec = tv.tv_sec;
     tango_tv.tv_usec = tv.tv_usec;
     tango_tv.tv_nsec = 0;
@@ -168,11 +170,13 @@ SCENARIO("When attempting to store invalid HdbppTxParameterEvent states, errors 
 {
     hdbpp_param_test::MockConnection conn;
 
-    struct timeval tv;
-    struct Tango::TimeVal tango_tv;
+    struct timeval tv
+    {};
+    struct Tango::TimeVal tango_tv
+    {};
 
     // ugly, how is this dealt with in Tango!?!
-    gettimeofday(&tv, NULL);
+    gettimeofday(&tv, nullptr);
     tango_tv.tv_sec = tv.tv_sec;
     tango_tv.tv_usec = tv.tv_usec;
     tango_tv.tv_nsec = 0;
@@ -241,11 +245,13 @@ SCENARIO("HdbppTxParameterEvent Simulated exception received", "[hdbpp-tx][hdbpp
 {
     hdbpp_param_test::MockConnection conn;
 
-    struct timeval tv;
-    struct Tango::TimeVal tango_tv;
+    struct timeval tv
+    {};
+    struct Tango::TimeVal tango_tv
+    {};
 
     // ugly, how is this dealt with in Tango!?!
-    gettimeofday(&tv, NULL);
+    gettimeofday(&tv, nullptr);
     tango_tv.tv_sec = tv.tv_sec;
     tango_tv.tv_usec = tv.tv_usec;
     tango_tv.tv_nsec = 0;

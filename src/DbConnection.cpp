@@ -265,9 +265,17 @@ namespace pqxx_conn
 
         _logger->trace("Storing parameter event for attribute {}", full_attr_name);
 
-        //    _logger->trace(string("Parmater event data: \n\tevent_time {}, label {}, unit {}, standard_unit {}, ") +
-        //        string("display_unit {}, format {}, archive_rel_change {}, archive_abs_change {}, archive_period {}, description {}"),
-        //        event_time, label, unit, standard_unit, display_unit, format, archive_rel_change, archive_abs_change, description);
+        _logger->trace("Parmater event data: event_time {}, label {}, unit {}, standard_unit {}, display_unit {}, "
+                       "format {}, archive_rel_change {}, archive_abs_change {}, archive_period {}, description {}",
+            event_time,
+            label,
+            unit,
+            standard_unit,
+            display_unit,
+            format,
+            archive_rel_change,
+            archive_abs_change,
+            description);
 
         checkConnection(LOCATION_INFO);
         checkAttributeExists(full_attr_name, LOCATION_INFO);
@@ -327,8 +335,10 @@ namespace pqxx_conn
         assert(_error_desc_id_cache != nullptr);
         assert(_event_id_cache != nullptr);
 
-        _logger->trace(
-            "Storing error message event for attribute {}. Error message: \"{}\"", full_attr_name, error_msg);
+        _logger->trace("Storing error message event for attribute {}. Quality: {}. Error message: \"{}\"",
+            full_attr_name,
+            quality,
+            error_msg);
 
         checkConnection(LOCATION_INFO);
         checkAttributeExists(full_attr_name, LOCATION_INFO);
@@ -399,6 +409,8 @@ namespace pqxx_conn
 
         checkConnection(LOCATION_INFO);
         checkAttributeExists(full_attr_name, LOCATION_INFO);
+
+        _logger->trace("Fetching last history event for attribute: {}", full_attr_name);
 
         // the result
         string last_event;
@@ -546,8 +558,10 @@ namespace pqxx_conn
         {
             string msg {
                 "Connection to database is closed. Ensure it has been opened before trying to use the connection."};
+
             _logger->error(
                 "Error: The DbConnection is showing a closed connection status, open it before using store functions");
+
             _logger->error("Throwing connection error with message: \"{}\"", msg);
             Tango::Except::throw_exception("Connecion Error", msg, location);
         }
@@ -561,7 +575,7 @@ namespace pqxx_conn
         string full_msg {"The database transaction failed. " + msg};
         _logger->error("Error: An unexpected error occurred when trying to run the database query");
         _logger->error("Caught error at: {} Error: \"{}\"", location, what);
-        _logger->error("Error: Faild query: {}", query);
+        _logger->error("Error: Failed query: {}", query);
         _logger->error("Throwing storage error with message: \"{}\"", full_msg);
         Tango::Except::throw_exception("Storage Error", full_msg, location);
     }

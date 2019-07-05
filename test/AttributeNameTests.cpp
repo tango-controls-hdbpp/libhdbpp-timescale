@@ -156,11 +156,11 @@ SCENARIO("AttributeName supports fully qualified attribute name but no network d
             hints.ai_flags = AI_CANONNAME;
 
             struct addrinfo *result, *rp;
-            const int status = getaddrinfo(server_name.c_str(), NULL, &hints, &result);
+            const int status = getaddrinfo(server_name.c_str(), nullptr, &hints, &result);
 
             REQUIRE(status == 0);
 
-            for (rp = result; rp != NULL; rp = rp->ai_next)
+            for (rp = result; rp != nullptr; rp = rp->ai_next)
                 server_name_with_domain = string(rp->ai_canonname) +
                     attribute_name.tangoHost().substr(attribute_name.tangoHost().find(':', 0));
 
@@ -205,6 +205,8 @@ SCENARIO("AttributeName creation and clear patterns result in valid or empty Att
         }
         WHEN("Creating a third attribute via copy constructor")
         {
+            // checking copy constrctor, must make a local copy
+            // NOLINTNEXTLINE
             AttributeName attribute_name3(attribute_name1);
 
             THEN("Then the new attribute is equal to the copy constructor value")

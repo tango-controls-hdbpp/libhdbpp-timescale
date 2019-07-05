@@ -46,7 +46,7 @@ public:
         return static_cast<Derived<Conn> &>(*this);
     }
 
-    Derived<Conn> &withTraits(Tango::AttrWriteType write, Tango::AttrDataFormat format, unsigned int type)
+    Derived<Conn> &withTraits(Tango::AttrWriteType write, Tango::AttrDataFormat format, Tango::CmdArgType type)
     {
         _traits = AttributeTraits(write, format, type);
         _traits_set = true;

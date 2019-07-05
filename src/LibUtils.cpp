@@ -37,6 +37,7 @@ ostream &operator<<(ostream &os, Tango::AttrWriteType write_type)
         case Tango::WRITE: os << "WRITE"; return os;
         case Tango::READ_WRITE: os << "READ_WRITE"; return os;
         case Tango::READ_WITH_WRITE: os << "READ_WITH_WRITE"; return os;
+        case Tango::WT_UNKNOWN: os << "WT_UNKNOWN"; return os;
     }
 
     os << "UNKNOWN";
@@ -52,6 +53,7 @@ ostream &operator<<(ostream &os, Tango::AttrDataFormat format)
         case Tango::SPECTRUM: os << "SPECTRUM"; return os;
         case Tango::SCALAR: os << "SCALAR"; return os;
         case Tango::IMAGE: os << "IMAGE"; return os;
+        case Tango::FMT_UNKNOWN: os << "FMT_UNKNOWN"; return os;
     }
 
     os << "UNKNOWN";
@@ -60,7 +62,7 @@ ostream &operator<<(ostream &os, Tango::AttrDataFormat format)
 
 //=============================================================================
 //=============================================================================
-ostream &operator<<(ostream &os, Tango::AttributeDataType type)
+ostream &operator<<(ostream &os, Tango::CmdArgType type)
 {
     switch (type)
     {
@@ -78,6 +80,7 @@ ostream &operator<<(ostream &os, Tango::AttributeDataType type)
         case Tango::DEV_STATE: os << "DEV_STATE"; return os;
         case Tango::DEV_ENUM: os << "DEV_ENUM"; return os;
         case Tango::DEV_ENCODED: os << "DEV_ENCODED"; return os;
+        case Tango::DATA_TYPE_UNKNOWN: os << "DATA_TYPE_UNKNOWN"; return os;
     }
 
     os << "UNKNOWN";

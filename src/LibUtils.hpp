@@ -49,7 +49,7 @@ auto operator<<(std::ostream &os, const T &t) -> decltype(t.print(os), static_ca
 // some output operators for tango enums
 std::ostream &operator<<(std::ostream &os, Tango::AttrWriteType write_type);
 std::ostream &operator<<(std::ostream &os, Tango::AttrDataFormat format);
-std::ostream &operator<<(std::ostream &os, Tango::AttributeDataType type);
+std::ostream &operator<<(std::ostream &os, Tango::CmdArgType type);
 std::ostream &operator<<(std::ostream &os, Tango::AttrQuality quality);
 
 // SPDLOG config and setup

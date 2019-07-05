@@ -35,7 +35,7 @@ class MockConnection : public ConnectionBase, public HdbppTxFactory<MockConnecti
 {
 public:
     // Enforced connection API from ConnectionBase
-    void connect(const string &) override { _conn_state = true; }
+    void connect(const string & /* connect_str */) override { _conn_state = true; }
     void disconnect() override { _conn_state = false; }
     bool isOpen() const noexcept override { return _conn_state; }
     bool isClosed() const noexcept override { return !isOpen(); }

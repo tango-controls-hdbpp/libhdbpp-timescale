@@ -69,7 +69,7 @@ public:
      * @param event_data_type HDB event data for the attribute.
      * @throw Tango::DevFailed
      */
-    virtual void insert_param_Attr(Tango::AttrConfEventData *conf_event_data, HdbEventDataType event_data_type);
+    virtual void insert_param_Attr(Tango::AttrConfEventData *conf_event_data, HdbEventDataType /* event_data_type */);
 
     /**
      * @brief Add and configure an attribute in the database.
@@ -85,7 +85,8 @@ public:
      * @param  ttl The time to live in hour, 0 for infinity
      * @throw Tango::DevFailed
      */
-    virtual void configure_Attr(std::string fqdn_attr_name, int type, int format, int write_type, unsigned int ttl);
+    virtual void configure_Attr(
+        std::string fqdn_attr_name, int type, int format, int write_type, unsigned int /* ttl */);
 
     /**
      * @brief Update the ttl value for an attribute.

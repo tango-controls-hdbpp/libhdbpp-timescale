@@ -42,7 +42,7 @@ using namespace hdbpp_test::data_gen;
 namespace psql_conn_test
 {
 // define it globally so we can use its cache during tests
-QueryBuilder query_builder;
+QueryBuilder TestQueryBuilder;
 
 void clearTable(pqxx::connection &conn, const string &table_name)
 {
@@ -65,8 +65,9 @@ template<Tango::CmdArgType Type>
 tuple<vector<typename TangoTypeTraits<Type>::type>, vector<typename TangoTypeTraits<Type>::type>> storeTestEventData(
     DbConnection &conn, const AttributeTraits &traits, int quality = Tango::ATTR_VALID)
 {
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
+    struct timeval tv
+    {};
+    gettimeofday(&tv, nullptr);
     double event_time = tv.tv_sec + tv.tv_usec / 1.0e6;
 
     auto r = generateData<Type>(traits, !traits.hasReadData());
@@ -100,11 +101,7 @@ bool compareData<float>(float lhs, float rhs)
 
     // Find the largest
     float largest = (rhs > lhs) ? rhs : lhs;
-
-    if (diff <= largest * 0.0001)
-        return true;
-
-    return false;
+    return (diff <= largest * 0.0001);
 }
 
 // double needs a specialised compare to ensure its close enough
@@ -118,11 +115,7 @@ bool compareData<double>(double lhs, double rhs)
 
     // Find the largest
     double largest = (rhs > lhs) ? rhs : lhs;
-
-    if (diff <= largest * 0.0001)
-        return true;
-
-    return false;
+    return (diff <= largest * 0.0001);
 }
 
 template<typename T>
@@ -167,8 +160,8 @@ void checkStoreTestEventData(
 {
     pqxx::work tx {test_conn};
 
-    auto data_row(
-        tx.exec1("SELECT * FROM " + query_builder.tableName(traits) + " ORDER BY " + DAT_COL_DATA_TIME + " LIMIT 1"));
+    auto data_row(tx.exec1(
+        "SELECT * FROM " + TestQueryBuilder.tableName(traits) + " ORDER BY " + DAT_COL_DATA_TIME + " LIMIT 1"));
 
     auto attr_row(tx.exec1("SELECT * FROM " + CONF_TABLE_NAME));
     tx.commit();
@@ -529,8 +522,9 @@ SCENARIO("Storing History Events in a disconnected state", "[db-access][hdbpp-db
 
 SCENARIO("Storing Parameter Events in the database", "[db-access][hdbpp-db-access][db-connection][psql]")
 {
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
+    struct timeval tv
+    {};
+    gettimeofday(&tv, nullptr);
     double event_time = tv.tv_sec + tv.tv_usec / 1.0e6;
 
     DbConnection conn;
@@ -619,11 +613,12 @@ SCENARIO("Storing Parameter Events in the database", "[db-access][hdbpp-db-acces
     if (test_conn.is_open())
         test_conn.disconnect();
 }
-/*
+
 SCENARIO("Storing Parameter Events in a disconnected state", "[db-access][hdbpp-db-access][db-connection][psql]")
 {
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
+    struct timeval tv
+    {};
+    gettimeofday(&tv, nullptr);
     double event_time = tv.tv_sec + tv.tv_usec / 1.0e6;
 
     DbConnection conn;
@@ -672,8 +667,9 @@ SCENARIO("Storing Parameter Events in a disconnected state", "[db-access][hdbpp-
 
 SCENARIO("Storing event data which is invalid", "[db-access][hdbpp-db-access][db-connection][psql]")
 {
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
+    struct timeval tv
+    {};
+    gettimeofday(&tv, nullptr);
     double event_time = tv.tv_sec + tv.tv_usec / 1.0e6;
 
     DbConnection conn;
@@ -702,7 +698,7 @@ SCENARIO("Storing event data which is invalid", "[db-access][hdbpp-db-access][db
             {
                 {
                     pqxx::work tx {test_conn};
-                    auto data_row(tx.exec1("SELECT * FROM " + psql_conn_test::query_builder.tableName(traits) +
+                    auto data_row(tx.exec1("SELECT * FROM " + psql_conn_test::TestQueryBuilder.tableName(traits) +
                         " ORDER BY " + DAT_COL_DATA_TIME + " LIMIT 1"));
                     auto attr_row(tx.exec1("SELECT * FROM " + CONF_TABLE_NAME));
                     tx.commit();
@@ -728,7 +724,7 @@ SCENARIO("Storing event data which is invalid", "[db-access][hdbpp-db-access][db
             {
                 {
                     pqxx::work tx {test_conn};
-                    auto data_row(tx.exec1("SELECT * FROM " + psql_conn_test::query_builder.tableName(traits) +
+                    auto data_row(tx.exec1("SELECT * FROM " + psql_conn_test::TestQueryBuilder.tableName(traits) +
                         " ORDER BY " + DAT_COL_DATA_TIME + " LIMIT 1"));
                     auto attr_row(tx.exec1("SELECT * FROM " + CONF_TABLE_NAME));
                     tx.commit();
@@ -747,7 +743,7 @@ SCENARIO("Storing event data which is invalid", "[db-access][hdbpp-db-access][db
     if (test_conn.is_open())
         test_conn.disconnect();
 }
-*/
+
 TEST_CASE("Storing event data of all Tango type combinations in the database",
     "[db-access][hdbpp-db-access][db-connection][psql]")
 {
@@ -758,10 +754,10 @@ TEST_CASE("Storing event data of all Tango type combinations in the database",
     pqxx::connection test_conn(postgres_db::HdbppConnectionString);
     psql_conn_test::clearTable(test_conn, CONF_TABLE_NAME);
 
-    vector<unsigned int> types {
-        //        Tango::DEV_BOOLEAN,
-        //      Tango::DEV_DOUBLE,
-        //    Tango::DEV_FLOAT,
+    vector<Tango::CmdArgType> types {
+        Tango::DEV_BOOLEAN,
+        Tango::DEV_DOUBLE,
+        Tango::DEV_FLOAT,
         Tango::DEV_STRING,
         Tango::DEV_LONG,
         Tango::DEV_ULONG,
@@ -876,6 +872,8 @@ TEST_CASE("Storing event data of all Tango type combinations in the database",
                             //test_conn, traits, psql_conn_test::storeTestEventData<hdbpp_encoded_t>(conn, traits));
 
                             //break;
+
+                        default: throw "Should not be here!";
                     }
                 }
             }
@@ -894,8 +892,9 @@ SCENARIO("Storing data events in a disconnected state", "[db-access][hdbpp-db-ac
     DbConnection conn;
     REQUIRE_NOTHROW(conn.connect(postgres_db::HdbppConnectionString));
 
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
+    struct timeval tv
+    {};
+    gettimeofday(&tv, nullptr);
     double event_time = tv.tv_sec + tv.tv_usec / 1.0e6;
 
     // used for verification
@@ -935,8 +934,9 @@ SCENARIO("Storing data events as errors", "[db-access][hdbpp-db-access][db-conne
 {
     string error_msg = "A Test Error, 'Message'";
 
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
+    struct timeval tv
+    {};
+    gettimeofday(&tv, nullptr);
     double event_time = tv.tv_sec + tv.tv_usec / 1.0e6;
 
     DbConnection conn;
@@ -963,7 +963,7 @@ SCENARIO("Storing data events as errors", "[db-access][hdbpp-db-access][db-conne
                 {
                     pqxx::work tx {test_conn};
 
-                    auto data_row(tx.exec1("SELECT * FROM " + psql_conn_test::query_builder.tableName(traits) +
+                    auto data_row(tx.exec1("SELECT * FROM " + psql_conn_test::TestQueryBuilder.tableName(traits) +
                         " ORDER BY " + DAT_COL_DATA_TIME + " LIMIT 1"));
 
                     auto attr_row(tx.exec1("SELECT * FROM " + CONF_TABLE_NAME));
@@ -978,7 +978,7 @@ SCENARIO("Storing data events as errors", "[db-access][hdbpp-db-access][db-conne
             }
             AND_WHEN("A second error is stored with the same message")
             {
-                gettimeofday(&tv, NULL);
+                gettimeofday(&tv, nullptr);
                 event_time = tv.tv_sec + tv.tv_usec / 1.0e6;
 
                 REQUIRE_NOTHROW(
@@ -989,7 +989,7 @@ SCENARIO("Storing data events as errors", "[db-access][hdbpp-db-access][db-conne
                     {
                         pqxx::work tx {test_conn};
 
-                        auto data_row(tx.exec1("SELECT * FROM " + psql_conn_test::query_builder.tableName(traits) +
+                        auto data_row(tx.exec1("SELECT * FROM " + psql_conn_test::TestQueryBuilder.tableName(traits) +
                             " ORDER BY " + DAT_COL_DATA_TIME + " LIMIT 1"));
 
                         auto attr_row(tx.exec1("SELECT * FROM " + CONF_TABLE_NAME));
@@ -1078,7 +1078,7 @@ SCENARIO("When no events have been stored, no error is thrown requesting the las
             THEN("No error occurs, and no event is returned")
             {
                 REQUIRE_NOTHROW(event = conn.fetchLastHistoryEvent(TestAttrFQDName));
-                REQUIRE(event == "");
+                REQUIRE(event.empty());
             }
         }
     }

@@ -38,10 +38,10 @@ class MockConnection : public ConnectionBase, public HdbppTxFactory<MockConnecti
 {
 public:
     // Enforced connection API from ConnectionBase
-    void connect(const string &) override { _conn_state = true; }
+    void connect(const string & /* connect_str */) override { _conn_state = true; }
     void disconnect() override { _conn_state = false; }
-    bool isOpen() const noexcept { return _conn_state; }
-    bool isClosed() const noexcept { return !isOpen(); }
+    bool isOpen() const noexcept override { return _conn_state; }
+    bool isClosed() const noexcept override { return !isOpen(); }
 
     // storage API
     void storeHistoryEvent(const string &full_attr_name, const std::string &event)
@@ -54,7 +54,7 @@ public:
         event_seq.push_back(event);
     }
 
-    std::string fetchLastHistoryEvent(const string &) { return att_last_event; }
+    std::string fetchLastHistoryEvent(const string & /* unused */) { return att_last_event; }
 
     // expose the results of the store function so they can be checked
     // in the results

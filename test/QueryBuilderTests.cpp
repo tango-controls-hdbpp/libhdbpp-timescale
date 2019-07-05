@@ -109,7 +109,7 @@ SCENARIO("Creating valid insert queries with storeDataEventErrorQuery()", "[quer
 
 TEST_CASE("Creating valid database table names for types", "[query-string]")
 {
-    vector<unsigned int> types {Tango::DEV_DOUBLE,
+    vector<Tango::CmdArgType> types {Tango::DEV_DOUBLE,
         Tango::DEV_FLOAT,
         Tango::DEV_STRING,
         Tango::DEV_LONG,
@@ -149,10 +149,10 @@ TEST_CASE("Creating valid database table names for types", "[query-string]")
     {
         for (unsigned int f = 0; f < format_types.size(); ++f)
         {
-            for (unsigned int w = 0; w < write_types.size(); ++w)
+            for (auto &write_type : write_types)
             {
                 QueryBuilder query_builder;
-                AttributeTraits traits {write_types[w], format_types[f], types[t]};
+                AttributeTraits traits {write_type, format_types[f], types[t]};
 
                 DYNAMIC_SECTION("Testing table name for traits: " << traits)
                 {

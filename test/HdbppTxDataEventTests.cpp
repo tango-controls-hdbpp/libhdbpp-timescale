@@ -90,6 +90,8 @@ Tango::DeviceAttribute createDeviceAttribute(const AttributeTraits &traits)
 
                 //case Tango::DEV_ENCODED:
                 //return Tango::DeviceAttribute(TestAttrFQDName.c_str(), *generateSpectrumData<Tango::DEV_ENCODED>(false, size_x + size_y));
+
+            default: throw "Should never be here!";
         }
 
         throw runtime_error("Control should not reach here");
@@ -120,10 +122,10 @@ class MockConnection : public ConnectionBase, public HdbppTxFactory<MockConnecti
 {
 public:
     // Enforced connection API from ConnectionBase
-    void connect(const string &) override { _conn_state = true; }
+    void connect(const string & /* connect_string */) override { _conn_state = true; }
     void disconnect() override { _conn_state = false; }
-    bool isOpen() const noexcept { return _conn_state; }
-    bool isClosed() const noexcept { return !isOpen(); }
+    bool isOpen() const noexcept override { return _conn_state; }
+    bool isClosed() const noexcept override { return !isOpen(); }
 
     template<typename T>
     void storeDataEvent(const std::string &full_attr_name,
@@ -152,7 +154,7 @@ public:
     // storeDataEvent/storeDataEventError results
     string att_name;
     double att_event_time = 0;
-    Tango::AttrQuality att_quality;
+    Tango::AttrQuality att_quality = Tango::ATTR_INVALID;
     AttributeTraits att_traits;
     int data_size_r = -1;
     int data_size_w = -1;
@@ -169,9 +171,11 @@ SCENARIO("Construct a valid HdbppTxDataEvent data event for storage", "[hdbpp-tx
     hdbpp_data_event_test::MockConnection conn;
 
     // ugly, how is this dealt with in Tango!?!
-    struct timeval tv;
-    struct Tango::TimeVal tango_tv;
-    gettimeofday(&tv, NULL);
+    struct timeval tv
+    {};
+    struct Tango::TimeVal tango_tv
+    {};
+    gettimeofday(&tv, nullptr);
     tango_tv.tv_sec = tv.tv_sec;
     tango_tv.tv_usec = tv.tv_usec;
     tango_tv.tv_nsec = 0;
@@ -234,9 +238,11 @@ SCENARIO("An invalid quality results in an HdbppTxDataEvent event with no data",
     hdbpp_data_event_test::MockConnection conn;
 
     // ugly, how is this dealt with in Tango!?!
-    struct timeval tv;
-    struct Tango::TimeVal tango_tv;
-    gettimeofday(&tv, NULL);
+    struct timeval tv
+    {};
+    struct Tango::TimeVal tango_tv
+    {};
+    gettimeofday(&tv, nullptr);
     tango_tv.tv_sec = tv.tv_sec;
     tango_tv.tv_usec = tv.tv_usec;
     tango_tv.tv_nsec = 0;
@@ -276,9 +282,11 @@ SCENARIO("A DeviceAttribute with no data results in an HdbppTxDataEvent event wi
     hdbpp_data_event_test::MockConnection conn;
 
     // ugly, how is this dealt with in Tango!?!
-    struct timeval tv;
-    struct Tango::TimeVal tango_tv;
-    gettimeofday(&tv, NULL);
+    struct timeval tv
+    {};
+    struct Tango::TimeVal tango_tv
+    {};
+    gettimeofday(&tv, nullptr);
     tango_tv.tv_sec = tv.tv_sec;
     tango_tv.tv_usec = tv.tv_usec;
     tango_tv.tv_nsec = 0;
@@ -318,9 +326,11 @@ SCENARIO(
     hdbpp_data_event_test::MockConnection conn;
 
     // ugly, how is this dealt with in Tango!?!
-    struct timeval tv;
-    struct Tango::TimeVal tango_tv;
-    gettimeofday(&tv, NULL);
+    struct timeval tv
+    {};
+    struct Tango::TimeVal tango_tv
+    {};
+    gettimeofday(&tv, nullptr);
     tango_tv.tv_sec = tv.tv_sec;
     tango_tv.tv_usec = tv.tv_usec;
     tango_tv.tv_nsec = 0;
@@ -397,16 +407,17 @@ TEST_CASE("Creating HdbppTxDataEvents for each tango type and storing them", "[d
     hdbpp_data_event_test::MockConnection conn;
 
     // ugly, how is this dealt with in Tango!?!
-    struct timeval tv;
-    struct Tango::TimeVal tango_tv;
-    gettimeofday(&tv, NULL);
+    struct timeval tv
+    {};
+    struct Tango::TimeVal tango_tv
+    {};
+    gettimeofday(&tv, nullptr);
     tango_tv.tv_sec = tv.tv_sec;
     tango_tv.tv_usec = tv.tv_usec;
     tango_tv.tv_nsec = 0;
 
-    // TODO remaining types
-    vector<unsigned int> types {
-        //Tango::DEV_BOOLEAN#,
+    vector<Tango::CmdArgType> types {
+        Tango::DEV_BOOLEAN,
         Tango::DEV_DOUBLE,
         Tango::DEV_FLOAT,
         Tango::DEV_STRING,
@@ -466,9 +477,11 @@ SCENARIO("HdbppTxDataEvent Simulated exception received", "[hdbpp-tx][hdbpp-tx-d
     hdbpp_data_event_test::MockConnection conn;
 
     // ugly, how is this dealt with in Tango!?!
-    struct timeval tv;
-    struct Tango::TimeVal tango_tv;
-    gettimeofday(&tv, NULL);
+    struct timeval tv
+    {};
+    struct Tango::TimeVal tango_tv
+    {};
+    gettimeofday(&tv, nullptr);
     tango_tv.tv_sec = tv.tv_sec;
     tango_tv.tv_usec = tv.tv_usec;
     tango_tv.tv_nsec = 0;

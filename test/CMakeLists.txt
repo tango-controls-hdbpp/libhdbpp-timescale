@@ -37,4 +37,5 @@ target_compile_definitions(unit-tests PRIVATE -DDEBUG_ENABLED)
 set_target_properties(unit-tests 
     PROPERTIES 
         LINK_FLAGS "-Wl,--no-undefined"
+        CXX_CLANG_TIDY ${DO_CLANG_TIDY}
         CXX_STANDARD 14)
