@@ -96,7 +96,7 @@ public:
     // expose the results of the store function so they can be checked
     // in the results
     string att_name;
-    double att_event_time;
+    double att_event_time = 0;
     string att_label;
     string att_unit;
     string att_standard_unit;

@@ -267,5 +267,11 @@ public:
 template<>
 struct string_traits<uint8_t> : internal::builtin_traits<uint8_t>
 {};
+
+// Specialization for Tango::DevState char, which was not included in pqxx,
+// this becomes an int16_t in the database
+template<>
+struct string_traits<Tango::DevState> : internal::builtin_traits<Tango::DevState>
+{};
 } // namespace pqxx
 #endif // _PQXX_EXTENSION_HPP

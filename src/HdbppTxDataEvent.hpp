@@ -53,8 +53,8 @@ private:
     // perform the actual storage for the type, this template helps
     // resolve the fact we are storing many different types via this tx
     // class
-    template<typename T>
-    void doStore();
+    template<typename T, typename ReadFunctor, typename WriteFunctor>
+    void doStore(ReadFunctor extract_read, WriteFunctor extract_write);
 
     // the device attribute to extract the value from
     Tango::DeviceAttribute *_dev_attr = nullptr;
@@ -93,27 +93,47 @@ HdbppTxDataEvent<Conn> &HdbppTxDataEvent<Conn>::store()
     // disable is_empty exception
     _dev_attr->reset_exceptions(Tango::DeviceAttribute::isempty_flag);
 
+    auto read_extractor = [this](auto &v) { return _dev_attr->extract_read(v); };
+    auto write_extractor = [this](auto &v) { return _dev_attr->extract_set(v); };
+
     // translate the Tango Type into a C++ type via templates, inside
     // doStore the data is extracted and then stored
     switch (Base::attributeTraits().type())
     {
-        case Tango::DEV_BOOLEAN: this->template doStore<bool>(); break;
-        case Tango::DEV_SHORT: this->template doStore<int16_t>(); break;
-        case Tango::DEV_LONG: this->template doStore<int32_t>(); break;
-        case Tango::DEV_LONG64: this->template doStore<int64_t>(); break;
-        case Tango::DEV_FLOAT: this->template doStore<float>(); break;
-        case Tango::DEV_DOUBLE: this->template doStore<double>(); break;
-        case Tango::DEV_UCHAR: this->template doStore<uint8_t>(); break;
-        case Tango::DEV_USHORT: this->template doStore<uint16_t>(); break;
-        case Tango::DEV_ULONG: this->template doStore<uint32_t>(); break;
-        case Tango::DEV_ULONG64: this->template doStore<uint64_t>(); break;
-        case Tango::DEV_STRING: this->template doStore<std::string>(); break;
-        case Tango::DEV_STATE:
-            this->template doStore<int32_t>();
-            break;
-            //case Tango::DEV_ENUM: this->template doStore<?>(); break;
-            //case Tango::DEV_ENCODED: this->template doStore<vector<uint8_t>>(); break;
+        case Tango::DEV_BOOLEAN: this->template doStore<bool>(read_extractor, write_extractor); break;
+        case Tango::DEV_SHORT: this->template doStore<int16_t>(read_extractor, write_extractor); break;
+        case Tango::DEV_LONG: this->template doStore<int32_t>(read_extractor, write_extractor); break;
+        case Tango::DEV_LONG64: this->template doStore<int64_t>(read_extractor, write_extractor); break;
+        case Tango::DEV_FLOAT: this->template doStore<float>(read_extractor, write_extractor); break;
+        case Tango::DEV_DOUBLE: this->template doStore<double>(read_extractor, write_extractor); break;
+        case Tango::DEV_UCHAR: this->template doStore<uint8_t>(read_extractor, write_extractor); break;
+        case Tango::DEV_USHORT: this->template doStore<uint16_t>(read_extractor, write_extractor); break;
+        case Tango::DEV_ULONG: this->template doStore<uint32_t>(read_extractor, write_extractor); break;
+        case Tango::DEV_ULONG64: this->template doStore<uint64_t>(read_extractor, write_extractor); break;
+        case Tango::DEV_STRING: this->template doStore<std::string>(read_extractor, write_extractor); break;
 
+        case Tango::DEV_STATE: 
+            if (Base::attributeTraits().formatType() == Tango::SCALAR)
+            {
+                auto state_scalar_read_extractor = [this](auto &v) {
+                    Tango::DevState state;
+                    bool read_state = ((*_dev_attr) >> state);
+
+                    if (read_state)
+                        v.push_back(state);
+
+                    return read_state;
+                };
+
+                this->template doStore<Tango::DevState>(state_scalar_read_extractor, write_extractor);
+            }
+            else
+                this->template doStore<Tango::DevState>(read_extractor, write_extractor); 
+
+            break;
+
+        //case Tango::DEV_ENUM: this->template doStoreEnum<?>(); break;
+        //case Tango::DEV_ENCODED: this->template doStoreEncoded<vector<uint8_t>>(); break;
         default:
             std::string msg {
                 "HdbppTxDataEvent built for unsupported type: " + std::to_string(Base::attributeTraits().type()) +
@@ -131,9 +151,11 @@ HdbppTxDataEvent<Conn> &HdbppTxDataEvent<Conn>::store()
 //=============================================================================
 //=============================================================================
 template<typename Conn>
-template<typename T>
-void HdbppTxDataEvent<Conn>::doStore()
+template<typename T, typename ReadFunctor, typename WriteFunctor>
+void HdbppTxDataEvent<Conn>::doStore(ReadFunctor extract_read, WriteFunctor extract_write)
 {
+    // this is the general extractor algorithm, it is primed for a means to do the
+    // actual extraction, the split allows some variation in types to be dealt with.
     auto value = [this](auto extractor, bool has_data, const std::string &write_type) {
         // this is the return, a unique ptr potentially with a vector in
         auto value = make_unique<std::vector<T>>();
@@ -148,12 +170,18 @@ void HdbppTxDataEvent<Conn>::doStore()
             // the unique_ptr as a signal to following functions there is no data
             if (!extractor(*value))
             {
-                std::string msg {"Failed to extract the attribute data for attribute: [" +
-                    Base::attributeName().fullAttributeName() + "]. Type: [" +
-                    std::to_string(Base::attributeTraits().type()) + "], and write type [" + write_type + "]"};
+                std::stringstream msg;
 
-                spdlog::error("Error: {}", msg);
-                Tango::Except::throw_exception("Runtime Error", msg, LOCATION_INFO);
+                msg << "Failed to extract the attribute data for attribute: ["
+                    << Base::attributeName().fullAttributeName()
+                    << "]. Traits: ["
+                    << Base::attributeTraits()
+                    << "], and read action ["
+                    << write_type 
+                    << "]";
+
+                spdlog::error("Error: {}", msg.str());
+                Tango::Except::throw_exception("Runtime Error", msg.str(), LOCATION_INFO);
             }
         }
         // log some more unusual conditions
@@ -181,12 +209,8 @@ void HdbppTxDataEvent<Conn>::doStore()
         HdbppTxBase<Conn>::attrNameForStorage(Base::attributeName()),
         Base::eventTime(),
         Base::quality(),
-        std::move(value([this](std::vector<T> &v) { return _dev_attr->extract_read(v); },
-            Base::attributeTraits().hasReadData(),
-            "read")),
-        std::move(value([this](std::vector<T> &v) { return _dev_attr->extract_set(v); },
-            Base::attributeTraits().hasWriteData(),
-            "write")),
+        std::move(value(extract_read, Base::attributeTraits().hasReadData(), "read")),
+        std::move(value(extract_write, Base::attributeTraits().hasWriteData(), "set")),
         Base::attributeTraits());
 }
 
