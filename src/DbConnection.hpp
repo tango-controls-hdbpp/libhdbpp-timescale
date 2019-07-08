@@ -92,6 +92,7 @@ namespace pqxx_conn
 
         // fetch API
         std::string fetchLastHistoryEvent(const std::string &full_attr_name);
+        bool fetchAttributeArchived(const std::string &full_attr_name);
 
     private:
         void storeEvent(const std::string &full_attr_name, const std::string &event);
@@ -118,9 +119,18 @@ namespace pqxx_conn
 
         // cache some database entries to speed up lookup, for example
         // various string ids and type ids
+
+        // map the attribute database id to its name
         std::unique_ptr<ColumnCache<int, std::string>> _conf_id_cache;
+
+        // map error id to its message
         std::unique_ptr<ColumnCache<int, std::string>> _error_desc_id_cache;
+
+        // map event id to its string
         std::unique_ptr<ColumnCache<int, std::string>> _event_id_cache;
+
+        // map attribute id to type id
+        std::unique_ptr<ColumnCache<int, int>> _type_id_cache;
 
         // logging subsystem
         std::shared_ptr<spdlog::logger> _logger;

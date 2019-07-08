@@ -86,6 +86,10 @@ namespace pqxx_conn
         assert(_error_desc_id_cache != nullptr);
         assert(_event_id_cache != nullptr);
 
+        _conf_id_cache->clear();
+        _error_desc_id_cache->clear();
+        _event_id_cache->clear();
+
         // disconnect as requested, this will stop access to all functions
         _conn->disconnect();
 
@@ -125,6 +129,7 @@ namespace pqxx_conn
         {
             string msg {
                 "This attribute [" + full_attr_name + "] already exists in the database. Unable to add it again."};
+                
             _logger->error("Error: The attribute already exists in the database and can not be added again");
             _logger->error("Attribute details. Name: {} traits: {}", full_attr_name, traits);
             _logger->error("Throwing consistency error with message: \"{}\"", msg);
@@ -447,6 +452,26 @@ namespace pqxx_conn
         }
 
         return last_event;
+    }
+
+    //=============================================================================
+    //=============================================================================
+    bool DbConnection::fetchAttributeArchived(const std::string &full_attr_name)
+    {
+        assert(!full_attr_name.empty());
+        assert(_conn != nullptr);
+        assert(_conf_id_cache != nullptr);
+        assert(_error_desc_id_cache != nullptr);
+        assert(_event_id_cache != nullptr);
+
+        if (_conf_id_cache->valueExists(full_attr_name))
+        {
+            _logger->trace("Query attribute archived returns true for: {}", full_attr_name);
+            return true;
+        }
+
+        _logger->trace("Query attribute archived returns false for: {}", full_attr_name);
+        return false;
     }
 
     //=============================================================================

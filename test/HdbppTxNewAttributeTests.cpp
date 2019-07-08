@@ -61,6 +61,28 @@ public:
         att_traits = traits;
     }
 
+    void storeHistoryEvent(const string & /* full_attr_name */, const std::string &event)
+    {
+        new_att_last_event = event;
+
+        if (event == events::RemoveEvent)
+            att_archived = false;
+
+        if (event == events::AddEvent)
+            att_archived = true;
+    }
+
+    std::string fetchLastHistoryEvent(const string & /* unused */) 
+    { 
+        return new_att_last_event; 
+    }
+
+    bool fetchAttributeArchived(const std::string & /* unused */)
+    {
+        return att_archived;
+    }
+
+
     // expose the results of the store function so they can be checked
     // in the results
 
@@ -71,8 +93,10 @@ public:
     string new_att_family;
     string new_att_member;
     string new_att_name;
+    string new_att_last_event;
     AttributeTraits att_traits;
     bool store_attribute_triggers_ex = false;
+    bool att_archived = false;
 
 private:
     // connection is always open unless test specifies closed
@@ -92,7 +116,7 @@ SCENARIO("Construct and store HdbppTxNewAttribute data without error", "[hdbpp-t
         {
             tx.withName(TestAttrFQDName).withTraits(Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE);
 
-            THEN("Then storing the transaction does not raise an exception")
+            THEN("Then storing the HdbppTxNewAttribute object does not raise an exception")
             {
                 REQUIRE_NOTHROW(tx.store());
                 REQUIRE(tx.result());
@@ -110,6 +134,49 @@ SCENARIO("Construct and store HdbppTxNewAttribute data without error", "[hdbpp-t
                     REQUIRE(conn.new_att_member == TestAttrMember);
                     REQUIRE(conn.new_att_name == TestAttrName);
                     REQUIRE(conn.att_traits == AttributeTraits(Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE));
+                }
+            }
+        }
+    }
+}
+
+SCENARIO("Storing an HdbppTxNewAttribute generates history events", "[hdbpp-tx][hdbpp-tx-new-attribute]")
+{
+    hdbpp_new_attr_test::MockConnection conn;
+
+    GIVEN("An HdbppTxNewAttribute object with no data set")
+    {
+        auto tx = conn.createTx<HdbppTxNewAttribute>();
+
+        WHEN("Storing a valid HdbppTxNewAttribute object")
+        {
+            tx.withName(TestAttrFQDName).withTraits(Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE);
+            REQUIRE_NOTHROW(tx.store());
+            REQUIRE(tx.result());
+
+            THEN("Then the store generates an AddEvent")
+            {
+                REQUIRE(conn.new_att_last_event == events::AddEvent);
+            }
+            AND_WHEN("Attempting to store the HdbppTxNewAttribute object again")
+            {
+                conn.new_att_full_attr_name = "";
+
+                THEN("No attribute is stored and an exception is thrown")
+                {
+                    REQUIRE_THROWS(tx.store());
+                    REQUIRE(conn.new_att_full_attr_name.empty());
+                }
+            }
+            AND_WHEN("Removing the attribute before trying to store again")
+            {
+                conn.storeHistoryEvent("", events::RemoveEvent);
+                REQUIRE_NOTHROW(tx.store());
+                REQUIRE(tx.result());
+
+                THEN("Attribute is stored and an AddEvent is generated")
+                {
+                    REQUIRE(conn.new_att_last_event == events::AddEvent);
                 }
             }
         }
@@ -167,7 +234,7 @@ SCENARIO("HdbppTxNewAttribute Simulated exception received", "[hdbpp-tx][hdbpp-t
                       .withName(TestAttrFQDName)
                       .withTraits(Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE);
 
-        WHEN("Storing the transaction with a triggered exception set")
+        WHEN("Storing the HdbppTxNewAttribute object with a triggered exception set")
         {
             conn.store_attribute_triggers_ex = true;
 

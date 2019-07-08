@@ -87,14 +87,54 @@ HdbppTxNewAttribute<Conn> &HdbppTxNewAttribute<Conn>::store()
         Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
 
-    // attempt to store the new attribute into the database
-    HdbppTxBase<Conn>::connection().storeAttribute(HdbppTxBase<Conn>::attrNameForStorage(_attr_name),
-        _attr_name.tangoHostWithDomain(),
-        _attr_name.domain(),
-        _attr_name.family(),
-        _attr_name.member(),
-        _attr_name.name(),
-        _traits);
+    // check if this attribute exists in the database already, if it does
+    // then it may have been removed and this is a case of readding it
+    if (HdbppTxBase<Conn>::connection().fetchAttributeArchived(HdbppTxBase<Conn>::attrNameForStorage(_attr_name)))
+    {
+        // so it exists in the database, check the last event was a remove
+        auto last_event = HdbppTxBase<Conn>::connection().fetchLastHistoryEvent(
+            HdbppTxBase<Conn>::attrNameForStorage(_attr_name));
+
+        // ok, this attribute is being readded after a remove, better check its
+        // the same type
+        if (last_event == events::RemoveEvent)
+        {
+            spdlog::info("Adding an attribute {} that is in a removed state, this is valid", _attr_name);
+
+            // record the event as added again
+            HdbppTxBase<Conn>::connection()
+                .template createTx<HdbppTxHistoryEvent>()
+                .withName(_attr_name.fqdnAttributeName())
+                .withEvent(events::AddEvent)
+                .store();
+        }
+        else
+        {
+            // someone is trying to add the same attribute over and over?
+            std::string msg {"The attribute already exists in the database. Can not add again. "};
+            spdlog::error("Error: {} For attribute {}", msg, _attr_name);
+            Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
+        }
+    }
+    else
+    {
+        spdlog::info("Adding a new attribute to the system: {}", _attr_name);
+
+        // attempt to store the new attribute into the database for the first time
+        HdbppTxBase<Conn>::connection().storeAttribute(HdbppTxBase<Conn>::attrNameForStorage(_attr_name),
+            _attr_name.tangoHostWithDomain(),
+            _attr_name.domain(),
+            _attr_name.family(),
+            _attr_name.member(),
+            _attr_name.name(),
+            _traits);
+
+        HdbppTxBase<Conn>::connection()
+            .template createTx<HdbppTxHistoryEvent>()
+            .withName(_attr_name.fqdnAttributeName())
+            .withEvent(events::AddEvent)
+            .store();
+    }
 
     // set the result to true to indicate success
     HdbppTxBase<Conn>::setResult(true);

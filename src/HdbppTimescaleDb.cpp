@@ -209,8 +209,6 @@ void HdbppTimescaleDb::configure_Attr(
     assert(!fqdn_attr_name.empty());
     spdlog::trace("Insert new attribute request for attribute: {}", fqdn_attr_name);
 
-    // TODO check if type already exists and if its changed type?
-
     // forgive the ugly casting, but for some reason we receive the enum values
     // already cast to ints, we cast them back to enums so they function as
     // enums again
@@ -220,9 +218,6 @@ void HdbppTimescaleDb::configure_Attr(
             static_cast<Tango::AttrDataFormat>(format),
             static_cast<Tango::CmdArgType>(type))
         .store();
-
-    // add an add event
-    Conn->createTx<HdbppTxHistoryEvent>().withName(fqdn_attr_name).withEvent(events::AddEvent).store();
 }
 
 //=============================================================================
