@@ -162,9 +162,9 @@ SCENARIO("Storing an HdbppTxNewAttribute generates history events", "[hdbpp-tx][
             {
                 conn.new_att_full_attr_name = "";
 
-                THEN("No attribute is stored and an exception is thrown")
+                THEN("No attribute is stored and no exception is thrown")
                 {
-                    REQUIRE_THROWS(tx.store());
+                    REQUIRE_NOTHROW(tx.store());
                     REQUIRE(conn.new_att_full_attr_name.empty());
                 }
             }

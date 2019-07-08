@@ -29,6 +29,7 @@
 
 #include <memory>
 #include <vector>
+#include <locale>
 
 using namespace std;
 
@@ -85,6 +86,16 @@ string HdbppTimescaleDbUtils::getConfigParam(const map<string, string> &conf, co
 //=============================================================================
 HdbppTimescaleDb::HdbppTimescaleDb(const vector<string> &configuration)
 {
+    auto param_to_lower = [](auto param) {
+        locale loc;
+        string tmp;
+
+        for(string::size_type i = 0; i < param.length(); ++i)
+            tmp += tolower(param[i], loc);
+
+        return tmp;
+    };
+
     // convert the config vector to a map
     auto libhdb_conf = HdbppTimescaleDbUtils::extractConfig(configuration, "=");
 
@@ -94,7 +105,9 @@ HdbppTimescaleDb::HdbppTimescaleDb(const vector<string> &configuration)
     auto log_console = HdbppTimescaleDbUtils::getConfigParam(libhdb_conf, "log_console", false);
     auto log_file_name = HdbppTimescaleDbUtils::getConfigParam(libhdb_conf, "log_file_name", false);
 
-    LogConfigurator::initLogging(log_file == "true", log_console == "true", log_file_name);
+    LogConfigurator::initLogging(
+        param_to_lower(log_file) == "true", 
+        param_to_lower(log_console) == "true", log_file_name);
 
     if (level == "ERROR" || level.empty())
         LogConfigurator::setLoggingLevel(spdlog::level::level_enum::err);
@@ -151,8 +164,10 @@ void HdbppTimescaleDb::insert_Attr(Tango::EventData *event_data, HdbEventDataTyp
         // now time data is passed for errors, so create some
         struct timeval tv
         {};
+
         struct Tango::TimeVal tango_tv
         {};
+
         gettimeofday(&tv, nullptr);
         tango_tv.tv_sec = tv.tv_sec;
         tango_tv.tv_usec = tv.tv_usec;

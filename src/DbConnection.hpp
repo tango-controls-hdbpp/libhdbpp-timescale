@@ -54,6 +54,8 @@ namespace pqxx_conn
         bool isClosed() const noexcept override { return !isOpen(); }
 
         // storage API
+
+        // store a new attribute and its conf data into the database
         void storeAttribute(const std::string &full_attr_name,
             const std::string &control_system,
             const std::string &att_domain,
@@ -62,8 +64,10 @@ namespace pqxx_conn
             const std::string &att_name,
             const AttributeTraits &traits);
 
+        // store a new history event in the database
         void storeHistoryEvent(const std::string &full_attr_name, const std::string &event);
 
+        // store a parameter event in the database
         void storeParameterEvent(const std::string &full_attr_name,
             double event_time,
             const std::string &label,
@@ -76,6 +80,9 @@ namespace pqxx_conn
             const std::string &archive_period,
             const std::string &description);
 
+        // this function can store the event data for all the supported 
+        // tango types. The data is passed in a unique pointer so the function
+        // can take ownership of the data.
         template<typename T>
         void storeDataEvent(const std::string &full_attr_name,
             double event_time,
@@ -84,6 +91,7 @@ namespace pqxx_conn
             std::unique_ptr<vector<T>> value_w,
             const AttributeTraits &traits);
 
+        // store a data error event in the data tables
         void storeDataEventError(const std::string &full_attr_name,
             double event_time,
             int quality,
@@ -91,7 +99,11 @@ namespace pqxx_conn
             const AttributeTraits &traits);
 
         // fetch API
+
+        // get the last history event for the given attribute
         std::string fetchLastHistoryEvent(const std::string &full_attr_name);
+
+        // check if the given attribute is stored in the database
         bool fetchAttributeArchived(const std::string &full_attr_name);
 
     private:

@@ -112,8 +112,10 @@ HdbppTxNewAttribute<Conn> &HdbppTxNewAttribute<Conn>::store()
         {
             // someone is trying to add the same attribute over and over?
             std::string msg {"The attribute already exists in the database. Can not add again. "};
-            spdlog::error("Error: {} For attribute {}", msg, _attr_name);
-            Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
+            spdlog::warn("Warning: {} For attribute {}", msg, _attr_name);
+
+            // black box behaviour, this is not an error, in fact, the system
+            // built top assume this undocumented behaviour!!
         }
     }
     else
