@@ -164,8 +164,8 @@ namespace data_gen
     template<>
     struct TangoTypeTraits<Tango::DEV_STATE>
     {
-        using type = int32_t;
-        using array = std::unique_ptr<std::vector<int32_t>>;
+        using type = Tango::DevState;
+        using array = std::unique_ptr<std::vector<Tango::DevState>>;
     };
 
     template<Tango::CmdArgType Type>

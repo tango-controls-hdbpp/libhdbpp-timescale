@@ -104,6 +104,12 @@ namespace pqxx_conn
         {
             return is_array ? "bytea[]" : "bytea";
         }
+
+        template<>
+        std::string postgresCast<Tango::DevState>(bool is_array)
+        {
+            return is_array ? "int4[]" : "int4";
+        }
     } // namespace query_utils
 
     //=============================================================================

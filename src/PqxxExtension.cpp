@@ -41,5 +41,21 @@ namespace internal
         return builtin_traits<int16_t>::to_string(Obj & 0xFF);
     }
 
+    template<>
+    // NOLINTNEXTLINE
+    void builtin_traits<Tango::DevState>::from_string(const char Str[], Tango::DevState &Obj)
+    {
+        int32_t tmp;
+        builtin_traits<int32_t>::from_string(Str, tmp);
+        Obj = static_cast<Tango::DevState>(tmp);
+    }
+
+    template<>
+    // NOLINTNEXTLINE
+    string builtin_traits<Tango::DevState>::to_string(Tango::DevState Obj)
+    {
+        return builtin_traits<int32_t>::to_string(static_cast<int32_t>(Obj));
+    }
+
 } // namespace internal
 } // namespace pqxx

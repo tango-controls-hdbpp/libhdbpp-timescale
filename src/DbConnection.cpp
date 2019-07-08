@@ -275,6 +275,7 @@ namespace pqxx_conn
             format,
             archive_rel_change,
             archive_abs_change,
+            archive_period,
             description);
 
         checkConnection(LOCATION_INFO);

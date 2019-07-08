@@ -26,6 +26,16 @@
 #include <pqxx/strconv>
 #include <vector>
 
+#include <tango.h>
+
+// why is it OmniORB (via Tango)) and Pqxx define these types in different ways? Perhaps
+// its the autotools used to configure them? Either way, we do not use tango, just need its
+// types, so undef and allow the Pqxx defines to take precedent
+#undef HAVE_UNISTD_H
+#undef HAVE_SYS_TYPES_H
+#undef HAVE_SYS_TIME_H
+#undef HAVE_POLL
+
 namespace pqxx
 {
 namespace internal
@@ -34,6 +44,12 @@ namespace internal
     struct type_name<uint8_t>
     {
         static constexpr const char *value = "uint8_t";
+    };
+
+    template<>
+    struct type_name<Tango::DevState>
+    {
+        static constexpr const char *value = "Tango::DevState";
     };
 
     template<>
@@ -268,8 +284,7 @@ template<>
 struct string_traits<uint8_t> : internal::builtin_traits<uint8_t>
 {};
 
-// Specialization for Tango::DevState char, which was not included in pqxx,
-// this becomes an int16_t in the database
+// Specialization for Tango::DevState, its stored as an init32_t
 template<>
 struct string_traits<Tango::DevState> : internal::builtin_traits<Tango::DevState>
 {};
