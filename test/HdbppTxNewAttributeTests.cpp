@@ -82,6 +82,10 @@ public:
         return att_archived;
     }
 
+    AttributeTraits fetchAttributeTraits(const std::string & /* unused */)
+    {
+        return att_traits;
+    }
 
     // expose the results of the store function so they can be checked
     // in the results
@@ -219,6 +223,37 @@ SCENARIO("When attempting to store invalid HdbppTxNewAttribute states, errors ar
             {
                 REQUIRE_THROWS(tx.store());
                 REQUIRE(!tx.result());
+            }
+        }
+    }
+}
+
+
+SCENARIO("HdbppTxNTrying to add an attribute with different type information causes an exception", "[hdbpp-tx][hdbpp-tx-new-attribute]")
+{
+    hdbpp_new_attr_test::MockConnection conn;
+
+    GIVEN("A test attribute in the database")
+    {
+        auto tx = conn.createTx<HdbppTxNewAttribute>()
+                      .withName(TestAttrFQDName)
+                      .withTraits(Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE)
+                      .store();
+
+        WHEN("Trying to store again with the same type")
+        {
+            THEN("No exception is raised") 
+            { 
+                REQUIRE_NOTHROW(tx.store()); 
+            }
+            AND_WHEN("Changing the type and storing again")
+            {
+                tx.withTraits(Tango::READ, Tango::SPECTRUM, Tango::DEV_DOUBLE);
+
+                THEN("An exception is raised")
+                {
+                    REQUIRE_THROWS(tx.store());
+                }
             }
         }
     }

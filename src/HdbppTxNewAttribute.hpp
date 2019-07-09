@@ -91,11 +91,23 @@ HdbppTxNewAttribute<Conn> &HdbppTxNewAttribute<Conn>::store()
     // then it may have been removed and this is a case of readding it
     if (HdbppTxBase<Conn>::connection().fetchAttributeArchived(HdbppTxBase<Conn>::attrNameForStorage(_attr_name)))
     {
-        // so it exists in the database, check the last event was a remove
+        // so it exists in the database, check its stored type
+        AttributeTraits stored_traits = 
+            HdbppTxBase<Conn>::connection().fetchAttributeTraits(HdbppTxBase<Conn>::attrNameForStorage(_attr_name));
+
+        if (stored_traits != _traits)
+        {
+            // oops, someone is trying to change types, this is not supported yet, throw an exception
+            std::string msg {"Attempt to add an attribute which is already stored with different type information."};
+            spdlog::error("Error: {} For attribute {}", msg, _attr_name);
+            Tango::Except::throw_exception("Consistency Error", msg, LOCATION_INFO);
+        }
+
+        // so it exists in the database and its type matches... check the last event
         auto last_event = HdbppTxBase<Conn>::connection().fetchLastHistoryEvent(
             HdbppTxBase<Conn>::attrNameForStorage(_attr_name));
 
-        // ok, this attribute is being readded after a remove, better check its
+        // ok, this attribute is being re-added after a remove, better check its
         // the same type
         if (last_event == events::RemoveEvent)
         {
@@ -114,8 +126,8 @@ HdbppTxNewAttribute<Conn> &HdbppTxNewAttribute<Conn>::store()
             std::string msg {"The attribute already exists in the database. Can not add again. "};
             spdlog::warn("Warning: {} For attribute {}", msg, _attr_name);
 
-            // black box behaviour, this is not an error, in fact, the system
-            // built top assume this undocumented behaviour!!
+            // bad black box behaviour, this is not an error, in fact, the system
+            // built top assume this undocumented behaviour!! 
         }
     }
     else

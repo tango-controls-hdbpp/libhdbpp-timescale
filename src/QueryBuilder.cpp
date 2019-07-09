@@ -306,6 +306,36 @@ namespace pqxx_conn
 
     //=============================================================================
     //=============================================================================
+    const std::string &QueryBuilder::fetchAttributeTraitsQuery()
+    {
+        // clang-format off
+        static string query = 
+            "SELECT " + 
+                CONF_TYPE_COL_TYPE_NUM + "," +
+                CONF_FORMAT_COL_FORMAT_NUM + "," +
+                CONF_WRITE_COL_WRITE_NUM + " " +
+            "FROM " +
+	            CONF_TYPE_TABLE_NAME + " t," +
+                CONF_FORMAT_TABLE_NAME + " f," + 
+                CONF_WRITE_TABLE_NAME + " w, " + 
+                "(SELECT " + 
+                    CONF_COL_TYPE_ID + "," + 
+                    CONF_COL_FORMAT_TYPE_ID + "," + 
+                    CONF_COL_WRITE_TYPE_ID + " " + 
+                "FROM " + CONF_TABLE_NAME + " WHERE " + CONF_COL_NAME + "=$1) AS tmp " + 
+            "WHERE " +
+	            "t." + CONF_COL_TYPE_ID + "=tmp." + CONF_COL_TYPE_ID + " " +
+            "AND " +  
+            	"f." + CONF_COL_FORMAT_TYPE_ID + "=tmp." + CONF_COL_FORMAT_TYPE_ID + " " +
+            "AND " + 
+	            "w." + CONF_COL_WRITE_TYPE_ID  + "=tmp." + CONF_COL_WRITE_TYPE_ID;
+        // clang-format on
+
+        return query;
+    }
+
+    //=============================================================================
+    //=============================================================================
     string QueryBuilder::tableName(const AttributeTraits &traits)
     {
         return SCHEMA_TABLE_PREFIX +

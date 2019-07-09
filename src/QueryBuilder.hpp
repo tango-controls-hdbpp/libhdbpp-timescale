@@ -72,6 +72,7 @@ namespace pqxx_conn
     const string StoreDataEventError = "StoreDataEventError";
     const string StoreErrorString = "StoreErrorString";
     const string FetchLastHistoryEvent = "FetchLastHistoryEvent";
+    const string FetchAttributeTraits = "FetchAttributeTraits";
     const string FetchValue = "FetchKey";
     const string FetchAllValues = "FetchAllKeys";
 
@@ -107,6 +108,7 @@ namespace pqxx_conn
         static const std::string &storeParameterEventQuery();
         static const std::string &storeErrorQuery();
         static const std::string &fetchLastHistoryEventQuery();
+        static const std::string &fetchAttributeTraitsQuery();
 
         // these query strings are built each call, so are cached in the class
         // that requests them

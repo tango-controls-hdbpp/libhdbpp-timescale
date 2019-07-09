@@ -476,6 +476,54 @@ namespace pqxx_conn
 
     //=============================================================================
     //=============================================================================
+    AttributeTraits DbConnection::fetchAttributeTraits(const std::string &full_attr_name)
+    {
+        assert(!full_attr_name.empty());
+        assert(_conn != nullptr);
+        assert(_conf_id_cache != nullptr);
+        assert(_error_desc_id_cache != nullptr);
+        assert(_event_id_cache != nullptr);
+
+        checkConnection(LOCATION_INFO);
+        checkAttributeExists(full_attr_name, LOCATION_INFO);
+
+        _logger->trace("Fetching attribute traits for attribute: {}", full_attr_name);
+
+        AttributeTraits traits;
+
+        try
+        {
+            // create and perform a pqxx transaction
+            traits = pqxx::perform([&full_attr_name, this]() {
+                // declare the work transaction for this event
+                pqxx::work tx {(*_conn), FetchAttributeTraits};
+
+                if (!tx.prepared(FetchAttributeTraits).exists())
+                    tx.conn().prepare(FetchAttributeTraits, QueryBuilder::fetchAttributeTraitsQuery());
+
+                // always expect a result, the type info for the attribute
+                auto row = tx.exec_prepared1(FetchLastHistoryEvent, full_attr_name);
+
+                // expect a result, so construct an AttributeTraits from it
+                return AttributeTraits{
+                    static_cast<Tango::AttrWriteType>(row.at(2).as<int>()), 
+                    static_cast<Tango::AttrDataFormat>(row.at(1).as<int>()), 
+                    static_cast<Tango::CmdArgType>(row.at(0).as<int>())};
+            });
+        }
+        catch (const pqxx::pqxx_exception &ex)
+        {
+            handlePqxxError("Can not return last event for attribute [" + full_attr_name + "].",
+                ex.base().what(),
+                QueryBuilder::fetchLastHistoryEventQuery(),
+                LOCATION_INFO);
+        }
+
+        return traits;
+    }
+
+    //=============================================================================
+    //=============================================================================
     void DbConnection::storeEvent(const std::string &full_attr_name, const std::string &event)
     {
         _logger->debug("Event {} needs adding to the database, by request of attribute {}", event, full_attr_name);
@@ -589,7 +637,7 @@ namespace pqxx_conn
                 "Error: The DbConnection is showing a closed connection status, open it before using store functions");
 
             _logger->error("Throwing connection error with message: \"{}\"", msg);
-            Tango::Except::throw_exception("Connecion Error", msg, location);
+            Tango::Except::throw_exception("Connection Error", msg, location);
         }
     }
 

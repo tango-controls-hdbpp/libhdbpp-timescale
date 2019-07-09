@@ -106,6 +106,9 @@ namespace pqxx_conn
         // check if the given attribute is stored in the database
         bool fetchAttributeArchived(const std::string &full_attr_name);
 
+        // get the AttributeTraits of an attribute in the database
+        AttributeTraits fetchAttributeTraits(const std::string &full_attr_name);
+
     private:
         void storeEvent(const std::string &full_attr_name, const std::string &event);
         void storeErrorMsg(const std::string &full_attr_name, const std::string &error_msg);
