@@ -1109,3 +1109,32 @@ SCENARIO("The archive of an attribute can be determined by fetchAttributeArchive
         }
     }
 }
+
+SCENARIO("The type traits of an archived attribute can be returned by fetchAttributeTraits()",
+    "[db-access][hdbpp-db-access][db-connection][psql]")
+{
+    DbConnection conn;
+    REQUIRE_NOTHROW(conn.connect(postgres_db::HdbppConnectionString));
+
+    // used for verification
+    pqxx::connection test_conn(postgres_db::HdbppConnectionString);
+    psql_conn_test::clearTable(test_conn, CONF_TABLE_NAME);
+
+    GIVEN("A valid DbConnection connected to a hdbpp database with a attribute in it")
+    {
+        WHEN("Requesting the attribute type traits state of the test attribute")
+        {
+            THEN("An exception is thrown") { REQUIRE_THROWS(conn.fetchAttributeTraits(TestAttrFQDName)); }
+        }
+        WHEN("Storing the test attribute and checking its type traits")
+        {
+            AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE};
+            psql_conn_test::storeTestAttribute(conn, traits);
+
+            THEN("The returned traits match those it was stored with")
+            {
+                REQUIRE(conn.fetchAttributeTraits(TestAttrFQDName) == traits);
+            }
+        }
+    }
+}

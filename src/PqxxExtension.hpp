@@ -24,7 +24,6 @@
 #include <iostream>
 #include <pqxx/pqxx>
 #include <pqxx/strconv>
-#include <tango.h>
 #include <vector>
 
 // why is it OmniORB (via Tango)) and Pqxx define these types in different ways? Perhaps
@@ -34,6 +33,8 @@
 #undef HAVE_SYS_TYPES_H
 #undef HAVE_SYS_TIME_H
 #undef HAVE_POLL
+
+#include <tango.h>
 
 namespace pqxx
 {

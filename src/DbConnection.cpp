@@ -502,7 +502,7 @@ namespace pqxx_conn
                     tx.conn().prepare(FetchAttributeTraits, QueryBuilder::fetchAttributeTraitsQuery());
 
                 // always expect a result, the type info for the attribute
-                auto row = tx.exec_prepared1(FetchLastHistoryEvent, full_attr_name);
+                auto row = tx.exec_prepared1(FetchAttributeTraits, full_attr_name);
 
                 // expect a result, so construct an AttributeTraits from it
                 return AttributeTraits {static_cast<Tango::AttrWriteType>(row.at(2).as<int>()),
@@ -512,9 +512,9 @@ namespace pqxx_conn
         }
         catch (const pqxx::pqxx_exception &ex)
         {
-            handlePqxxError("Can not return last event for attribute [" + full_attr_name + "].",
+            handlePqxxError("Can not return the type traits for attribute [" + full_attr_name + "].",
                 ex.base().what(),
-                QueryBuilder::fetchLastHistoryEventQuery(),
+                QueryBuilder::fetchAttributeTraitsQuery(),
                 LOCATION_INFO);
         }
 

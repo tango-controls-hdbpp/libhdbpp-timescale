@@ -92,7 +92,7 @@ HdbppTxNewAttribute<Conn> &HdbppTxNewAttribute<Conn>::store()
     if (HdbppTxBase<Conn>::connection().fetchAttributeArchived(HdbppTxBase<Conn>::attrNameForStorage(_attr_name)))
     {
         // so it exists in the database, check its stored type
-        AttributeTraits stored_traits = HdbppTxBase<Conn>::connection().fetchAttributeTraits(
+        auto stored_traits = HdbppTxBase<Conn>::connection().fetchAttributeTraits(
             HdbppTxBase<Conn>::attrNameForStorage(_attr_name));
 
         if (stored_traits != _traits)
