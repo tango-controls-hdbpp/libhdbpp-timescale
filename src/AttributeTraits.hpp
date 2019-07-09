@@ -79,10 +79,7 @@ public:
             _attr_type == other.type();
     }
 
-    bool operator!=(const AttributeTraits &other) const
-    {
-        return !(*this == other);
-    }
+    bool operator!=(const AttributeTraits &other) const { return !(*this == other); }
 
     /// @brief Print the AttributeTraits object to the stream
     void print(std::ostream &os) const;

@@ -72,20 +72,11 @@ public:
             att_archived = true;
     }
 
-    std::string fetchLastHistoryEvent(const string & /* unused */) 
-    { 
-        return new_att_last_event; 
-    }
+    std::string fetchLastHistoryEvent(const string & /* unused */) { return new_att_last_event; }
 
-    bool fetchAttributeArchived(const std::string & /* unused */)
-    {
-        return att_archived;
-    }
+    bool fetchAttributeArchived(const std::string & /* unused */) { return att_archived; }
 
-    AttributeTraits fetchAttributeTraits(const std::string & /* unused */)
-    {
-        return att_traits;
-    }
+    AttributeTraits fetchAttributeTraits(const std::string & /* unused */) { return att_traits; }
 
     // expose the results of the store function so they can be checked
     // in the results
@@ -158,10 +149,7 @@ SCENARIO("Storing an HdbppTxNewAttribute generates history events", "[hdbpp-tx][
             REQUIRE_NOTHROW(tx.store());
             REQUIRE(tx.result());
 
-            THEN("Then the store generates an AddEvent")
-            {
-                REQUIRE(conn.new_att_last_event == events::AddEvent);
-            }
+            THEN("Then the store generates an AddEvent") { REQUIRE(conn.new_att_last_event == events::AddEvent); }
             AND_WHEN("Attempting to store the HdbppTxNewAttribute object again")
             {
                 conn.new_att_full_attr_name = "";
@@ -228,8 +216,8 @@ SCENARIO("When attempting to store invalid HdbppTxNewAttribute states, errors ar
     }
 }
 
-
-SCENARIO("HdbppTxNTrying to add an attribute with different type information causes an exception", "[hdbpp-tx][hdbpp-tx-new-attribute]")
+SCENARIO("HdbppTxNTrying to add an attribute with different type information causes an exception",
+    "[hdbpp-tx][hdbpp-tx-new-attribute]")
 {
     hdbpp_new_attr_test::MockConnection conn;
 
@@ -242,18 +230,12 @@ SCENARIO("HdbppTxNTrying to add an attribute with different type information cau
 
         WHEN("Trying to store again with the same type")
         {
-            THEN("No exception is raised") 
-            { 
-                REQUIRE_NOTHROW(tx.store()); 
-            }
+            THEN("No exception is raised") { REQUIRE_NOTHROW(tx.store()); }
             AND_WHEN("Changing the type and storing again")
             {
                 tx.withTraits(Tango::READ, Tango::SPECTRUM, Tango::DEV_DOUBLE);
 
-                THEN("An exception is raised")
-                {
-                    REQUIRE_THROWS(tx.store());
-                }
+                THEN("An exception is raised") { REQUIRE_THROWS(tx.store()); }
             }
         }
     }

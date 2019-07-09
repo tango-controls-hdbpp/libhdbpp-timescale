@@ -24,9 +24,8 @@
 #include <iostream>
 #include <pqxx/pqxx>
 #include <pqxx/strconv>
-#include <vector>
-
 #include <tango.h>
+#include <vector>
 
 // why is it OmniORB (via Tango)) and Pqxx define these types in different ways? Perhaps
 // its the autotools used to configure them? Either way, we do not use tango, just need its

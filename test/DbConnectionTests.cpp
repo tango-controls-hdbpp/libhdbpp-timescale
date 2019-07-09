@@ -1084,7 +1084,8 @@ SCENARIO("When no events have been stored, no error is thrown requesting the las
     }
 }
 
-SCENARIO("The archive of an attribute can be determined by fetchAttributeArchived()", "[db-access][hdbpp-db-access][db-connection][psql]")
+SCENARIO("The archive of an attribute can be determined by fetchAttributeArchived()",
+    "[db-access][hdbpp-db-access][db-connection][psql]")
 {
     DbConnection conn;
     REQUIRE_NOTHROW(conn.connect(postgres_db::HdbppConnectionString));
@@ -1097,20 +1098,14 @@ SCENARIO("The archive of an attribute can be determined by fetchAttributeArchive
     {
         WHEN("Requesting the archive state of the test attribute")
         {
-            THEN("The archive state is false")
-            {
-                REQUIRE(!conn.fetchAttributeArchived(TestAttrFQDName));
-            }
+            THEN("The archive state is false") { REQUIRE(!conn.fetchAttributeArchived(TestAttrFQDName)); }
         }
         WHEN("Storing the test attribute and checking its archive state")
         {
             AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE};
             psql_conn_test::storeTestAttribute(conn, traits);
 
-            THEN("The archive state is true")
-            {
-                REQUIRE(conn.fetchAttributeArchived(TestAttrFQDName));
-            }
+            THEN("The archive state is true") { REQUIRE(conn.fetchAttributeArchived(TestAttrFQDName)); }
         }
     }
 }

@@ -27,9 +27,9 @@
 #include "HdbppTxParameterEvent.hpp"
 #include "LibUtils.hpp"
 
+#include <locale>
 #include <memory>
 #include <vector>
-#include <locale>
 
 using namespace std;
 
@@ -90,7 +90,7 @@ HdbppTimescaleDb::HdbppTimescaleDb(const vector<string> &configuration)
         locale loc;
         string tmp;
 
-        for(string::size_type i = 0; i < param.length(); ++i)
+        for (string::size_type i = 0; i < param.length(); ++i)
             tmp += tolower(param[i], loc);
 
         return tmp;
@@ -106,8 +106,7 @@ HdbppTimescaleDb::HdbppTimescaleDb(const vector<string> &configuration)
     auto log_file_name = HdbppTimescaleDbUtils::getConfigParam(libhdb_conf, "log_file_name", false);
 
     LogConfigurator::initLogging(
-        param_to_lower(log_file) == "true", 
-        param_to_lower(log_console) == "true", log_file_name);
+        param_to_lower(log_file) == "true", param_to_lower(log_console) == "true", log_file_name);
 
     if (level == "ERROR" || level.empty())
         LogConfigurator::setLoggingLevel(spdlog::level::level_enum::err);

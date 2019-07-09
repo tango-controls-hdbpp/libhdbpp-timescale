@@ -80,7 +80,7 @@ namespace pqxx_conn
             const std::string &archive_period,
             const std::string &description);
 
-        // this function can store the event data for all the supported 
+        // this function can store the event data for all the supported
         // tango types. The data is passed in a unique pointer so the function
         // can take ownership of the data.
         template<typename T>

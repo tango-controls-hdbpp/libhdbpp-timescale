@@ -129,7 +129,7 @@ namespace pqxx_conn
         {
             string msg {
                 "This attribute [" + full_attr_name + "] already exists in the database. Unable to add it again."};
-                
+
             _logger->error("Error: The attribute already exists in the database and can not be added again");
             _logger->error("Attribute details. Name: {} traits: {}", full_attr_name, traits);
             _logger->error("Throwing consistency error with message: \"{}\"", msg);
@@ -505,9 +505,8 @@ namespace pqxx_conn
                 auto row = tx.exec_prepared1(FetchLastHistoryEvent, full_attr_name);
 
                 // expect a result, so construct an AttributeTraits from it
-                return AttributeTraits{
-                    static_cast<Tango::AttrWriteType>(row.at(2).as<int>()), 
-                    static_cast<Tango::AttrDataFormat>(row.at(1).as<int>()), 
+                return AttributeTraits {static_cast<Tango::AttrWriteType>(row.at(2).as<int>()),
+                    static_cast<Tango::AttrDataFormat>(row.at(1).as<int>()),
                     static_cast<Tango::CmdArgType>(row.at(0).as<int>())};
             });
         }

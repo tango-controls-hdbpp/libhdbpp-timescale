@@ -112,7 +112,7 @@ HdbppTxDataEvent<Conn> &HdbppTxDataEvent<Conn>::store()
         case Tango::DEV_ULONG64: this->template doStore<uint64_t>(read_extractor, write_extractor); break;
         case Tango::DEV_STRING: this->template doStore<std::string>(read_extractor, write_extractor); break;
 
-        case Tango::DEV_STATE: 
+        case Tango::DEV_STATE:
             if (Base::attributeTraits().formatType() == Tango::SCALAR)
             {
                 auto state_scalar_read_extractor = [this](auto &v) {
@@ -128,7 +128,7 @@ HdbppTxDataEvent<Conn> &HdbppTxDataEvent<Conn>::store()
                 this->template doStore<Tango::DevState>(state_scalar_read_extractor, write_extractor);
             }
             else
-                this->template doStore<Tango::DevState>(read_extractor, write_extractor); 
+                this->template doStore<Tango::DevState>(read_extractor, write_extractor);
 
             break;
 
@@ -173,12 +173,8 @@ void HdbppTxDataEvent<Conn>::doStore(ReadFunctor extract_read, WriteFunctor extr
                 std::stringstream msg;
 
                 msg << "Failed to extract the attribute data for attribute: ["
-                    << Base::attributeName().fullAttributeName()
-                    << "]. Traits: ["
-                    << Base::attributeTraits()
-                    << "], and read action ["
-                    << write_type 
-                    << "]";
+                    << Base::attributeName().fullAttributeName() << "]. Traits: [" << Base::attributeTraits()
+                    << "], and read action [" << write_type << "]";
 
                 spdlog::error("Error: {}", msg.str());
                 Tango::Except::throw_exception("Runtime Error", msg.str(), LOCATION_INFO);

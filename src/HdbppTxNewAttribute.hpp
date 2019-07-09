@@ -92,8 +92,8 @@ HdbppTxNewAttribute<Conn> &HdbppTxNewAttribute<Conn>::store()
     if (HdbppTxBase<Conn>::connection().fetchAttributeArchived(HdbppTxBase<Conn>::attrNameForStorage(_attr_name)))
     {
         // so it exists in the database, check its stored type
-        AttributeTraits stored_traits = 
-            HdbppTxBase<Conn>::connection().fetchAttributeTraits(HdbppTxBase<Conn>::attrNameForStorage(_attr_name));
+        AttributeTraits stored_traits = HdbppTxBase<Conn>::connection().fetchAttributeTraits(
+            HdbppTxBase<Conn>::attrNameForStorage(_attr_name));
 
         if (stored_traits != _traits)
         {
@@ -127,7 +127,7 @@ HdbppTxNewAttribute<Conn> &HdbppTxNewAttribute<Conn>::store()
             spdlog::warn("Warning: {} For attribute {}", msg, _attr_name);
 
             // bad black box behaviour, this is not an error, in fact, the system
-            // built top assume this undocumented behaviour!! 
+            // built top assume this undocumented behaviour!!
         }
     }
     else
