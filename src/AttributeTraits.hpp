@@ -35,11 +35,6 @@
 
 namespace hdbpp
 {
-/// @class AttributeTraits
-/// @brief Represents The combined traits for a Tango Attribute.
-/// @details
-/// The combined traits for a Tango Attribute and gives a series of convientent
-/// accessors to work with the traits
 class AttributeTraits
 {
 public:
@@ -53,6 +48,9 @@ public:
         _attr_format(format),
         _attr_type(data_type)
     {}
+
+    bool isValid() const noexcept;
+    bool isInvalid() const noexcept { return !isValid(); }
 
     bool isArray() const noexcept { return _attr_format == Tango::SPECTRUM; }
     bool isScalar() const noexcept { return _attr_format == Tango::SCALAR; }
@@ -82,7 +80,7 @@ public:
     bool operator!=(const AttributeTraits &other) const { return !(*this == other); }
 
     /// @brief Print the AttributeTraits object to the stream
-    void print(std::ostream &os) const;
+    void print(std::ostream &os) const noexcept;
 
 private:
     Tango::AttrWriteType _attr_write_type = Tango::WT_UNKNOWN;

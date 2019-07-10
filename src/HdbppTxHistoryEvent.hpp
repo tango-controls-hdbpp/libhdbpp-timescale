@@ -103,14 +103,18 @@ HdbppTxHistoryEvent<Conn> &HdbppTxHistoryEvent<Conn>::store()
     }
     if (_event.empty())
     {
-        std::string msg {"The event string is reporting empty. Unable to complete the transaction."};
-        spdlog::error("Error: {} For attribute {}", msg, _attr_name);
+        std::string msg {"The event string is reporting empty. Unable to complete the transaction. For attribute" +
+            _attr_name.fqdnAttributeName()};
+
+        spdlog::error("Error: {}", msg);
         Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
     else if (HdbppTxBase<Conn>::connection().isClosed())
     {
-        std::string msg {"The connection is reporting it is closed. Unable to store event."};
-        spdlog::error("Error: {} For attribute {}", msg, _attr_name);
+        std::string msg {"The connection is reporting it is closed. Unable to store event. For attribute" +
+            _attr_name.fqdnAttributeName()};
+
+        spdlog::error("Error: {}", msg);
         Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
 
@@ -125,7 +129,7 @@ HdbppTxHistoryEvent<Conn> &HdbppTxHistoryEvent<Conn>::store()
         // check the last event was a StartEvent
         if (last_event == events::StartEvent)
         {
-            spdlog::trace("Detected a double: {} event for attribute: {}, storing a {}: before second {}:",
+            spdlog::trace("Detected a double: {} event for attribute: {}, storing a {}: before the second {}:",
                 events::StartEvent,
                 _attr_name.fqdnAttributeName(),
                 events::CrashEvent,

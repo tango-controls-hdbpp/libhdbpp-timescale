@@ -49,14 +49,12 @@ public:
     Derived<Conn> &withTraits(Tango::AttrWriteType write, Tango::AttrDataFormat format, Tango::CmdArgType type)
     {
         _traits = AttributeTraits(write, format, type);
-        _traits_set = true;
         return static_cast<Derived<Conn> &>(*this);
     }
 
     Derived<Conn> &withTraits(AttributeTraits &traits)
     {
         _traits = traits;
-        _traits_set = true;
         return static_cast<Derived<Conn> &>(*this);
     }
 
@@ -81,7 +79,6 @@ protected:
     const AttributeTraits &attributeTraits() const { return _traits; }
     Tango::AttrQuality quality() const { return _quality; }
     double eventTime() const { return _event_time; }
-    bool traitsSet() const { return _traits_set; }
 
 private:
     AttributeName _attr_name;
@@ -90,9 +87,6 @@ private:
 
     // time this parameter change event was generated
     double _event_time = 0;
-
-    // force user to set traits
-    bool _traits_set = false;
 };
 
 //=============================================================================
@@ -109,7 +103,6 @@ void HdbppTxDataEventBase<Conn, Derived>::print(std::ostream &os) const noexcept
        << "_event_time: " << _event_time << ", "
        << "_attr_name: " << _attr_name << ", "
        << "_traits: " << _traits << ", "
-       << "_traits_set: " << _traits_set << ", "
        << "_quality: " << _quality << ", "
        << "_event_time: " << _event_time << ")";
 }

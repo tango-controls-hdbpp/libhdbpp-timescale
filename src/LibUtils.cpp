@@ -29,18 +29,82 @@ namespace hdbpp
 {
 //=============================================================================
 //=============================================================================
-ostream &operator<<(ostream &os, Tango::AttrWriteType write_type)
+string tangoEnumToString(Tango::AttrWriteType write_type)
 {
     switch (write_type)
     {
-        case Tango::READ: os << "READ"; return os;
-        case Tango::WRITE: os << "WRITE"; return os;
-        case Tango::READ_WRITE: os << "READ_WRITE"; return os;
-        case Tango::READ_WITH_WRITE: os << "READ_WITH_WRITE"; return os;
-        case Tango::WT_UNKNOWN: os << "WT_UNKNOWN"; return os;
+        case Tango::READ: return "READ";
+        case Tango::WRITE: return "WRITE";
+        case Tango::READ_WRITE: return "READ_WRITE";
+        case Tango::READ_WITH_WRITE: return "READ_WITH_WRITE";
+        case Tango::WT_UNKNOWN: return "WT_UNKNOWN";
     }
 
-    os << "UNKNOWN";
+    return "UNKNOWN";
+}
+
+//=============================================================================
+//=============================================================================
+string tangoEnumToString(Tango::AttrDataFormat format)
+{
+    switch (format)
+    {
+        case Tango::SPECTRUM: return "SPECTRUM";
+        case Tango::SCALAR: return "SCALAR";
+        case Tango::IMAGE: return "IMAGE";
+        case Tango::FMT_UNKNOWN: return "FMT_UNKNOWN";
+    }
+
+    return "UNKNOWN";
+}
+
+//=============================================================================
+//=============================================================================
+string tangoEnumToString(Tango::CmdArgType type)
+{
+    switch (type)
+    {
+        case Tango::DEV_BOOLEAN: return "DEV_BOOLEAN";
+        case Tango::DEV_SHORT: return "DEV_SHORT";
+        case Tango::DEV_LONG: return "DEV_LONG";
+        case Tango::DEV_LONG64: return "DEV_LONG64";
+        case Tango::DEV_FLOAT: return "DEV_FLOAT";
+        case Tango::DEV_DOUBLE: return "DEV_DOUBLE";
+        case Tango::DEV_UCHAR: return "DEV_UCHAR";
+        case Tango::DEV_USHORT: return "DEV_USHORT";
+        case Tango::DEV_ULONG: return "DEV_ULONG";
+        case Tango::DEV_ULONG64: return "DEV_ULONG64";
+        case Tango::DEV_STRING: return "DEV_STRING";
+        case Tango::DEV_STATE: return "DEV_STATE";
+        case Tango::DEV_ENUM: return "DEV_ENUM";
+        case Tango::DEV_ENCODED: return "DEV_ENCODED";
+        case Tango::DATA_TYPE_UNKNOWN: return "DATA_TYPE_UNKNOWN";
+    }
+
+    return "UNKNOWN";
+}
+
+//=============================================================================
+//=============================================================================
+string tangoEnumToString(Tango::AttrQuality quality)
+{
+    switch (quality)
+    {
+        case Tango::ATTR_VALID: return "ATTR_VALID";
+        case Tango::ATTR_INVALID: return "ATTR_INVALID";
+        case Tango::ATTR_ALARM: return "ATTR_ALARM";
+        case Tango::ATTR_CHANGING: return "ATTR_CHANGING";
+        case Tango::ATTR_WARNING: return "ATTR_WARNING";
+    }
+
+    return "UNKNOWN";
+}
+
+//=============================================================================
+//=============================================================================
+ostream &operator<<(ostream &os, Tango::AttrWriteType write_type)
+{
+    os << tangoEnumToString(write_type);
     return os;
 }
 
@@ -48,15 +112,7 @@ ostream &operator<<(ostream &os, Tango::AttrWriteType write_type)
 //=============================================================================
 ostream &operator<<(ostream &os, Tango::AttrDataFormat format)
 {
-    switch (format)
-    {
-        case Tango::SPECTRUM: os << "SPECTRUM"; return os;
-        case Tango::SCALAR: os << "SCALAR"; return os;
-        case Tango::IMAGE: os << "IMAGE"; return os;
-        case Tango::FMT_UNKNOWN: os << "FMT_UNKNOWN"; return os;
-    }
-
-    os << "UNKNOWN";
+    os << tangoEnumToString(format);
     return os;
 }
 
@@ -64,26 +120,7 @@ ostream &operator<<(ostream &os, Tango::AttrDataFormat format)
 //=============================================================================
 ostream &operator<<(ostream &os, Tango::CmdArgType type)
 {
-    switch (type)
-    {
-        case Tango::DEV_BOOLEAN: os << "DEV_BOOLEAN"; return os;
-        case Tango::DEV_SHORT: os << "DEV_SHORT"; return os;
-        case Tango::DEV_LONG: os << "DEV_LONG"; return os;
-        case Tango::DEV_LONG64: os << "DEV_LONG64"; return os;
-        case Tango::DEV_FLOAT: os << "DEV_FLOAT"; return os;
-        case Tango::DEV_DOUBLE: os << "DEV_DOUBLE"; return os;
-        case Tango::DEV_UCHAR: os << "DEV_UCHAR"; return os;
-        case Tango::DEV_USHORT: os << "DEV_USHORT"; return os;
-        case Tango::DEV_ULONG: os << "DEV_ULONG"; return os;
-        case Tango::DEV_ULONG64: os << "DEV_ULONG64"; return os;
-        case Tango::DEV_STRING: os << "DEV_STRING"; return os;
-        case Tango::DEV_STATE: os << "DEV_STATE"; return os;
-        case Tango::DEV_ENUM: os << "DEV_ENUM"; return os;
-        case Tango::DEV_ENCODED: os << "DEV_ENCODED"; return os;
-        case Tango::DATA_TYPE_UNKNOWN: os << "DATA_TYPE_UNKNOWN"; return os;
-    }
-
-    os << "UNKNOWN";
+    os << tangoEnumToString(type);
     return os;
 }
 
@@ -91,16 +128,7 @@ ostream &operator<<(ostream &os, Tango::CmdArgType type)
 //=============================================================================
 ostream &operator<<(ostream &os, Tango::AttrQuality quality)
 {
-    switch (quality)
-    {
-        case Tango::ATTR_VALID: os << "ATTR_VALID"; return os;
-        case Tango::ATTR_INVALID: os << "ATTR_INVALID"; return os;
-        case Tango::ATTR_ALARM: os << "ATTR_ALARM"; return os;
-        case Tango::ATTR_CHANGING: os << "ATTR_CHANGING"; return os;
-        case Tango::ATTR_WARNING: os << "ATTR_WARNING"; return os;
-    }
-
-    os << "UNKNOWN";
+    os << tangoEnumToString(quality);
     return os;
 }
 

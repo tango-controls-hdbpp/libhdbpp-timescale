@@ -103,6 +103,7 @@ namespace pqxx_conn
         const AttributeTraits &traits)
     {
         assert(!full_attr_name.empty());
+        assert(!traits.isValid());
 
         _logger->trace("Storing data event for attribute {} with traits {}, value_r valid: {}, value_w valid: {}",
             full_attr_name,

@@ -46,6 +46,12 @@ auto operator<<(std::ostream &os, const T &t) -> decltype(t.print(os), static_ca
     return os;
 }
 
+// to_string functions for tango enums
+std::string tangoEnumToString(Tango::AttrWriteType write_type);
+std::string tangoEnumToString(Tango::AttrDataFormat format);
+std::string tangoEnumToString(Tango::CmdArgType type);
+std::string tangoEnumToString(Tango::AttrQuality quality);
+
 // some output operators for tango enums
 std::ostream &operator<<(std::ostream &os, Tango::AttrWriteType write_type);
 std::ostream &operator<<(std::ostream &os, Tango::AttrDataFormat format);

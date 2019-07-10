@@ -61,22 +61,25 @@ HdbppTxDataEventError<Conn> &HdbppTxDataEventError<Conn>::store()
         spdlog::error("Error: {}", msg);
         Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
-    else if (!Base::traitsSet())
+    else if (!Base::attributeTraits().isInvalid())
     {
         std::string msg {"AttributeTraits are not set. Unable to complete the transaction."};
-        spdlog::error("Error: {} For attribute {}", msg, Base::attributeName());
+        msg += ". For attribute" + Base::attributeName().fqdnAttributeName();
+        spdlog::error("Error: {}", msg);
         Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
     else if (_error_msg.empty())
     {
         std::string msg {"Error message is not set. Unable to complete the transaction."};
-        spdlog::error("Error: {} For attribute {}", msg, Base::attributeName());
+        msg += ". For attribute" + Base::attributeName().fqdnAttributeName();
+        spdlog::error("Error: {}", msg);
         Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
     else if (HdbppTxBase<Conn>::connection().isClosed())
     {
         string msg {"The connection is reporting it is closed. Unable to store data event."};
-        spdlog::error("Error: {} For attribute {}", msg, Base::attributeName());
+        msg += ". For attribute" + Base::attributeName().fqdnAttributeName();
+        spdlog::error("Error: {}", msg);
         Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
 

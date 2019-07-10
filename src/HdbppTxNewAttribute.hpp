@@ -46,7 +46,6 @@ public:
         Tango::AttrWriteType write, Tango::AttrDataFormat format, Tango::CmdArgType type)
     {
         _traits = AttributeTraits(write, format, type);
-        _traits_set = true;
         return *this;
     }
 
@@ -58,9 +57,6 @@ public:
 private:
     AttributeName _attr_name;
     AttributeTraits _traits;
-
-    // force user to set traits
-    bool _traits_set = false;
 };
 
 //=============================================================================
@@ -74,44 +70,71 @@ HdbppTxNewAttribute<Conn> &HdbppTxNewAttribute<Conn>::store()
         spdlog::error("Error: {}", msg);
         Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
-    else if (!_traits_set)
+    else if (!_traits.isInvalid())
     {
-        std::string msg {"AttributeTraits are not set. Unable to complete the transaction."};
-        spdlog::error("Error: {} For attribute {}", msg, _attr_name);
+        std::string msg {"AttributeTraits are invalid. Unable to complete the transaction. For attribute" +
+            _attr_name.fqdnAttributeName()};
+
+        spdlog::error("Error: {}", msg);
         Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
     else if (HdbppTxBase<Conn>::connection().isClosed())
     {
-        std::string msg {"The connection is reporting it is closed. Unable to store new attribute."};
-        spdlog::error("Error: {} For attribute {}", msg, _attr_name);
+        std::string msg {"The connection is reporting it is closed. Unable to store new attribute. For attribute" +
+            _attr_name.fqdnAttributeName()};
+
+        spdlog::error("Error: {}", msg);
         Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
 
+    // for now image types are not supported
+    if (_traits.isImage())
+    {
+        std::string msg {
+            "Image type attributes are currently not supported. For attribute" + _attr_name.fqdnAttributeName()};
+
+        spdlog::error("Error: {}", msg);
+        Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
+    }
+
+    if (_traits.type() == Tango::DEV_ENUM || _traits.type() == Tango::DEV_ENCODED)
+    {
+        std::string msg {"Unsupported attribute type: " + tangoEnumToString(_traits.type()) + ". For attribute" +
+            _attr_name.fqdnAttributeName()};
+
+        spdlog::error("Error: {}", msg);
+        Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
+    }
+
+    auto prepared_attr_name = HdbppTxBase<Conn>::attrNameForStorage(_attr_name);
+
     // check if this attribute exists in the database already, if it does
     // then it may have been removed and this is a case of readding it
-    if (HdbppTxBase<Conn>::connection().fetchAttributeArchived(HdbppTxBase<Conn>::attrNameForStorage(_attr_name)))
+    if (HdbppTxBase<Conn>::connection().fetchAttributeArchived(prepared_attr_name))
     {
         // so it exists in the database, check its stored type
-        auto stored_traits = HdbppTxBase<Conn>::connection().fetchAttributeTraits(
-            HdbppTxBase<Conn>::attrNameForStorage(_attr_name));
+        auto stored_traits = HdbppTxBase<Conn>::connection().fetchAttributeTraits(prepared_attr_name);
 
         if (stored_traits != _traits)
         {
             // oops, someone is trying to change types, this is not supported yet, throw an exception
-            std::string msg {"Attempt to add an attribute which is already stored with different type information."};
-            spdlog::error("Error: {} For attribute {}", msg, _attr_name);
+            std::string msg {
+                "Attempt to add an attribute which is already stored with different type information. For attribute" +
+                _attr_name.fqdnAttributeName()};
+
+            spdlog::error("Error: {}", msg);
             Tango::Except::throw_exception("Consistency Error", msg, LOCATION_INFO);
         }
 
         // so it exists in the database and its type matches... check the last event
-        auto last_event = HdbppTxBase<Conn>::connection().fetchLastHistoryEvent(
-            HdbppTxBase<Conn>::attrNameForStorage(_attr_name));
+        auto last_event = HdbppTxBase<Conn>::connection().fetchLastHistoryEvent(prepared_attr_name);
 
         // ok, this attribute is being re-added after a remove, better check its
         // the same type
         if (last_event == events::RemoveEvent)
         {
-            spdlog::info("Adding an attribute {} that is in a removed state, this is valid", _attr_name);
+            spdlog::info(
+                "Adding an attribute {} that is in a removed state, this is valid", _attr_name.fqdnAttributeName());
 
             // record the event as added again
             HdbppTxBase<Conn>::connection()
@@ -124,7 +147,7 @@ HdbppTxNewAttribute<Conn> &HdbppTxNewAttribute<Conn>::store()
         {
             // someone is trying to add the same attribute over and over?
             std::string msg {"The attribute already exists in the database. Can not add again. "};
-            spdlog::warn("Warning: {} For attribute {}", msg, _attr_name);
+            spdlog::warn("Warning: {} For attribute {}", msg, _attr_name.fqdnAttributeName());
 
             // bad black box behaviour, this is not an error, in fact, the system
             // built top assume this undocumented behaviour!!
@@ -132,10 +155,10 @@ HdbppTxNewAttribute<Conn> &HdbppTxNewAttribute<Conn>::store()
     }
     else
     {
-        spdlog::info("Adding a new attribute to the system: {}", _attr_name);
+        spdlog::info("Adding a new attribute to the system: {}", _attr_name.fqdnAttributeName());
 
         // attempt to store the new attribute into the database for the first time
-        HdbppTxBase<Conn>::connection().storeAttribute(HdbppTxBase<Conn>::attrNameForStorage(_attr_name),
+        HdbppTxBase<Conn>::connection().storeAttribute(prepared_attr_name,
             _attr_name.tangoHostWithDomain(),
             _attr_name.domain(),
             _attr_name.family(),

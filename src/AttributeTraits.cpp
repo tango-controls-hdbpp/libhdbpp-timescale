@@ -25,7 +25,15 @@ namespace hdbpp
 {
 //=============================================================================
 //=============================================================================
-void AttributeTraits::print(ostream &os) const
+bool AttributeTraits::isValid() const noexcept
+{
+    return _attr_write_type != Tango::WT_UNKNOWN || _attr_format != Tango::FMT_UNKNOWN ||
+        _attr_type != Tango::DATA_TYPE_UNKNOWN;
+}
+
+//=============================================================================
+//=============================================================================
+void AttributeTraits::print(ostream &os) const noexcept
 {
     os << "AttributeTraits("
        << "write_type: " << _attr_write_type << "(" << static_cast<unsigned int>(_attr_write_type) << "), "

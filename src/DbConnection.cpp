@@ -114,6 +114,7 @@ namespace pqxx_conn
         assert(!att_family.empty());
         assert(!att_member.empty());
         assert(!att_name.empty());
+        assert(!traits.isValid());
         assert(_conn != nullptr);
         assert(_conf_id_cache != nullptr);
         assert(_error_desc_id_cache != nullptr);
@@ -336,6 +337,7 @@ namespace pqxx_conn
     {
         assert(!full_attr_name.empty());
         assert(!error_msg.empty());
+        assert(!traits.isValid());
         assert(_conn != nullptr);
         assert(_conf_id_cache != nullptr);
         assert(_error_desc_id_cache != nullptr);

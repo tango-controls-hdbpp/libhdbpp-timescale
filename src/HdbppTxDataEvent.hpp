@@ -71,22 +71,25 @@ HdbppTxDataEvent<Conn> &HdbppTxDataEvent<Conn>::store()
         spdlog::error("Error: {}", msg);
         Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
-    else if (!Base::traitsSet())
+    else if (!Base::attributeTraits().isInvalid())
     {
         std::string msg {"AttributeTraits are not set. Unable to complete the transaction."};
-        spdlog::error("Error: {} For attribute {}", msg, Base::attributeName());
+        msg += ". For attribute" + Base::attributeName().fqdnAttributeName();
+        spdlog::error("Error: {}", msg);
         Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
     else if (!_dev_attr)
     {
         std::string msg {"Device Attribute is not set. Unable to complete the transaction."};
-        spdlog::error("Error: {} For attribute {}", msg, Base::attributeName());
+        msg += ". For attribute" + Base::attributeName().fqdnAttributeName();
+        spdlog::error("Error: {}", msg);
         Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
     else if (HdbppTxBase<Conn>::connection().isClosed())
     {
         string msg {"The connection is reporting it is closed. Unable to store data event."};
-        spdlog::error("Error: {} For attribute {}", msg, Base::attributeName());
+        msg += ". For attribute" + Base::attributeName().fqdnAttributeName();
+        spdlog::error("Error: {}", msg);
         Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
 
@@ -136,8 +139,8 @@ HdbppTxDataEvent<Conn> &HdbppTxDataEvent<Conn>::store()
         //case Tango::DEV_ENCODED: this->template doStoreEncoded<vector<uint8_t>>(); break;
         default:
             std::string msg {
-                "HdbppTxDataEvent built for unsupported type: " + std::to_string(Base::attributeTraits().type()) +
-                ", for attribute: [" + Base::attributeName().fullAttributeName() + "]"};
+                "HdbppTxDataEvent built for unsupported type: " + tangoEnumToString(Base::attributeTraits().type()) +
+                ", for attribute: [" + Base::attributeName().fqdnAttributeName() + "]"};
 
             spdlog::error("Error: {}", msg);
             Tango::Except::throw_exception("Runtime Error", msg, LOCATION_INFO);
