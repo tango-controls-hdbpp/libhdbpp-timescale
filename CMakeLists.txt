@@ -82,6 +82,7 @@ find_package(Threads REQUIRED)
 add_subdirectory(thirdparty/libhdbpp EXCLUDE_FROM_ALL)
 add_subdirectory(thirdparty/libpqxx  EXCLUDE_FROM_ALL)
 add_subdirectory(thirdparty/spdlog  EXCLUDE_FROM_ALL)
+add_subdirectory(thirdparty/Catch2  EXCLUDE_FROM_ALL)
 
 set_target_properties(pqxx_shared
     PROPERTIES
@@ -137,7 +138,6 @@ set_target_properties(libhdbpp_timescale_shared_library
         VERSION ${VERSION_STRING}
         SOVERSION ${VERSION_STRING})
 
-target_compile_definitions(libhdbpp_timescale_shared_library PRIVATE -DDEBUG_ENABLED)
 target_compile_options(libhdbpp_timescale_shared_library PRIVATE "$<$<CONFIG:DEBUG>:-g>")
 #target_compile_features(libhdbpp_timescale_shared_library PRIVATE cxx_std_17)
 
@@ -155,7 +155,6 @@ set_target_properties(libhdbpp_timescale_static_library
         CXX_STANDARD 14
         EXCLUDE_FROM_ALL 1)
 
-target_compile_definitions(libhdbpp_timescale_static_library PRIVATE -DDEBUG_ENABLED)
 target_compile_options(libhdbpp_timescale_static_library PRIVATE "$<$<CONFIG:DEBUG>:-g>")
 #target_compile_features(libhdbpp_timescale_shared_library PRIVATE cxx_std_17)
 

@@ -4,3 +4,6 @@
 [submodule "thirdparty/libpqxx"]
 	path = thirdparty/libpqxx
 	url = https://github.com/jtv/libpqxx.git
+[submodule "thirdparty/Catch2"]
+	path = thirdparty/Catch2
+	url = https://github.com/catchorg/Catch2.git
