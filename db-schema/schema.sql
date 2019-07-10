@@ -1,8 +1,8 @@
-DROP DATABASE IF EXISTS hdbpp;
+DROP DATABASE IF EXISTS hdb;
 
 -- Create the hdb database and use it
-CREATE DATABASE hdbpp;
-\c hdbpp
+CREATE DATABASE hdb;
+\c hdb
 
 -- Add the timescaledb extension (Important)
 CREATE EXTENSION IF NOT EXISTS timescaledb CASCADE;
@@ -112,7 +112,7 @@ CREATE INDEX IF NOT EXISTS att_history_att_history_event_id_idx ON att_history_e
 CREATE TABLE IF NOT EXISTS att_history (
     att_conf_id integer NOT NULL,
     att_history_event_id integer NOT NULL,
-    event_time timestamp(6) with time zone,
+    event_time timestamp WITH TIME ZONE,
     details json,
     PRIMARY KEY (att_conf_id, event_time),
     FOREIGN KEY (att_conf_id) REFERENCES att_conf (att_conf_id),
@@ -125,7 +125,7 @@ CREATE INDEX IF NOT EXISTS att_history_att_conf_id_inx ON att_history (att_conf_
 -------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS att_parameter (
     att_conf_id integer NOT NULL,
-    recv_time timestamp with time zone NOT NULL,
+    recv_time timestamp WITH TIME ZONE NOT NULL,
     label text NOT NULL DEFAULT '',
     unit text NOT NULL DEFAULT '',
     standard_unit text NOT NULL DEFAULT '',
@@ -158,7 +158,7 @@ CREATE INDEX IF NOT EXISTS att_error_desc_att_error_desc_id_idx ON att_error_des
 -------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS att_scalar_devboolean (
     att_conf_id integer NOT NULL,
-    data_time timestamp with time zone NOT NULL,
+    data_time timestamp WITH TIME ZONE NOT NULL,
     value_r boolean,
     value_w boolean,
     quality smallint,
@@ -172,11 +172,11 @@ CREATE TABLE IF NOT EXISTS att_scalar_devboolean (
 COMMENT ON TABLE att_scalar_devboolean IS 'Scalar Boolean Values Table';
 CREATE INDEX IF NOT EXISTS att_scalar_devboolean_att_conf_id_idx ON att_scalar_devboolean (att_conf_id);
 CREATE INDEX IF NOT EXISTS att_scalar_devboolean_att_conf_id_data_time_idx ON att_scalar_devboolean (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_scalar_devboolean', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
+SELECT create_hypertable('att_scalar_devboolean', 'data_time', chunk_time_interval => interval '28 day', create_default_indexes => FALSE);
 
 CREATE TABLE IF NOT EXISTS att_array_devboolean (
     att_conf_id integer NOT NULL,
-    data_time timestamp with time zone NOT NULL,
+    data_time timestamp WITH TIME ZONE NOT NULL,
     value_r boolean[],
     value_w boolean[],
     quality smallint,
@@ -190,11 +190,11 @@ CREATE TABLE IF NOT EXISTS att_array_devboolean (
 COMMENT ON TABLE att_array_devboolean IS 'Array Boolean Values Table';
 CREATE INDEX IF NOT EXISTS att_array_devboolean_att_conf_id_idx ON att_array_devboolean (att_conf_id);
 CREATE INDEX IF NOT EXISTS att_array_devboolean_att_conf_id_data_time_idx ON att_array_devboolean (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_array_devboolean', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
+SELECT create_hypertable('att_array_devboolean', 'data_time', chunk_time_interval => interval '28 day', create_default_indexes => FALSE);
 
 CREATE TABLE IF NOT EXISTS att_scalar_devuchar (
     att_conf_id integer NOT NULL,
-    data_time timestamp with time zone NOT NULL,
+    data_time timestamp WITH TIME ZONE NOT NULL,
     value_r uchar,
     value_w uchar,
     quality smallint,
@@ -208,11 +208,11 @@ CREATE TABLE IF NOT EXISTS att_scalar_devuchar (
 COMMENT ON TABLE att_scalar_devuchar IS 'Scalar UChar Values Table';
 CREATE INDEX IF NOT EXISTS att_scalar_devuchar_att_conf_id_idx ON att_scalar_devuchar (att_conf_id);
 CREATE INDEX IF NOT EXISTS att_scalar_devuchar_att_conf_id_data_time_idx ON att_scalar_devuchar (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_scalar_devuchar', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
+SELECT create_hypertable('att_scalar_devuchar', 'data_time', chunk_time_interval => interval '28 day', create_default_indexes => FALSE);
 
 CREATE TABLE IF NOT EXISTS att_array_devuchar (
     att_conf_id integer NOT NULL,
-    data_time timestamp with time zone NOT NULL,
+    data_time timestamp WITH TIME ZONE NOT NULL,
     value_r uchar[],
     value_w uchar[],
     quality smallint,
@@ -226,11 +226,11 @@ CREATE TABLE IF NOT EXISTS att_array_devuchar (
 COMMENT ON TABLE att_array_devuchar IS 'Array UChar Values Table';
 CREATE INDEX IF NOT EXISTS att_array_devuchar_att_conf_id_idx ON att_array_devuchar (att_conf_id);
 CREATE INDEX IF NOT EXISTS att_array_devuchar_att_conf_id_data_time_idx ON att_array_devuchar (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_array_devuchar', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
+SELECT create_hypertable('att_array_devuchar', 'data_time', chunk_time_interval => interval '28 day', create_default_indexes => FALSE);
 
 CREATE TABLE IF NOT EXISTS att_scalar_devshort (
     att_conf_id integer NOT NULL,
-    data_time timestamp with time zone NOT NULL,
+    data_time timestamp WITH TIME ZONE NOT NULL,
     value_r smallint,
     value_w smallint,
     quality smallint,
@@ -244,11 +244,11 @@ CREATE TABLE IF NOT EXISTS att_scalar_devshort (
 COMMENT ON TABLE att_scalar_devshort IS 'Scalar Short Values Table';
 CREATE INDEX IF NOT EXISTS att_scalar_devshort_att_conf_id_idx ON att_scalar_devshort (att_conf_id);
 CREATE INDEX IF NOT EXISTS att_scalar_devshort_att_conf_id_data_time_idx ON att_scalar_devshort (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_scalar_devshort', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
+SELECT create_hypertable('att_scalar_devshort', 'data_time', chunk_time_interval => interval '28 day', create_default_indexes => FALSE);
 
 CREATE TABLE IF NOT EXISTS att_array_devshort (
     att_conf_id integer NOT NULL,
-    data_time timestamp with time zone NOT NULL,
+    data_time timestamp WITH TIME ZONE NOT NULL,
     value_r smallint[],
     value_w smallint[],
     quality smallint,
@@ -262,11 +262,11 @@ CREATE TABLE IF NOT EXISTS att_array_devshort (
 COMMENT ON TABLE att_array_devshort IS 'Array Short Values Table';
 CREATE INDEX IF NOT EXISTS att_array_devshort_att_conf_id_idx ON att_array_devshort (att_conf_id);
 CREATE INDEX IF NOT EXISTS att_array_devshort_att_conf_id_data_time_idx ON att_array_devshort (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_array_devshort', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
+SELECT create_hypertable('att_array_devshort', 'data_time', chunk_time_interval => interval '28 day', create_default_indexes => FALSE);
 
 CREATE TABLE IF NOT EXISTS att_scalar_devushort (
     att_conf_id integer NOT NULL,
-    data_time timestamp with time zone NOT NULL,
+    data_time timestamp WITH TIME ZONE NOT NULL,
     value_r ushort,
     value_w ushort,
     quality smallint,
@@ -280,11 +280,11 @@ CREATE TABLE IF NOT EXISTS att_scalar_devushort (
 COMMENT ON TABLE att_scalar_devushort IS 'Scalar UShort Values Table';
 CREATE INDEX IF NOT EXISTS att_scalar_devushort_att_conf_id_idx ON att_scalar_devushort (att_conf_id);
 CREATE INDEX IF NOT EXISTS att_scalar_devushort_att_conf_id_data_time_idx ON att_scalar_devushort (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_scalar_devushort', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
+SELECT create_hypertable('att_scalar_devushort', 'data_time', chunk_time_interval => interval '28 day', create_default_indexes => FALSE);
 
 CREATE TABLE IF NOT EXISTS att_array_devushort (
     att_conf_id integer NOT NULL,
-    data_time timestamp with time zone NOT NULL,
+    data_time timestamp WITH TIME ZONE NOT NULL,
     value_r ushort[],
     value_w ushort[],
     quality smallint,
@@ -298,11 +298,11 @@ CREATE TABLE IF NOT EXISTS att_array_devushort (
 COMMENT ON TABLE att_array_devushort IS 'Array UShort Values Table';
 CREATE INDEX IF NOT EXISTS att_array_devushort_att_conf_id_idx ON att_array_devushort (att_conf_id);
 CREATE INDEX IF NOT EXISTS att_array_devushort_att_conf_id_data_time_idx ON att_array_devushort (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_array_devushort', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
+SELECT create_hypertable('att_array_devushort', 'data_time', chunk_time_interval => interval '28 day', create_default_indexes => FALSE);
 
 CREATE TABLE IF NOT EXISTS att_scalar_devlong (
     att_conf_id integer NOT NULL,
-    data_time timestamp with time zone NOT NULL,
+    data_time timestamp WITH TIME ZONE NOT NULL,
     value_r integer,
     value_w integer,
     quality smallint,
@@ -316,11 +316,11 @@ CREATE TABLE IF NOT EXISTS att_scalar_devlong (
 COMMENT ON TABLE att_scalar_devlong IS 'Scalar Long Values Table';
 CREATE INDEX IF NOT EXISTS att_scalar_devlong_att_conf_id_idx ON att_scalar_devlong (att_conf_id);
 CREATE INDEX IF NOT EXISTS att_scalar_devlong_att_conf_id_data_time_idx ON att_scalar_devlong (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_scalar_devlong', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
+SELECT create_hypertable('att_scalar_devlong', 'data_time', chunk_time_interval => interval '28 day', create_default_indexes => FALSE);
 
 CREATE TABLE IF NOT EXISTS att_array_devlong (
     att_conf_id integer NOT NULL,
-    data_time timestamp with time zone NOT NULL,
+    data_time timestamp WITH TIME ZONE NOT NULL,
     value_r integer[],
     value_w integer[],
     quality smallint,
@@ -334,11 +334,11 @@ CREATE TABLE IF NOT EXISTS att_array_devlong (
 COMMENT ON TABLE att_array_devlong IS 'Array Long Values Table';
 CREATE INDEX IF NOT EXISTS att_array_devlong_att_conf_id_idx ON att_array_devlong (att_conf_id);
 CREATE INDEX IF NOT EXISTS att_array_devlong_att_conf_id_data_time_idx ON att_array_devlong (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_array_devlong', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
+SELECT create_hypertable('att_array_devlong', 'data_time', chunk_time_interval => interval '28 day', create_default_indexes => FALSE);
 
 CREATE TABLE IF NOT EXISTS att_scalar_devulong (
     att_conf_id integer NOT NULL,
-    data_time timestamp with time zone NOT NULL,
+    data_time timestamp WITH TIME ZONE NOT NULL,
     value_r ulong,
     value_w ulong,
     quality smallint,
@@ -352,11 +352,11 @@ CREATE TABLE IF NOT EXISTS att_scalar_devulong (
 COMMENT ON TABLE att_scalar_devulong IS 'Scalar ULong Values Table';
 CREATE INDEX IF NOT EXISTS att_scalar_devulong_att_conf_id_idx ON att_scalar_devulong (att_conf_id);
 CREATE INDEX IF NOT EXISTS att_scalar_devulong_att_conf_id_data_time_idx ON att_scalar_devulong (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_scalar_devulong', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
+SELECT create_hypertable('att_scalar_devulong', 'data_time', chunk_time_interval => interval '28 day', create_default_indexes => FALSE);
 
 CREATE TABLE IF NOT EXISTS att_array_devulong (
     att_conf_id integer NOT NULL,
-    data_time timestamp with time zone NOT NULL,
+    data_time timestamp WITH TIME ZONE NOT NULL,
     value_r ulong[],
     value_w ulong[],
     quality smallint,
@@ -370,11 +370,11 @@ CREATE TABLE IF NOT EXISTS att_array_devulong (
 COMMENT ON TABLE att_array_devulong IS 'Array ULong Values Table';
 CREATE INDEX IF NOT EXISTS att_array_devulong_att_conf_id_idx ON att_array_devulong (att_conf_id);
 CREATE INDEX IF NOT EXISTS att_array_devulong_att_conf_id_data_time_idx ON att_array_devulong (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_array_devulong', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
+SELECT create_hypertable('att_array_devulong', 'data_time', chunk_time_interval => interval '28 day', create_default_indexes => FALSE);
 
 CREATE TABLE IF NOT EXISTS att_scalar_devlong64 (
     att_conf_id integer NOT NULL,
-    data_time timestamp with time zone NOT NULL,
+    data_time timestamp WITH TIME ZONE NOT NULL,
     value_r bigint,
     value_w bigint,
     quality smallint,
@@ -388,11 +388,11 @@ CREATE TABLE IF NOT EXISTS att_scalar_devlong64 (
 COMMENT ON TABLE att_scalar_devlong64 IS 'Scalar Long64 Values Table';
 CREATE INDEX IF NOT EXISTS att_scalar_devlong64_att_conf_id_idx ON att_scalar_devlong64 (att_conf_id);
 CREATE INDEX IF NOT EXISTS att_scalar_devlong64_att_conf_id_data_time_idx ON att_scalar_devlong64 (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_scalar_devlong64', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
+SELECT create_hypertable('att_scalar_devlong64', 'data_time', chunk_time_interval => interval '28 day', create_default_indexes => FALSE);
 
 CREATE TABLE IF NOT EXISTS att_array_devlong64 (
     att_conf_id integer NOT NULL,
-    data_time timestamp with time zone NOT NULL,
+    data_time timestamp WITH TIME ZONE NOT NULL,
     value_r bigint[],
     value_w bigint[],
     quality smallint,
@@ -406,11 +406,11 @@ CREATE TABLE IF NOT EXISTS att_array_devlong64 (
 COMMENT ON TABLE att_array_devlong64 IS 'Array Long64 Values Table';
 CREATE INDEX IF NOT EXISTS att_array_devlong64_att_conf_id_idx ON att_array_devlong64 (att_conf_id);
 CREATE INDEX IF NOT EXISTS att_array_devlong64_att_conf_id_data_time_idx ON att_array_devlong64 (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_array_devlong64', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
+SELECT create_hypertable('att_array_devlong64', 'data_time', chunk_time_interval => interval '28 day', create_default_indexes => FALSE);
 
 CREATE TABLE IF NOT EXISTS att_scalar_devulong64 (
     att_conf_id integer NOT NULL,
-    data_time timestamp with time zone NOT NULL,
+    data_time timestamp WITH TIME ZONE NOT NULL,
     value_r ulong64,
     value_w ulong64,
     quality smallint,
@@ -424,11 +424,11 @@ CREATE TABLE IF NOT EXISTS att_scalar_devulong64 (
 COMMENT ON TABLE att_scalar_devulong64 IS 'Scalar ULong64 Values Table';
 CREATE INDEX IF NOT EXISTS att_scalar_devulong64_att_conf_id_idx ON att_scalar_devulong64 (att_conf_id);
 CREATE INDEX IF NOT EXISTS att_scalar_devulong64_att_conf_id_data_time_idx ON att_scalar_devulong64 (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_scalar_devulong64', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
+SELECT create_hypertable('att_scalar_devulong64', 'data_time', chunk_time_interval => interval '28 day', create_default_indexes => FALSE);
 
 CREATE TABLE IF NOT EXISTS att_array_devulong64 (
     att_conf_id integer NOT NULL,
-    data_time timestamp with time zone NOT NULL,
+    data_time timestamp WITH TIME ZONE NOT NULL,
     value_r ulong64[],
     value_w ulong64[],
     quality smallint,
@@ -442,11 +442,11 @@ CREATE TABLE IF NOT EXISTS att_array_devulong64 (
 COMMENT ON TABLE att_array_devulong64 IS 'Array ULong64 Values Table';
 CREATE INDEX IF NOT EXISTS att_array_devulong64_att_conf_id_idx ON att_array_devulong64 (att_conf_id);
 CREATE INDEX IF NOT EXISTS att_array_devulong64_att_conf_id_data_time_idx ON att_array_devulong64 (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_array_devulong64', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
+SELECT create_hypertable('att_array_devulong64', 'data_time', chunk_time_interval => interval '28 day', create_default_indexes => FALSE);
 
 CREATE TABLE IF NOT EXISTS att_scalar_devfloat (
     att_conf_id integer NOT NULL,
-    data_time timestamp with time zone NOT NULL,
+    data_time timestamp WITH TIME ZONE NOT NULL,
     value_r real,
     value_w real,
     quality smallint,
@@ -460,11 +460,11 @@ CREATE TABLE IF NOT EXISTS att_scalar_devfloat (
 COMMENT ON TABLE att_scalar_devfloat IS 'Scalar Float Values Table';
 CREATE INDEX IF NOT EXISTS att_scalar_devfloat_att_conf_id_idx ON att_scalar_devfloat (att_conf_id);
 CREATE INDEX IF NOT EXISTS att_scalar_devfloat_att_conf_id_data_time_idx ON att_scalar_devfloat (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_scalar_devfloat', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
+SELECT create_hypertable('att_scalar_devfloat', 'data_time', chunk_time_interval => interval '28 day', create_default_indexes => FALSE);
 
 CREATE TABLE IF NOT EXISTS att_array_devfloat (
     att_conf_id integer NOT NULL,
-    data_time timestamp with time zone NOT NULL,
+    data_time timestamp WITH TIME ZONE NOT NULL,
     value_r real[],
     value_w real[],
     quality smallint,
@@ -478,11 +478,11 @@ CREATE TABLE IF NOT EXISTS att_array_devfloat (
 COMMENT ON TABLE att_array_devfloat IS 'Array Float Values Table';
 CREATE INDEX IF NOT EXISTS att_array_devfloat_att_conf_id_idx ON att_array_devfloat (att_conf_id);
 CREATE INDEX IF NOT EXISTS att_array_devfloat_att_conf_id_data_time_idx ON att_array_devfloat (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_array_devfloat', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
+SELECT create_hypertable('att_array_devfloat', 'data_time', chunk_time_interval => interval '28 day', create_default_indexes => FALSE);
 
 CREATE TABLE IF NOT EXISTS att_scalar_devdouble (
     att_conf_id integer NOT NULL,
-    data_time timestamp with time zone NOT NULL,
+    data_time timestamp WITH TIME ZONE NOT NULL,
     value_r double precision,
     value_w double precision,
     quality smallint,
@@ -496,11 +496,11 @@ CREATE TABLE IF NOT EXISTS att_scalar_devdouble (
 COMMENT ON TABLE att_scalar_devdouble IS 'Scalar Double Values Table';
 CREATE INDEX IF NOT EXISTS att_scalar_devdouble_att_conf_id_idx ON att_scalar_devdouble (att_conf_id);
 CREATE INDEX IF NOT EXISTS att_scalar_devdouble_att_conf_id_data_time_idx ON att_scalar_devdouble (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_scalar_devdouble', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
+SELECT create_hypertable('att_scalar_devdouble', 'data_time', chunk_time_interval => interval '14 day', create_default_indexes => FALSE);
 
 CREATE TABLE IF NOT EXISTS att_array_devdouble (
     att_conf_id integer NOT NULL,
-    data_time timestamp with time zone NOT NULL,
+    data_time timestamp WITH TIME ZONE NOT NULL,
     value_r double precision[],
     value_w double precision[],
     quality smallint,
@@ -514,11 +514,11 @@ CREATE TABLE IF NOT EXISTS att_array_devdouble (
 COMMENT ON TABLE att_array_devdouble IS 'Array Double Values Table';
 CREATE INDEX IF NOT EXISTS att_array_devdouble_att_conf_id_idx ON att_array_devdouble (att_conf_id);
 CREATE INDEX IF NOT EXISTS att_array_devdouble_att_conf_id_data_time_idx ON att_array_devdouble (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_array_devdouble', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
+SELECT create_hypertable('att_array_devdouble', 'data_time', chunk_time_interval => interval '28 day', create_default_indexes => FALSE);
 
 CREATE TABLE IF NOT EXISTS att_scalar_devstring (
     att_conf_id integer NOT NULL,
-    data_time timestamp with time zone NOT NULL,
+    data_time timestamp WITH TIME ZONE NOT NULL,
     value_r text,
     value_w text,
     quality smallint,
@@ -532,11 +532,11 @@ CREATE TABLE IF NOT EXISTS att_scalar_devstring (
 COMMENT ON TABLE att_scalar_devstring IS 'Scalar String Values Table';
 CREATE INDEX IF NOT EXISTS att_scalar_devstring_att_conf_id_idx ON att_scalar_devstring (att_conf_id);
 CREATE INDEX IF NOT EXISTS att_scalar_devstring_att_conf_id_data_time_idx ON att_scalar_devstring (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_scalar_devstring', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
+SELECT create_hypertable('att_scalar_devstring', 'data_time', chunk_time_interval => interval '28 day', create_default_indexes => FALSE);
 
 CREATE TABLE IF NOT EXISTS att_array_devstring (
     att_conf_id integer NOT NULL,
-    data_time timestamp with time zone NOT NULL,
+    data_time timestamp WITH TIME ZONE NOT NULL,
     value_r text[],
     value_w text[],
     quality smallint,
@@ -550,11 +550,11 @@ CREATE TABLE IF NOT EXISTS att_array_devstring (
 COMMENT ON TABLE att_array_devstring IS 'Array String Values Table';
 CREATE INDEX IF NOT EXISTS att_array_devstring_att_conf_id_idx ON att_array_devstring (att_conf_id);
 CREATE INDEX IF NOT EXISTS att_array_devstring_att_conf_id_data_time_idx ON att_array_devstring (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_array_devstring', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
+SELECT create_hypertable('att_array_devstring', 'data_time', chunk_time_interval => interval '28 day', create_default_indexes => FALSE);
 
 CREATE TABLE IF NOT EXISTS att_scalar_devstate (
     att_conf_id integer NOT NULL,
-    data_time timestamp with time zone NOT NULL,
+    data_time timestamp WITH TIME ZONE NOT NULL,
     value_r integer,
     value_w integer,
     quality smallint,
@@ -568,11 +568,11 @@ CREATE TABLE IF NOT EXISTS att_scalar_devstate (
 COMMENT ON TABLE att_scalar_devstate IS 'Scalar State Values Table';
 CREATE INDEX IF NOT EXISTS att_scalar_devstate_att_conf_id_idx ON att_scalar_devstate (att_conf_id);
 CREATE INDEX IF NOT EXISTS att_scalar_devstate_att_conf_id_data_time_idx ON att_scalar_devstate (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_scalar_devstate', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
+SELECT create_hypertable('att_scalar_devstate', 'data_time', chunk_time_interval => interval '28 day', create_default_indexes => FALSE);
 
 CREATE TABLE IF NOT EXISTS att_array_devstate (
     att_conf_id integer NOT NULL,
-    data_time timestamp with time zone NOT NULL,
+    data_time timestamp WITH TIME ZONE NOT NULL,
     value_r integer[],
     value_w integer[],
     quality smallint,
@@ -586,11 +586,11 @@ CREATE TABLE IF NOT EXISTS att_array_devstate (
 COMMENT ON TABLE att_array_devstate IS 'Array State Values Table';
 CREATE INDEX IF NOT EXISTS att_array_devstate_att_conf_id_idx ON att_array_devstate (att_conf_id);
 CREATE INDEX IF NOT EXISTS att_array_devstate_att_conf_id_data_time_idx ON att_array_devstate (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_array_devstate', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
+SELECT create_hypertable('att_array_devstate', 'data_time', chunk_time_interval => interval '28 day', create_default_indexes => FALSE);
 
 CREATE TABLE IF NOT EXISTS att_scalar_devencoded (
     att_conf_id integer NOT NULL,
-    data_time timestamp with time zone NOT NULL,
+    data_time timestamp WITH TIME ZONE NOT NULL,
     value_r bytea,
     value_w bytea,
     quality smallint,
@@ -603,11 +603,11 @@ CREATE TABLE IF NOT EXISTS att_scalar_devencoded (
 COMMENT ON TABLE att_scalar_devencoded IS 'Scalar DevEncoded Values Table';
 CREATE INDEX IF NOT EXISTS att_scalar_devencoded_att_conf_id_idx ON att_scalar_devencoded (att_conf_id);
 CREATE INDEX IF NOT EXISTS att_scalar_devencoded_att_conf_id_data_time_idx ON att_scalar_devencoded (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_scalar_devencoded', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
+SELECT create_hypertable('att_scalar_devencoded', 'data_time', chunk_time_interval => interval '28 day', create_default_indexes => FALSE);
 
 CREATE TABLE IF NOT EXISTS att_array_devencoded (
     att_conf_id integer NOT NULL,
-    data_time timestamp with time zone NOT NULL,
+    data_time timestamp WITH TIME ZONE NOT NULL,
     value_r bytea[],
     value_w bytea[],
     quality smallint,
@@ -620,13 +620,13 @@ CREATE TABLE IF NOT EXISTS att_array_devencoded (
 COMMENT ON TABLE att_array_devencoded IS 'Array DevEncoded Values Table';
 CREATE INDEX IF NOT EXISTS att_array_devencoded_att_conf_id_idx ON att_array_devencoded (att_conf_id);
 CREATE INDEX IF NOT EXISTS att_array_devencoded_att_conf_id_data_time_idx ON att_array_devencoded (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_array_devencoded', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
+SELECT create_hypertable('att_array_devencoded', 'data_time', chunk_time_interval => interval '28 day', create_default_indexes => FALSE);
 
 -- The Enum tables are unique in that they store a value and text label for 
 -- each data point
 CREATE TABLE IF NOT EXISTS att_scalar_devenum (
     att_conf_id integer NOT NULL,
-    data_time timestamp with time zone NOT NULL,
+    data_time timestamp WITH TIME ZONE NOT NULL,
     value_r_label text,
     value_r smallint,
     value_w_label text,
@@ -642,11 +642,11 @@ CREATE TABLE IF NOT EXISTS att_scalar_devenum (
 COMMENT ON TABLE att_scalar_devenum IS 'Scalar Enum Values Table';
 CREATE INDEX IF NOT EXISTS att_scalar_devenum_att_conf_id_idx ON att_scalar_devenum (att_conf_id);
 CREATE INDEX IF NOT EXISTS att_scalar_devenum_att_conf_id_data_time_idx ON att_scalar_devenum (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_scalar_devenum', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
+SELECT create_hypertable('att_scalar_devenum', 'data_time', chunk_time_interval => interval '28 day', create_default_indexes => FALSE);
 
 CREATE TABLE IF NOT EXISTS att_array_devenum (
     att_conf_id integer NOT NULL,
-    data_time timestamp with time zone NOT NULL,
+    data_time timestamp WITH TIME ZONE NOT NULL,
     value_r_label text[],
     value_r smallint[],
     value_w_label text[],
@@ -662,4 +662,5 @@ CREATE TABLE IF NOT EXISTS att_array_devenum (
 COMMENT ON TABLE att_array_devenum IS 'Array Enum Values Table';
 CREATE INDEX IF NOT EXISTS att_array_devenum_att_conf_id_idx ON att_array_devenum (att_conf_id);
 CREATE INDEX IF NOT EXISTS att_array_devenum_att_conf_id_data_time_idx ON att_array_devenum (att_conf_id,data_time DESC);
-SELECT create_hypertable('att_array_devenum', 'data_time', chunk_time_interval => interval '1 day', create_default_indexes => FALSE);
+SELECT create_hypertable('att_array_devenum', 'data_time', chunk_time_interval => interval '28 day', create_default_indexes => FALSE);
+

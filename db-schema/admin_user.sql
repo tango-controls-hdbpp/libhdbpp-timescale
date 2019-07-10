@@ -1,0 +1,1 @@
+CREATE ROLE hdb_admin WITH LOGIN PASSWORD 'hdbpp';
