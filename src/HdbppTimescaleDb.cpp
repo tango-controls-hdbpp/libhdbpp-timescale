@@ -100,7 +100,7 @@ HdbppTimescaleDb::HdbppTimescaleDb(const vector<string> &configuration)
     auto libhdb_conf = HdbppTimescaleDbUtils::extractConfig(configuration, "=");
 
     // logging_level optional config parameter ----
-    auto level = HdbppTimescaleDbUtils::getConfigParam(libhdb_conf, "logging_level", false);
+    auto level = param_to_lower(HdbppTimescaleDbUtils::getConfigParam(libhdb_conf, "logging_level", false));
     auto log_file = HdbppTimescaleDbUtils::getConfigParam(libhdb_conf, "log_file", false);
     auto log_console = HdbppTimescaleDbUtils::getConfigParam(libhdb_conf, "log_console", false);
     auto log_file_name = HdbppTimescaleDbUtils::getConfigParam(libhdb_conf, "log_file_name", false);
@@ -108,17 +108,17 @@ HdbppTimescaleDb::HdbppTimescaleDb(const vector<string> &configuration)
     LogConfigurator::initLogging(
         param_to_lower(log_file) == "true", param_to_lower(log_console) == "true", log_file_name);
 
-    if (level == "ERROR" || level.empty())
+    if (level == "error" || level.empty())
         LogConfigurator::setLoggingLevel(spdlog::level::level_enum::err);
-    else if (level == "WARNING")
+    else if (level == "warning")
         LogConfigurator::setLoggingLevel(spdlog::level::level_enum::warn);
-    else if (level == "INFO")
+    else if (level == "info")
         LogConfigurator::setLoggingLevel(spdlog::level::level_enum::info);
-    else if (level == "DEBUG")
+    else if (level == "debug")
         LogConfigurator::setLoggingLevel(spdlog::level::level_enum::debug);
-    else if (level == "TRACE")
+    else if (level == "trace")
         LogConfigurator::setLoggingLevel(spdlog::level::level_enum::trace);
-    else if (level == "DISABLED")
+    else if (level == "disabled")
         LogConfigurator::setLoggingLevel(spdlog::level::level_enum::off);
 
     spdlog::info("Logging level: {}", level);

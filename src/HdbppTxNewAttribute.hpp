@@ -70,7 +70,7 @@ HdbppTxNewAttribute<Conn> &HdbppTxNewAttribute<Conn>::store()
         spdlog::error("Error: {}", msg);
         Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
-    else if (!_traits.isInvalid())
+    else if (_traits.isInvalid())
     {
         std::string msg {"AttributeTraits are invalid. Unable to complete the transaction. For attribute" +
             _attr_name.fqdnAttributeName()};

@@ -157,6 +157,7 @@ namespace pqxx_conn
                     att_family,
                     att_member,
                     att_name,
+                    false,
                     static_cast<unsigned int>(traits.type()),
                     static_cast<unsigned int>(traits.formatType()),
                     static_cast<unsigned int>(traits.writeType()));
@@ -383,8 +384,6 @@ namespace pqxx_conn
                     _logger->trace(
                         "Created prepared statement for: {}", _query_builder.storeDataEventErrorName(traits));
                 }
-
-                _logger->warn("{}", _error_desc_id_cache->value(error_msg));
 
                 // no result expected
                 tx.exec_prepared0(_query_builder.storeDataEventErrorName(traits),

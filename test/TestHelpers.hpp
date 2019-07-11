@@ -36,8 +36,8 @@ namespace psql_conn_test
     namespace postgres_db
     {
         // connection strings
-        const std::string ConnectionString = "user=postgres password=password host=hdb1";
-        const std::string HdbppConnectionString = "user=postgres password=password host=hdb1 dbname=hdbpp_test_dev";
+        const std::string ConnectionString = "user=hdb_admin_tester password=hdbpp  host=hdb-services port=5000 dbname=hdb_test";
+        const std::string HdbppConnectionString = "user=hdb_admin_tester password=hdbpp host=hdb-services port=5000 dbname=hdb_test";
     } // namespace postgres_db
 } // namespace psql_conn_test
 
@@ -45,8 +45,10 @@ namespace attr_name
 {
     // mock test data
     const std::string TestAttrFQDName = "tango://localhost.server.com:10000/test-domain/test-family/test-member/test";
+
     const std::string TestAttrFQDNameNoTangoQual =
         "localhost.server.com:10000/test-domain/test-family/test-member/test";
+
     const std::string TestAttrFQDNameNoDomain = "tango://localhost:10000/test-domain/test-family/test-member/test";
 
     const std::string TestAttrCs = "new_cs";

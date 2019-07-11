@@ -62,6 +62,7 @@ namespace pqxx_conn
     const std::string CONF_COL_MEMBER = "member";
     const std::string CONF_COL_LAST_NAME = "name";
     const std::string CONF_COL_TTL = "ttl";
+    const std::string CONF_COL_HIDE = "hide";
 
     // att_conf_type table
     const std::string CONF_TYPE_TABLE_NAME = "att_conf_type";

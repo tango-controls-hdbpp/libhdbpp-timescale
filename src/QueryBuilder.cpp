@@ -144,20 +144,21 @@ namespace pqxx_conn
                 CONF_COL_DOMAIN + "," +
                 CONF_COL_FAMILY + "," +
                 CONF_COL_MEMBER + "," +
-                CONF_COL_LAST_NAME + ") (" +
+                CONF_COL_LAST_NAME + "," + 
+                CONF_COL_HIDE + ") (" +
                 "SELECT " + 
                     "$1," + 
                     CONF_TYPE_COL_TYPE_ID + "," + 
                     CONF_FORMAT_COL_FORMAT_ID + "," + 
                     CONF_WRITE_COL_WRITE_ID + 
-                    ",$2,$3,$4,$5,$6,$7 " +
+                    ",$2,$3,$4,$5,$6,$7,$8 " +
                 "FROM " + 
                     CONF_TYPE_TABLE_NAME + ", " +
                     CONF_FORMAT_TABLE_NAME + ", " +
                     CONF_WRITE_TABLE_NAME + " " +
-                "WHERE " + CONF_TYPE_TABLE_NAME + "." + CONF_TYPE_COL_TYPE_NUM + " = $8 " + 
-                "AND " + CONF_FORMAT_TABLE_NAME + "." + CONF_FORMAT_COL_FORMAT_NUM + " = $9 " + 
-                "AND " + CONF_WRITE_TABLE_NAME + "." + CONF_WRITE_COL_WRITE_NUM + " = $10) " +
+                "WHERE " + CONF_TYPE_TABLE_NAME + "." + CONF_TYPE_COL_TYPE_NUM + " = $9 " + 
+                "AND " + CONF_FORMAT_TABLE_NAME + "." + CONF_FORMAT_COL_FORMAT_NUM + " = $10 " + 
+                "AND " + CONF_WRITE_TABLE_NAME + "." + CONF_WRITE_COL_WRITE_NUM + " = $11) " +
                 "RETURNING " + CONF_COL_ID;
         // clang-format on
 

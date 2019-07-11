@@ -71,7 +71,7 @@ HdbppTxDataEvent<Conn> &HdbppTxDataEvent<Conn>::store()
         spdlog::error("Error: {}", msg);
         Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
-    else if (!Base::attributeTraits().isInvalid())
+    else if (Base::attributeTraits().isInvalid())
     {
         std::string msg {"AttributeTraits are not set. Unable to complete the transaction."};
         msg += ". For attribute" + Base::attributeName().fqdnAttributeName();
