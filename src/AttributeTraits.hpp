@@ -35,6 +35,10 @@
 
 namespace hdbpp
 {
+// An AttributeTraits class wraps the various type information about an
+// attribute to make it easy to check facts about it, i.e. is there read
+// data. This makes the code much cleaner, simpler and less error prone
+// in many places
 class AttributeTraits
 {
 public:
@@ -49,25 +53,29 @@ public:
         _attr_type(data_type)
     {}
 
+    // general validation
     bool isValid() const noexcept;
     bool isInvalid() const noexcept { return !isValid(); }
 
+    // format type information 
     bool isArray() const noexcept { return _attr_format == Tango::SPECTRUM; }
     bool isScalar() const noexcept { return _attr_format == Tango::SCALAR; }
     bool isImage() const noexcept { return _attr_format == Tango::IMAGE; }
 
+    // write type information
     bool isReadOnly() const noexcept { return _attr_write_type == Tango::READ; }
     bool isWriteOnly() const noexcept { return _attr_write_type == Tango::WRITE; }
     bool isReadWrite() const noexcept { return _attr_write_type == Tango::READ_WRITE; }
     bool isReadWithWrite() const noexcept { return _attr_write_type == Tango::READ_WITH_WRITE; }
-
     bool hasReadData() const noexcept { return isReadOnly() || isReadWrite() || isReadWithWrite(); }
     bool hasWriteData() const noexcept { return isWriteOnly() || isReadWrite() || isReadWithWrite(); }
 
+    // type access
     Tango::CmdArgType type() const noexcept { return _attr_type; }
     Tango::AttrWriteType writeType() const noexcept { return _attr_write_type; }
     Tango::AttrDataFormat formatType() const noexcept { return _attr_format; }
 
+    // various utilities
     AttributeTraits &operator=(const AttributeTraits &) = default;
     AttributeTraits &operator=(AttributeTraits &&) = default;
 
@@ -79,10 +87,13 @@ public:
 
     bool operator!=(const AttributeTraits &other) const { return !(*this == other); }
 
-    /// @brief Print the AttributeTraits object to the stream
     void print(std::ostream &os) const noexcept;
 
 private:
+
+    // set the default values to the invalid elements of the enum,
+    // that way we can check if the traits are valid, or have been
+    // set within the various functions using this class
     Tango::AttrWriteType _attr_write_type = Tango::WT_UNKNOWN;
     Tango::AttrDataFormat _attr_format = Tango::FMT_UNKNOWN;
     Tango::CmdArgType _attr_type = Tango::DATA_TYPE_UNKNOWN;

@@ -24,10 +24,13 @@
 
 namespace hdbpp
 {
+// The ConnectionBase class defines some basics all storage classes
+// must implement. The derived class must implement a further API based
+// on what the transaction classes use.
 class ConnectionBase
 {
 public:
-    // TODO conig params to constructor and get api
+    // TODO config params to constructor and get api
 
     // connection API
     virtual void connect(const std::string &connect_string) = 0;

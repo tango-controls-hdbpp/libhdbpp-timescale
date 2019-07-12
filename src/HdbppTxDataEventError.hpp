@@ -24,6 +24,9 @@
 
 namespace hdbpp
 {
+// When we receieve a data event with an error, we use this simplified transaction
+// class to store it. This saves having to deduce type information and attempt
+// to extract data as is done in HdbppTxDataEvent.
 template<typename Conn>
 class HdbppTxDataEventError : public HdbppTxDataEventBase<Conn, HdbppTxDataEventError>
 {
@@ -41,6 +44,7 @@ public:
         return *this;
     }
 
+    // trigger the database storage routines
     HdbppTxDataEventError<Conn> &store();
 
     /// @brief Print the HdbppTxDataEventError object to the stream

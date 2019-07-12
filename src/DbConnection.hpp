@@ -37,6 +37,8 @@ namespace hdbpp
 {
 namespace pqxx_conn
 {
+    // The DbConnection represents a direct connection to a database, in this case
+    // postgresql. The API is fixed by the transaction classes usage and CRTP
     class DbConnection : public ConnectionBase, public HdbppTxFactory<DbConnection>
     {
     public:
@@ -138,13 +140,9 @@ namespace pqxx_conn
         // map the attribute database id to its name
         std::unique_ptr<ColumnCache<int, std::string>> _conf_id_cache;
 
-        // map error id to its message
+        // cache the some id's for quick lookup
         std::unique_ptr<ColumnCache<int, std::string>> _error_desc_id_cache;
-
-        // map event id to its string
         std::unique_ptr<ColumnCache<int, std::string>> _event_id_cache;
-
-        // map attribute id to type id
         std::unique_ptr<ColumnCache<int, int>> _type_id_cache;
 
         // logging subsystem

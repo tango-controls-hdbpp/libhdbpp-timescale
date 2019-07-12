@@ -24,7 +24,6 @@
 
 int main(int argc, char *argv[])
 {
-    // console only warning level logging
     hdbpp::LogConfigurator::initLogging(false, true, "/tmp/hdb/test.log");
     hdbpp::LogConfigurator::setLoggingLevel(spdlog::level::err);
 

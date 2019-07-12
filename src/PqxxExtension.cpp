@@ -29,6 +29,7 @@ namespace internal
     // NOLINTNEXTLINE
     void builtin_traits<uint8_t>::from_string(const char Str[], uint8_t &Obj)
     {
+        // convert the short back to an unsigned char
         int16_t tmp;
         builtin_traits<int16_t>::from_string(Str, tmp);
         Obj = tmp & 0xFF;
@@ -38,6 +39,8 @@ namespace internal
     // NOLINTNEXTLINE
     string builtin_traits<uint8_t>::to_string(uint8_t Obj)
     {
+        // unsigned chars get converted to shorts for storage, there is no
+        // support for unsigned char in postgres
         return builtin_traits<int16_t>::to_string(Obj & 0xFF);
     }
 
@@ -54,6 +57,8 @@ namespace internal
     // NOLINTNEXTLINE
     string builtin_traits<Tango::DevState>::to_string(Tango::DevState Obj)
     {
+        // DevState is an enum, so its bit of a special case. We simply
+        // convert it to an int for storage
         return builtin_traits<int32_t>::to_string(static_cast<int32_t>(Obj));
     }
 

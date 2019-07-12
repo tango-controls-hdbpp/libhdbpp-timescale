@@ -29,6 +29,8 @@
 
 namespace hdbpp
 {
+// Stores an entry into the database for an attribute. On saving the attribute, the
+// store() method will also store any history events required
 template<typename Conn>
 class HdbppTxNewAttribute : public HdbppTxBase<Conn>
 {
@@ -49,6 +51,7 @@ public:
         return *this;
     }
 
+    // trigger the database storage routines
     HdbppTxNewAttribute<Conn> &store();
 
     /// @brief Print the HdbppTxNewAttribute object to the stream
@@ -97,6 +100,7 @@ HdbppTxNewAttribute<Conn> &HdbppTxNewAttribute<Conn>::store()
         Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
 
+    // unsupported types
     if (_traits.type() == Tango::DEV_ENUM || _traits.type() == Tango::DEV_ENCODED)
     {
         std::string msg {"Unsupported attribute type: " + tangoEnumToString(_traits.type()) + ". For attribute" +

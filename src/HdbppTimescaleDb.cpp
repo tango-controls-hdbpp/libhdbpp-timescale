@@ -120,6 +120,8 @@ HdbppTimescaleDb::HdbppTimescaleDb(const vector<string> &configuration)
         LogConfigurator::setLoggingLevel(spdlog::level::level_enum::trace);
     else if (level == "disabled")
         LogConfigurator::setLoggingLevel(spdlog::level::level_enum::off);
+    else
+        LogConfigurator::setLoggingLevel(spdlog::level::level_enum::err);
 
     spdlog::info("Logging level: {}", level);
     spdlog::info("Logging to file: {}, logging to console: {}", log_file, log_console);
@@ -160,7 +162,7 @@ void HdbppTimescaleDb::insert_Attr(Tango::EventData *event_data, HdbEventDataTyp
     {
         spdlog::trace("Event type is error for attribute: {}", event_data->attr_name);
 
-        // now time data is passed for errors, so create some
+        // now time data is passed for errors, so make something up
         struct timeval tv
         {};
 

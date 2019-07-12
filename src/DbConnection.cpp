@@ -39,7 +39,7 @@ namespace pqxx_conn
     //=============================================================================
     void DbConnection::connect(const string &connect_string)
     {
-        _logger->trace("Connecting to postgres database with string: \"{}\"", connect_string);
+        _logger->info("Connecting to postgres database with string: \"{}\"", connect_string);
 
         // construct the database connection
         try
@@ -54,7 +54,7 @@ namespace pqxx_conn
 
             // mark the connected flag as true to cache this state
             _connected = true;
-            _logger->debug("Connected to postgres successfully");
+            _logger->info("Connected to postgres successfully");
         }
         catch (const pqxx::broken_connection &ex)
         {
@@ -149,6 +149,7 @@ namespace pqxx_conn
                     _logger->trace("Created prepared statement for: {}", StoreAttribute);
                 }
 
+                // execute the statement with the expectation that we get a row back
                 auto row = tx.exec_prepared1(StoreAttribute,
                     full_attr_name,
                     _query_builder.tableName(traits),
@@ -207,8 +208,10 @@ namespace pqxx_conn
         {
             string msg {
                 "The event [" + event + "] is missing in both the cache and database, this is an unrecoverable error."};
+
             _logger->error(
                 "Event found missing, this occurred when storing event: {} for attribute: {}", event, full_attr_name);
+
             _logger->error("Throwing consistency error with message: \"{}\"", msg);
             Tango::Except::throw_exception("Consistency Error", msg, LOCATION_INFO);
         }
@@ -582,6 +585,7 @@ namespace pqxx_conn
                     _logger->trace("Created prepared statement for: {}", StoreErrorString);
                 }
 
+                // expect a single row returned
                 auto row = tx.exec_prepared1(StoreErrorString, error_msg);
                 tx.commit();
 

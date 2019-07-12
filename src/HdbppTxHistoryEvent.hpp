@@ -29,6 +29,8 @@
 
 namespace hdbpp
 {
+// Store history information about an attribute. This is basically just some event
+// information at the moment, i.e. added, removed etc
 template<typename Conn>
 class HdbppTxHistoryEvent : public HdbppTxBase<Conn>
 {
@@ -44,14 +46,18 @@ public:
         return *this;
     }
 
+    // this overload converts the event types defined in libhdb to
+    // usable strings
     HdbppTxHistoryEvent<Conn> &withEvent(unsigned char event);
 
+    // allow the adding of any type of event
     HdbppTxHistoryEvent<Conn> &withEvent(const std::string &event)
     {
         _event = event;
         return *this;
     }
 
+    // trigger the database storage routines
     HdbppTxHistoryEvent<Conn> &store();
 
     /// @brief Print the HdbppTxHistoryEvent object to the stream

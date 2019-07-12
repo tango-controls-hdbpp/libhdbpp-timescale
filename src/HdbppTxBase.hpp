@@ -35,6 +35,9 @@
 
 namespace hdbpp
 {
+// Base class for all hdbpp transaction classes. While it provides some basic 
+// functionality, it mainly acts to group the classes together and allow some
+// easy future expansion if required
 template<typename Conn>
 class HdbppTxBase
 {
@@ -42,9 +45,11 @@ public:
     HdbppTxBase(Conn &conn) : _conn(conn) {}
     virtual ~HdbppTxBase() {}
 
+    // simple feedback that the transaction was successfull. Most
+    // errors are handled with exceptions which are thrown to the
+    // tx creator.
     bool result() const noexcept { return _result; };
 
-    /// @brief Print the HdbppTxBase object to the stream
     virtual void print(std::ostream &os) const noexcept { os << "HdbppTxBase(_result: " << _result << ")"; }
 
 protected:
@@ -68,6 +73,7 @@ private:
     // through it
     Conn &_conn;
 
+    // default result is false
     bool _result = false;
 };
 

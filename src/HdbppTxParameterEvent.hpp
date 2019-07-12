@@ -29,6 +29,9 @@
 
 namespace hdbpp
 {
+// Store event parameter information in the database. This is information about the actual
+// event, i.e. units, display options etc. These strings must be kept simple, since
+// they are not quoted in the database
 template<typename Conn>
 class HdbppTxParameterEvent : public HdbppTxBase<Conn>
 {
@@ -56,6 +59,7 @@ public:
         return *this;
     }
 
+    // trigger the database storage routines
     HdbppTxParameterEvent<Conn> &store();
 
     /// @brief Print the HdbppTxParameterEvent object to the stream

@@ -142,6 +142,7 @@ void LogConfigurator::initLogging(bool enable_file, bool enable_console, const s
 
         vector<spdlog::sink_ptr> sinks;
 
+        // attempt to create a rotating log files of size 10MB and 3 rotations
         if (enable_file && !log_file_name.empty())
             sinks.push_back(make_shared<spdlog::sinks::rotating_file_sink_mt>(log_file_name, 1024 * 1024 * 10, 3));
 
@@ -157,6 +158,7 @@ void LogConfigurator::initLogging(bool enable_file, bool enable_console, const s
             spdlog::thread_pool(),
             spdlog::async_overflow_policy::overrun_oldest);
 
+        // set the logger as the default so it can be accessed all over the library
         spdlog::register_logger(logger);
         spdlog::flush_every(std::chrono::seconds(1));
         spdlog::flush_on(spdlog::level::warn);

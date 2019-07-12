@@ -24,6 +24,10 @@
 
 namespace hdbpp
 {
+// Used to store data about an attribute in the database. This transaction class
+// will determine if the data exists and what data is to be stored based on the 
+// attribute traits it is given. The HdbppTxDataEvent class also acts as the main
+// conversion point from Tango data types to standard C++ types.
 template<typename Conn>
 class HdbppTxDataEvent : public HdbppTxDataEventBase<Conn, HdbppTxDataEvent>
 {
@@ -39,14 +43,14 @@ public:
     {
         // just set the pointer here, we will do a full event data extraction at
         // point of storage, this reduces complexity but limits the functionality, i.e
-        // we can not safely queue these events
+        // we can not safely queue these events until they have been stored
         _dev_attr = dev_attr;
         return *this;
     }
 
+    // trigger the database storage routines
     HdbppTxDataEvent<Conn> &store();
 
-    /// @brief Print the HdbppTxDataEvent object to the stream
     void print(std::ostream &os) const noexcept override;
 
 private:
@@ -96,6 +100,9 @@ HdbppTxDataEvent<Conn> &HdbppTxDataEvent<Conn>::store()
     // disable is_empty exception
     _dev_attr->reset_exceptions(Tango::DeviceAttribute::isempty_flag);
 
+    // default extraction methods used for most types, the doStore() routine can be
+    // primed with differing extractors to support the various peculiarities of
+    // the tango types
     auto read_extractor = [this](auto &v) { return _dev_attr->extract_read(v); };
     auto write_extractor = [this](auto &v) { return _dev_attr->extract_set(v); };
 
@@ -118,6 +125,8 @@ HdbppTxDataEvent<Conn> &HdbppTxDataEvent<Conn>::store()
         case Tango::DEV_STATE:
             if (Base::attributeTraits().formatType() == Tango::SCALAR)
             {
+                // specialise the DevState read extraction, for some reason calling extract_read
+                // stuffs up the attribute, but we can stream it into a local variable
                 auto state_scalar_read_extractor = [this](auto &v) {
                     Tango::DevState state;
                     bool read_state = ((*_dev_attr) >> state);
@@ -135,8 +144,8 @@ HdbppTxDataEvent<Conn> &HdbppTxDataEvent<Conn>::store()
 
             break;
 
-        //case Tango::DEV_ENUM: this->template doStoreEnum<?>(); break;
-        //case Tango::DEV_ENCODED: this->template doStoreEncoded<vector<uint8_t>>(); break;
+        //case Tango::DEV_ENUM: this->template doStoreEnum<?>(); break; // TODO
+        //case Tango::DEV_ENCODED: this->template doStoreEncoded<vector<uint8_t>>(); break; // TODO
         default:
             std::string msg {
                 "HdbppTxDataEvent built for unsupported type: " + tangoEnumToString(Base::attributeTraits().type()) +
@@ -186,7 +195,7 @@ void HdbppTxDataEvent<Conn>::doStore(ReadFunctor extract_read, WriteFunctor extr
         // log some more unusual conditions
         else if (Base::quality() == Tango::ATTR_INVALID)
         {
-            spdlog::trace("Quality is {} for attribute: [{}] (write type: {}), no data extracted",
+            spdlog::debug("Quality is {} for attribute: [{}] (write type: {}), no data extracted",
                 Base::quality(),
                 Base::attributeName().fqdnAttributeName(),
                 write_type);

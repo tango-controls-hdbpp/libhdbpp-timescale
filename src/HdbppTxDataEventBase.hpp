@@ -30,6 +30,9 @@
 
 namespace hdbpp
 {
+// Collects the common functionality for data storage events together into a single,
+// simple base class. Obviously derived from HdbppTxBase to gain any base class 
+// functionality that may be provided for all transaction classes
 template<typename Conn, template<typename> class Derived>
 class HdbppTxDataEventBase : public HdbppTxBase<Conn>
 {
@@ -60,6 +63,7 @@ public:
 
     Derived<Conn> &withEventTime(Tango::TimeVal tv)
     {
+        // convert to something more usable
         _event_time = tv.tv_sec + tv.tv_usec / 1.0e6;
         return static_cast<Derived<Conn> &>(*this);
     }

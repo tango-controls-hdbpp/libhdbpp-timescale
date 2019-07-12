@@ -149,7 +149,6 @@ public:
         // note we reduce string size to remove the brace at each end
         auto items = std::count(in.begin(), in.end(), ',');
         value.clear();
-        //value.reserve(items);
 
         // preallocate all the items in the vector, we can then
         // simply set each in turn
@@ -172,7 +171,7 @@ public:
         if (value.empty())
             return {};
 
-        // simply use the pqxx utilities for this, rather than reinvent the wheel
+        // simply use the pqxx utilities for this, rather than reinvent the wheel...
         return "{" + separated_list(",", value.begin(), value.end()) + "}";
     }
 };
@@ -197,6 +196,8 @@ public:
             throw pqxx::conversion_error("Invalid array format");
 
         value.clear();
+
+        // TODO this extraction is not yet complete. Required to complete unit tests
 
         // not the best solution right now, but we are using this for testing only
         // currently. Copy the str into a std::string so we can work with it more easily.
@@ -224,7 +225,7 @@ public:
 };
 
 // This specialisation is for bool, since it is not a normal container class, but
-// rather some kind of bitfield. We have to adjust the from_string to take into
+// rather some kind of alien bitfield. We have to adjust the from_string to take into
 // account we can not use container element access
 template<>
 struct string_traits<std::vector<bool>>

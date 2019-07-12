@@ -42,18 +42,20 @@ namespace pqxx_conn
             const std::string &column_name,
             const std::string &reference);
 
-        // query if the reference has a cached value
+        // query if the reference has a value, if its not cached it will be
+        // loaded from the database
         bool valueExists(const TRef &reference);
 
         // get the value associated with the reference, throws and exception if it does not
-        // exist either in the cache or database
+        // exist either in the cache or database. The caller can check valueExists()
+        // before calling this function to know if its valid to attempt to return
+        // the value
         TValue value(const TRef &reference);
 
         // cache a value in the internal maps
         void cacheValue(const TValue &value, const TRef &reference);
 
-        // fetch all values from the database and cache them for future
-        // look up
+        // fetch all values from the database and cache them for future look up
         void fetchAll();
 
         // utility functions
@@ -62,7 +64,7 @@ namespace pqxx_conn
         void print(std::ostream &os) const noexcept;
 
     private:
-        // the database connection, only valid after the cache has been connected
+        // the database connection passed on construction
         std::shared_ptr<pqxx::connection> _conn;
 
         // store the cache parameters for debug purposes
@@ -70,7 +72,8 @@ namespace pqxx_conn
         std::string _column_name;
         std::string _reference;
 
-        // prepared query names for this cache
+        // prepared query names for this cache, used to lookup
+        // prepared statements
         std::string _fetch_all_query_name;
         std::string _fetch_id_query_name;
 
