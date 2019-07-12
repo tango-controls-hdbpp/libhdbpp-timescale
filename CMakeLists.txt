@@ -32,22 +32,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Build options
-option(HDBPP_TDB_BUILD_TESTS "Build unit tests" ON)
-option(HDBPP_TDB_BUILD_DEBUG_SYMBOLS "Build with debug symbol" OFF)
-option(HDBPP_TDB_ENABLE_TRACING "Enable tracing on all function calls" OFF)
+option(HDBPP_TDB_BUILD_TESTS "Build unit tests" OFF)
 option(HDBPP_TDB_ENABLE_CLANG "Enable clang code and layout analysis" ON)
-
-if(HDBPP_TDB_ENABLE_TRACING)
-    message(STATUS "Enabled function tracing for libhdbpp-timescale")
-endif(HDBPP_TDB_ENABLE_TRACING)
 
 if(HDBPP_TDB_BUILD_TESTS)
     message(STATUS "Unit tests will be built")
 endif(HDBPP_TDB_BUILD_TESTS)
-
-if(HDBPP_TDB_LOG_TO_TANGO)
-    message(STATUS "Enable logging redirect to tango logging system")
-endif(HDBPP_TDB_LOG_TO_TANGO)
 
 # arch install definitions
 include(GNUInstallDirs)
@@ -109,7 +99,6 @@ if(HDBPP_TDB_ENABLE_CLANG)
     endif(NOT CLANG_TIDY_EXE)
 endif(HDBPP_TDB_ENABLE_CLANG)
 
-# Sub-projects  -----------------------------------
 add_subdirectory(src)
 
 # Build Targets  -----------------------------------
@@ -172,6 +161,6 @@ target_compile_options(libhdbpp_timescale_static_library PRIVATE "$<$<CONFIG:DEB
 #install(DIRECTORY include/libhdb++ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
 # Tests -----------------------------------
-#if(HDBPP_CASS_BUILD_TESTS)
+if(HDBPP_CASS_BUILD_TESTS)
     add_subdirectory(test)
-#endif(HDBPP_CASS_BUILD_TESTS)
+endif(HDBPP_CASS_BUILD_TESTS)
