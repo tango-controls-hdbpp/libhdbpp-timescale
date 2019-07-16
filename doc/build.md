@@ -9,7 +9,7 @@ The project has two types of dependencies, those required by the toolchain, and 
 * libpqxx - Modern C++ Postgresql library (Submodule)
 * spdlog - Logging system (Submodule)
 * Catch2 - Unit test subsystem (Submodule)
-* libhdbpp - Part of the hdb++ library loading chain (Modified version of original project. This will be pushed back to the original repository in time)
+* libhdbpp - Part of the hdb++ library loading chain (Modified version of [original](https://github.com/tango-controls-hdbpp/libhdbpp) project. This will be pushed back to the original repository in time)
 
 ### Toolchain Dependencies
 
@@ -59,7 +59,7 @@ The following is a list of common useful CMake flags and their use:
 | CMAKE_INSTALL_PREFIX | PATH | Standard CMake flag to modify the install prefix. |
 | CMAKE_INCLUDE_PATH | PATH[S] | Standard CMake flag to add include paths to the search path. |
 | CMAKE_LIBRARY_PATH | PATH[S] | Standard CMake flag to add paths to the library search path |
-| CMAKE_BUILD_TYPE | Debug/Release | Build Type |
+| CMAKE_BUILD_TYPE | Debug/Release | Build type to produce |
 
 ### Project Flags
 

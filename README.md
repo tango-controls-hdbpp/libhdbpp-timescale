@@ -34,16 +34,16 @@ Please file the bug reports and feature requests in the issue tracker
 
 ## Documentation
 
+* See the [doc](doc/README.md) directoory for documentation on various topics, including building and installing.
 * General documentations on the Tango HDB system can be found [here](http://tango-controls.readthedocs.io/en/latest/administration/services/hdbpp/index.html#hdb-an-archiving-historian-service)
-* See the doc directoory for documentation on various topics.
 
 ## Building
 
-See [Build.md](doc/Build.md) in the doc folder
+See [Build.md](doc/build.md) in the doc folder
 
 ## Installing
 
-See [Install.md](doc/Install.md) in the doc folder
+See [Install.md](doc/install.md) in the doc folder
 
 ## License
 
