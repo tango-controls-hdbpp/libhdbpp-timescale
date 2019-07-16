@@ -22,10 +22,10 @@
 
 #include "HdbppTxDataEventBase.hpp"
 
-namespace hdbpp
+namespace hdbpp_internal
 {
 // Used to store data about an attribute in the database. This transaction class
-// will determine if the data exists and what data is to be stored based on the 
+// will determine if the data exists and what data is to be stored based on the
 // attribute traits it is given. The HdbppTxDataEvent class also acts as the main
 // conversion point from Tango data types to standard C++ types.
 template<typename Conn>
@@ -234,5 +234,5 @@ void HdbppTxDataEvent<Conn>::print(std::ostream &os) const noexcept
     os << ")";
 }
 
-} // namespace hdbpp
+} // namespace hdbpp_internal
 #endif // _HDBPP_TX_DATA_EVENT_HPP

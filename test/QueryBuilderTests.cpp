@@ -22,8 +22,8 @@
 #include "catch2/catch.hpp"
 
 using namespace std;
-using namespace hdbpp;
-using namespace hdbpp::pqxx_conn;
+using namespace hdbpp_internal;
+using namespace hdbpp_internal::pqxx_conn;
 using namespace Catch::Matchers;
 
 SCENARIO("storeDataEventQuery() returns the correct Value fields for the given traits", "[query-string]")

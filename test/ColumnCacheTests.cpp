@@ -25,8 +25,8 @@
 #include <string>
 
 using namespace std;
-using namespace hdbpp;
-using namespace hdbpp::pqxx_conn;
+using namespace hdbpp_internal;
+using namespace hdbpp_internal::pqxx_conn;
 using namespace hdbpp_test::psql_conn_test;
 
 namespace value_cache_test

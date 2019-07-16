@@ -22,7 +22,7 @@
 
 #include "HdbppTxDataEventBase.hpp"
 
-namespace hdbpp
+namespace hdbpp_internal
 {
 // When we receieve a data event with an error, we use this simplified transaction
 // class to store it. This saves having to deduce type information and attempt
@@ -112,5 +112,5 @@ void HdbppTxDataEventError<Conn>::print(std::ostream &os) const noexcept
        << "_error_msg: " << _error_msg << ")";
 }
 
-} // namespace hdbpp
+} // namespace hdbpp_internal
 #endif // _HDBPP_TX_DATA_EVENT_ERROR_HPP

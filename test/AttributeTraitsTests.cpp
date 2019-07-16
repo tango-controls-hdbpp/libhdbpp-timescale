@@ -21,7 +21,7 @@
 #include "catch2/catch.hpp"
 
 using namespace std;
-using namespace hdbpp;
+using namespace hdbpp_internal;
 
 SCENARIO("Attribute format returns expected results", "[attribute-traits]")
 {

@@ -27,7 +27,7 @@
 #include <iostream>
 #include <string>
 
-namespace hdbpp
+namespace hdbpp_internal
 {
 // Store event parameter information in the database. This is information about the actual
 // event, i.e. units, display options etc. These strings must be kept simple, since
@@ -149,5 +149,5 @@ void HdbppTxParameterEvent<Conn>::print(std::ostream &os) const noexcept
        << "_attr_info_ex_set: " << _attr_info_ex_set << ")";
 }
 
-} // namespace hdbpp
+} // namespace hdbpp_internal
 #endif // _HDBPP_TX_PARAMETER_EVENT_HPP

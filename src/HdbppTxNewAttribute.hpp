@@ -27,7 +27,7 @@
 #include <iostream>
 #include <string>
 
-namespace hdbpp
+namespace hdbpp_internal
 {
 // Stores an entry into the database for an attribute. On saving the attribute, the
 // store() method will also store any history events required
@@ -195,5 +195,5 @@ void HdbppTxNewAttribute<Conn>::print(std::ostream &os) const noexcept
        << "_attr_name: " << _attr_name << ")";
 }
 
-} // namespace hdbpp
+} // namespace hdbpp_internal
 #endif // _HDBPP_TX_NEW_ATTRIBUTE_HPP

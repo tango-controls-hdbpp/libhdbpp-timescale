@@ -20,7 +20,7 @@
 #include "TestHelpers.hpp"
 
 using namespace std;
-using namespace hdbpp;
+using namespace hdbpp_internal;
 
 namespace hdbpp_test
 {

@@ -24,7 +24,7 @@
 #include <netdb.h>
 
 using namespace std;
-using namespace hdbpp;
+using namespace hdbpp_internal;
 using namespace hdbpp_test::attr_name;
 
 SCENARIO("AttributeName supports fully qualified attribute name", "[attribute-name]")

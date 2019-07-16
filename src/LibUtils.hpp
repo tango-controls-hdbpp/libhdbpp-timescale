@@ -36,7 +36,7 @@
 #undef HAVE_SYS_TIME_H
 #undef HAVE_POLL
 
-namespace hdbpp
+namespace hdbpp_internal
 {
 // generic output operator for classes
 template<class T>
@@ -59,7 +59,7 @@ std::ostream &operator<<(std::ostream &os, Tango::CmdArgType type);
 std::ostream &operator<<(std::ostream &os, Tango::AttrQuality quality);
 
 // SPDLOG config and setup
-const string LibLoggerName = "hdbpp";
+const string LibLoggerName = "hdbpp_internal";
 
 struct LogConfigurator
 {
@@ -73,5 +73,5 @@ struct LogConfigurator
 #define S2(x) S1(x)
 #define LOCATION_INFO string(__func__) + ":" S2(__LINE__)
 
-}; // namespace hdbpp
+}; // namespace hdbpp_internal
 #endif // _LIBUTILS_H

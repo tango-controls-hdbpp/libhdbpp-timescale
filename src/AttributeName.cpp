@@ -25,7 +25,7 @@
 
 using namespace std;
 
-namespace hdbpp
+namespace hdbpp_internal
 {
 //=============================================================================
 //=============================================================================
@@ -292,4 +292,4 @@ AttributeName &AttributeName::operator=(const AttributeName &other)
     _fqdn_attr_name = other._fqdn_attr_name;
 }
 
-} // namespace hdbpp
+} // namespace hdbpp_internal

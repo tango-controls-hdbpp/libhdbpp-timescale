@@ -32,8 +32,8 @@
 
 using namespace std;
 using namespace pqxx;
-using namespace hdbpp;
-using namespace hdbpp::pqxx_conn;
+using namespace hdbpp_internal;
+using namespace hdbpp_internal::pqxx_conn;
 using namespace hdbpp_test::attr_name;
 using namespace hdbpp_test::attr_info;
 using namespace hdbpp_test::psql_conn_test;

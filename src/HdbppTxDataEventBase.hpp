@@ -28,10 +28,10 @@
 #include <iostream>
 #include <string>
 
-namespace hdbpp
+namespace hdbpp_internal
 {
 // Collects the common functionality for data storage events together into a single,
-// simple base class. Obviously derived from HdbppTxBase to gain any base class 
+// simple base class. Obviously derived from HdbppTxBase to gain any base class
 // functionality that may be provided for all transaction classes
 template<typename Conn, template<typename> class Derived>
 class HdbppTxDataEventBase : public HdbppTxBase<Conn>
@@ -111,5 +111,5 @@ void HdbppTxDataEventBase<Conn, Derived>::print(std::ostream &os) const noexcept
        << "_event_time: " << _event_time << ")";
 }
 
-} // namespace hdbpp
+} // namespace hdbpp_internal
 #endif // _HDBPP_TX_DATA_EVENT_BASE_HPP

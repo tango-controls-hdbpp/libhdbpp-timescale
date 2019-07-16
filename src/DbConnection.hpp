@@ -33,7 +33,7 @@
 #include <pqxx/pqxx>
 #include <string>
 
-namespace hdbpp
+namespace hdbpp_internal
 {
 namespace pqxx_conn
 {
@@ -149,7 +149,7 @@ namespace pqxx_conn
         std::shared_ptr<spdlog::logger> _logger;
     };
 } // namespace pqxx_conn
-} // namespace hdbpp
+} // namespace hdbpp_internal
 
 // include the template implementations for DbConnection
 #include "DbConnection.tpp"

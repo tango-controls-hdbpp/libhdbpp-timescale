@@ -22,13 +22,12 @@
 
 #include <iostream>
 
-namespace hdbpp
+namespace hdbpp_internal
 {
 template<typename Conn>
 class HdbppTxFactory
 {
 public:
-
     // this generic method creates transaction objects based on the template
     // parameter. Any parameters are forward directly to the new object
     template<template<typename> class Class, typename... Params>
@@ -38,5 +37,5 @@ public:
     }
 };
 
-} // namespace hdbpp
+} // namespace hdbpp_internal
 #endif // _HDBPP_TX_FACTORY_HPP

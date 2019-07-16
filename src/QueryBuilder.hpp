@@ -34,9 +34,9 @@ namespace std
 // use as a key in a map. The traits class is used as a key to reference
 // cached queries
 template<>
-struct less<hdbpp::AttributeTraits>
+struct less<hdbpp_internal::AttributeTraits>
 {
-    bool operator()(const hdbpp::AttributeTraits &lhs, const hdbpp::AttributeTraits &rhs) const
+    bool operator()(const hdbpp_internal::AttributeTraits &lhs, const hdbpp_internal::AttributeTraits &rhs) const
     {
         auto a = lhs.type();
         auto b = lhs.writeType();
@@ -49,7 +49,7 @@ struct less<hdbpp::AttributeTraits>
 };
 } // namespace std
 
-namespace hdbpp
+namespace hdbpp_internal
 {
 namespace pqxx_conn
 {
@@ -187,5 +187,5 @@ namespace pqxx_conn
         return result->second;
     }
 } // namespace pqxx_conn
-} // namespace hdbpp
+} // namespace hdbpp_internal
 #endif // _QUERY_BUILDER_HPP

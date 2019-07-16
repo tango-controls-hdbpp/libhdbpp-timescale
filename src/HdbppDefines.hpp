@@ -23,7 +23,7 @@
 
 #include <string>
 
-namespace hdbpp
+namespace hdbpp_internal
 {
 namespace libhdbpp_compatibility
 {
@@ -51,5 +51,5 @@ namespace events
     const std::string PauseEvent = "pause";
     const std::string CrashEvent = "crash";
 } // namespace events
-} // namespace hdbpp
+} // namespace hdbpp_internal
 #endif // _HDBPP_DEFINES_HPP

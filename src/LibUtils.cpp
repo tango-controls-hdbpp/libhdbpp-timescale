@@ -25,7 +25,7 @@
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include "spdlog/sinks/syslog_sink.h"
 
-namespace hdbpp
+namespace hdbpp_internal
 {
 //=============================================================================
 //=============================================================================
@@ -200,4 +200,4 @@ void LogConfigurator::setLoggingLevel(spdlog::level::level_enum level)
     spdlog::debug("Logger set to level {}", (int)level);
 }
 
-} // namespace hdbpp
+} // namespace hdbpp_internal

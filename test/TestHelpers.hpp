@@ -36,8 +36,11 @@ namespace psql_conn_test
     namespace postgres_db
     {
         // connection strings
-        const std::string ConnectionString = "user=hdb_admin_tester password=hdbpp  host=hdb-services port=5000 dbname=hdb_test";
-        const std::string HdbppConnectionString = "user=hdb_admin_tester password=hdbpp host=hdb-services port=5000 dbname=hdb_test";
+        const std::string ConnectionString =
+            "user=hdb_admin_tester password=hdbpp host=hdb-services port=5000 dbname=hdb_test";
+
+        const std::string HdbppConnectionString =
+            "user=hdb_admin_tester password=hdbpp host=hdb-services port=5000 dbname=hdb_test";
     } // namespace postgres_db
 } // namespace psql_conn_test
 
@@ -70,6 +73,7 @@ namespace attr_info
 {
     const std::string AttrInfoDescription =
         "Description about attribute, its \"quoted\",  and 'quoted', yet does it work?";
+        
     const std::string AttrInfoLabel = "Label";
     const std::string AttrInfoUnit = "Unit %";
     const std::string AttrInfoStandardUnit = "Standard Unit";
@@ -236,7 +240,8 @@ namespace data_gen
     }
 
     template<Tango::CmdArgType Type>
-    typename TangoTypeTraits<Type>::array generateData(const hdbpp::AttributeTraits &traits, bool empty_data = false)
+    typename TangoTypeTraits<Type>::array generateData(
+        const hdbpp_internal::AttributeTraits &traits, bool empty_data = false)
     {
         if (traits.isArray())
             return generateSpectrumData<Type>(empty_data);

@@ -22,7 +22,7 @@
 
 #include <string>
 
-namespace hdbpp
+namespace hdbpp_internal
 {
 // The ConnectionBase class defines some basics all storage classes
 // must implement. The derived class must implement a further API based
@@ -39,5 +39,5 @@ public:
     virtual bool isClosed() const noexcept = 0;
 };
 
-}; // namespace hdbpp
+}; // namespace hdbpp_internal
 #endif // _ABSTRACT_CONNECTION_HPP

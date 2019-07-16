@@ -25,7 +25,7 @@
 
 using namespace Tango;
 using namespace std;
-using namespace hdbpp;
+using namespace hdbpp_internal;
 using namespace hdbpp_test::attr_name;
 using namespace hdbpp_test::attr_info;
 

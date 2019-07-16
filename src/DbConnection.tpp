@@ -22,7 +22,7 @@
 
 #include "PqxxExtension.hpp"
 
-namespace hdbpp
+namespace hdbpp_internal
 {
 namespace pqxx_conn
 {
@@ -103,7 +103,7 @@ namespace pqxx_conn
         const AttributeTraits &traits)
     {
         assert(!full_attr_name.empty());
-        assert(!traits.isValid());
+        assert(traits.isValid());
 
         _logger->trace("Storing data event for attribute {} with traits {}, value_r valid: {}, value_w valid: {}",
             full_attr_name,
@@ -181,5 +181,5 @@ namespace pqxx_conn
     }
 
 } // namespace pqxx_conn
-} // namespace hdbpp
+} // namespace hdbpp_internal
 #endif // _PSQL_CONNECTION_TPP

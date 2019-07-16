@@ -24,7 +24,7 @@
 #include "catch2/catch.hpp"
 
 using namespace std;
-using namespace hdbpp;
+using namespace hdbpp_internal;
 using namespace hdbpp_test::attr_name;
 
 namespace hdbpp_new_attr_test

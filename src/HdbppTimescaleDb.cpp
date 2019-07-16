@@ -32,6 +32,7 @@
 #include <vector>
 
 using namespace std;
+using namespace hdbpp_internal;
 
 namespace hdbpp
 {

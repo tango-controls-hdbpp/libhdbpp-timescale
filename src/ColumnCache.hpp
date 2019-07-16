@@ -29,7 +29,7 @@
 #include <memory>
 #include <pqxx/pqxx>
 
-namespace hdbpp
+namespace hdbpp_internal
 {
 namespace pqxx_conn
 {
@@ -287,6 +287,6 @@ namespace pqxx_conn
     }
 
 } // namespace pqxx_conn
-} // namespace hdbpp
+} // namespace hdbpp_internal
 
 #endif // _COLUMN_CACHE_HPP

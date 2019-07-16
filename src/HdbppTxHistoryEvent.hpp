@@ -27,7 +27,7 @@
 #include <iostream>
 #include <string>
 
-namespace hdbpp
+namespace hdbpp_internal
 {
 // Store history information about an attribute. This is basically just some event
 // information at the moment, i.e. added, removed etc
@@ -172,5 +172,5 @@ void HdbppTxHistoryEvent<Conn>::print(std::ostream &os) const noexcept
        << "_event: " << _event << ")";
 }
 
-} // namespace hdbpp
+} // namespace hdbpp_internal
 #endif // _HDBPP_TX_HISTORY_EVENT_HPP

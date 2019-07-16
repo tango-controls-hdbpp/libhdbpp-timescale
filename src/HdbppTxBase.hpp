@@ -33,9 +33,9 @@
 #undef HAVE_SYS_TIME_H
 #undef HAVE_POLL
 
-namespace hdbpp
+namespace hdbpp_internal
 {
-// Base class for all hdbpp transaction classes. While it provides some basic 
+// Base class for all hdbpp_internal transaction classes. While it provides some basic
 // functionality, it mainly acts to group the classes together and allow some
 // easy future expansion if required
 template<typename Conn>
@@ -77,5 +77,5 @@ private:
     bool _result = false;
 };
 
-} // namespace hdbpp
+} // namespace hdbpp_internal
 #endif // _HDBPP_TX_BASE_HPP

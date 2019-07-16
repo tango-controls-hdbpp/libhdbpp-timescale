@@ -22,7 +22,7 @@
 
 #include <string>
 
-namespace hdbpp
+namespace hdbpp_internal
 {
 namespace pqxx_conn
 {
@@ -136,5 +136,5 @@ namespace pqxx_conn
     const std::string DAT_IMG_COL_DIMX_W = "dim_x_w";
     const std::string DAT_IMG_COL_DIMY_W = "dim_y_w";
 } // namespace pqxx_conn
-} // namespace hdbpp
+} // namespace hdbpp_internal
 #endif // _TIMESCALE_SCHEMA_HPP

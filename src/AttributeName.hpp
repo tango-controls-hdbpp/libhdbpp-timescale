@@ -25,7 +25,7 @@
 #include <iostream>
 #include <string>
 
-namespace hdbpp
+namespace hdbpp_internal
 {
 /// @class AttributeName
 /// @brief Represents a fully qualified domain name (FQDN) for a device server attribute.
@@ -146,5 +146,5 @@ private:
     std::string _attribute_name_cache;
 };
 
-} // namespace hdbpp
+} // namespace hdbpp_internal
 #endif // _ATTRIBUTE_NAME_H

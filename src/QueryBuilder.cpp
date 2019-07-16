@@ -24,7 +24,7 @@
 
 using namespace std;
 
-namespace hdbpp
+namespace hdbpp_internal
 {
 namespace pqxx_conn
 {
@@ -409,4 +409,4 @@ namespace pqxx_conn
            << _data_event_error_queries.size() << ")";
     }
 } // namespace pqxx_conn
-} // namespace hdbpp
+} // namespace hdbpp_internal

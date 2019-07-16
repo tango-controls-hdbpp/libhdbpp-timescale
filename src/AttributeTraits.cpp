@@ -21,7 +21,7 @@
 
 using namespace std;
 
-namespace hdbpp
+namespace hdbpp_internal
 {
 //=============================================================================
 //=============================================================================
@@ -42,4 +42,4 @@ void AttributeTraits::print(ostream &os) const noexcept
        << "type: " << _attr_type << "(" << static_cast<unsigned int>(_attr_type) << ")";
 }
 
-} // namespace hdbpp
+} // namespace hdbpp_internal

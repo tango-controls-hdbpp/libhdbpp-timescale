@@ -33,7 +33,7 @@
 #undef HAVE_SYS_TIME_H
 #undef HAVE_POLL
 
-namespace hdbpp
+namespace hdbpp_internal
 {
 // An AttributeTraits class wraps the various type information about an
 // attribute to make it easy to check facts about it, i.e. is there read
@@ -57,7 +57,7 @@ public:
     bool isValid() const noexcept;
     bool isInvalid() const noexcept { return !isValid(); }
 
-    // format type information 
+    // format type information
     bool isArray() const noexcept { return _attr_format == Tango::SPECTRUM; }
     bool isScalar() const noexcept { return _attr_format == Tango::SCALAR; }
     bool isImage() const noexcept { return _attr_format == Tango::IMAGE; }
@@ -90,7 +90,6 @@ public:
     void print(std::ostream &os) const noexcept;
 
 private:
-
     // set the default values to the invalid elements of the enum,
     // that way we can check if the traits are valid, or have been
     // set within the various functions using this class
@@ -99,5 +98,5 @@ private:
     Tango::CmdArgType _attr_type = Tango::DATA_TYPE_UNKNOWN;
 };
 
-} // namespace hdbpp
+} // namespace hdbpp_internal
 #endif // _ATTRIBUTE_TRAITS_H

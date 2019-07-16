@@ -24,11 +24,11 @@
 
 int main(int argc, char *argv[])
 {
-    hdbpp::LogConfigurator::initLogging(false, true, "/tmp/hdb/test.log");
-    hdbpp::LogConfigurator::setLoggingLevel(spdlog::level::err);
+    hdbpp_internal::LogConfigurator::initLogging(false, true, "/tmp/hdb/test.log");
+    hdbpp_internal::LogConfigurator::setLoggingLevel(spdlog::level::err);
 
     int result = Catch::Session().run(argc, argv);
 
-    hdbpp::LogConfigurator::shutdownLogging();
+    hdbpp_internal::LogConfigurator::shutdownLogging();
     return result;
 }

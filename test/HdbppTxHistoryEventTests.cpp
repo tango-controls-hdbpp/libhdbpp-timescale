@@ -27,7 +27,7 @@
 #include <vector>
 
 using namespace std;
-using namespace hdbpp;
+using namespace hdbpp_internal;
 using namespace hdbpp_test::attr_name;
 
 namespace hdbpp_hist_event_test

@@ -3,11 +3,6 @@ project(unit-tests)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_COLOR_MAKEFILE ON)
 
-# Prepare "Catch" library for other executables
-#set(CATCH_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/catch2)
-#add_library(catch_library INTERFACE)
-#target_include_directories(catch_library INTERFACE ${CATCH_INCLUDE_DIR})
-
 # Make test executable
 set(TEST_SOURCES 
     ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
@@ -30,9 +25,11 @@ target_compile_options(unit-tests PRIVATE -Wall -Wextra -g)
 target_link_libraries(unit-tests 
     PRIVATE libhdbpp_headers libhdbpp_timescale_shared_library Catch2 TangoInterfaceLibrary)
 
-target_include_directories(unit-tests PRIVATE ${UNIT_TEST_INCLUDE_PATHS})
-target_compile_definitions(unit-tests PRIVATE -DDEBUG_ENABLED)
-#target_compile_features(libhdbpp_timescale_shared_library PRIVATE cxx_std_17)
+target_include_directories(unit-tests 
+    PRIVATE ${CMAKE_SOURCE_DIR}/src ${PROJECT_SOURCE_DIR})
+
+target_compile_definitions(unit-tests 
+    PRIVATE -DDEBUG_ENABLED)
 
 set_target_properties(unit-tests 
     PROPERTIES 
