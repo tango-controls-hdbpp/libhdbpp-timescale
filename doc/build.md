@@ -80,7 +80,7 @@ cmake -DHDBPP_TDB_BUILD_TESTS=ON ..
 make
 ```
 
-To run all unit tests, a postgresql database node is required with the project schema loaded up. To run all tests:
+To run all unit tests, a postgresql database node is required with the project schema loaded up. Also note the connection string to this database node needs setting in TestHelpers.hpp. To run all tests:
 
 ```bash
 ./test/unit-tests
