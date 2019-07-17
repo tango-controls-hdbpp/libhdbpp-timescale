@@ -39,11 +39,11 @@ Please file the bug reports and feature requests in the issue tracker
 
 ## Building
 
-See [Build.md](doc/build.md) in the doc folder
+See [build.md](doc/build.md) in the doc folder
 
 ## Installing
 
-See [Install.md](doc/install.md) in the doc folder
+See [install.md](doc/install.md) in the doc folder
 
 ## License
 
