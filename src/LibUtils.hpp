@@ -59,7 +59,7 @@ std::ostream &operator<<(std::ostream &os, Tango::CmdArgType type);
 std::ostream &operator<<(std::ostream &os, Tango::AttrQuality quality);
 
 // SPDLOG config and setup
-const string LibLoggerName = "hdbpp_internal";
+const string LibLoggerName = "hdbpp";
 
 struct LogConfigurator
 {
@@ -68,10 +68,25 @@ struct LogConfigurator
     static void setLoggingLevel(spdlog::level::level_enum level);
 };
 
+// get the file name from the __FILE__ variable for error messages
+constexpr auto* getFileName(const char* const path)
+{
+    const auto* start_position = path;
+
+    for (const auto* current_character = path; *current_character != '\0'; ++current_character)
+        if (*current_character == '\\' || *current_character == '/')
+            start_position = current_character;
+
+    if (start_position != path)
+        ++start_position;
+
+    return start_position;
+}
+
 // Macros to get the location for reporting errors
 #define S1(x) #x
 #define S2(x) S1(x)
-#define LOCATION_INFO string(__func__) + ":" S2(__LINE__)
+#define LOCATION_INFO string(getFileName(__FILE__)) + ":" + string(__func__) + ":" S2(__LINE__)
 
 }; // namespace hdbpp_internal
 #endif // _LIBUTILS_H

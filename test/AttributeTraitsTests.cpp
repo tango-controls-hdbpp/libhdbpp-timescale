@@ -20,11 +20,15 @@
 #include "AttributeTraits.hpp"
 #include "catch2/catch.hpp"
 
+#include "LibUtils.hpp"
+
 using namespace std;
 using namespace hdbpp_internal;
 
 SCENARIO("Attribute format returns expected results", "[attribute-traits]")
 {
+    cout << LOCATION_INFO << endl;
+
     GIVEN("Constructed AttributeTraits as an Array")
     {
         AttributeTraits traits {Tango::READ, Tango::SPECTRUM, Tango::DEV_BOOLEAN};
