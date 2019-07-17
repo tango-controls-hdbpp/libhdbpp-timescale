@@ -28,6 +28,7 @@ SCENARIO("Attribute format returns expected results", "[attribute-traits]")
     GIVEN("Constructed AttributeTraits as an Array")
     {
         AttributeTraits traits {Tango::READ, Tango::SPECTRUM, Tango::DEV_BOOLEAN};
+        REQUIRE(traits.isValid());
 
         WHEN("Checking if traits are an array")
         {
@@ -46,6 +47,7 @@ SCENARIO("Attribute format returns expected results", "[attribute-traits]")
     GIVEN("Constructed AttributeTraits as a Scalar")
     {
         AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_BOOLEAN};
+        REQUIRE(traits.isValid());
 
         WHEN("Checking if traits are an array")
         {
@@ -64,6 +66,7 @@ SCENARIO("Attribute format returns expected results", "[attribute-traits]")
     GIVEN("Constructed AttributeTraits as an Image")
     {
         AttributeTraits traits {Tango::READ, Tango::IMAGE, Tango::DEV_BOOLEAN};
+        REQUIRE(traits.isValid());
 
         WHEN("Checking if traits are an array")
         {
@@ -85,6 +88,7 @@ SCENARIO("Attribute write type returns expected results", "[attribute-traits]")
     GIVEN("Constructed AttributeTraits as ReadOnly")
     {
         AttributeTraits traits {Tango::READ, Tango::SPECTRUM, Tango::DEV_BOOLEAN};
+        REQUIRE(traits.isValid());
 
         WHEN("Checking if traits are ReadOnly")
         {
@@ -115,6 +119,7 @@ SCENARIO("Attribute write type returns expected results", "[attribute-traits]")
     GIVEN("Constructed AttributeTraits as WriteOnly")
     {
         AttributeTraits traits {Tango::WRITE, Tango::SPECTRUM, Tango::DEV_BOOLEAN};
+        REQUIRE(traits.isValid());
 
         WHEN("Checking if traits are ReadOnly")
         {
@@ -145,6 +150,7 @@ SCENARIO("Attribute write type returns expected results", "[attribute-traits]")
     GIVEN("Constructed AttributeTraits as ReadWrite")
     {
         AttributeTraits traits {Tango::READ_WRITE, Tango::SPECTRUM, Tango::DEV_BOOLEAN};
+        REQUIRE(traits.isValid());
 
         WHEN("Checking if traits are ReadOnly")
         {
@@ -175,6 +181,7 @@ SCENARIO("Attribute write type returns expected results", "[attribute-traits]")
     GIVEN("Constructed AttributeTraits as ReadWithWrite")
     {
         AttributeTraits traits {Tango::READ_WITH_WRITE, Tango::SPECTRUM, Tango::DEV_BOOLEAN};
+        REQUIRE(traits.isValid());
 
         WHEN("Checking if traits are ReadOnly")
         {
@@ -208,6 +215,7 @@ SCENARIO("Attribute traits accessors return construction time results", "[attrib
     GIVEN("Constructed AttributeTraits as a Read Only Array of type Tango::DEV_BOOLEAN")
     {
         AttributeTraits traits {Tango::READ, Tango::SPECTRUM, Tango::DEV_BOOLEAN};
+        REQUIRE(traits.isValid());
 
         WHEN("Checking if traits type is Tango::DEV_BOOLEAN")
         {
@@ -220,6 +228,62 @@ SCENARIO("Attribute traits accessors return construction time results", "[attrib
         AND_WHEN("Checking if traits access type is Tango::READ")
         {
             THEN("Result is true") { REQUIRE(traits.writeType() == Tango::READ); }
+        }
+    }
+}
+
+SCENARIO("Attribute traits are invalid if not set with valid traits", "[attribute-traits]")
+{
+    GIVEN("Constructing an AttributeTraits with no traits")
+    {
+        AttributeTraits traits;
+
+        WHEN("Checking if traits type is valid")
+        {
+            THEN("Result is false") 
+            { 
+                REQUIRE(!traits.isValid()); 
+                REQUIRE(traits.isInvalid()); 
+            }
+        }
+    }
+    GIVEN("Constructing an AttributeTraits with valid write trait")
+    {
+        AttributeTraits traits {Tango::READ, Tango::FMT_UNKNOWN, Tango::DATA_TYPE_UNKNOWN};
+
+        WHEN("Checking if traits type is valid")
+        {
+            THEN("Result is false") 
+            { 
+                REQUIRE(!traits.isValid()); 
+                REQUIRE(traits.isInvalid()); 
+            }
+        }
+    }
+    GIVEN("Constructed AttributeTraits with valid format and write traits")
+    {
+        AttributeTraits traits {Tango::READ, Tango::SPECTRUM, Tango::DATA_TYPE_UNKNOWN};
+
+        WHEN("Checking if traits type is valid")
+        {
+            THEN("Result is false") 
+            { 
+                REQUIRE(!traits.isValid()); 
+                REQUIRE(traits.isInvalid()); 
+            }
+        }
+    }
+    GIVEN("Constructed AttributeTraits with valid traits")
+    {
+        AttributeTraits traits {Tango::READ, Tango::SPECTRUM, Tango::DEV_BOOLEAN};
+
+        WHEN("Checking if traits type is valid")
+        {
+            THEN("Result is true") 
+            { 
+                REQUIRE(traits.isValid()); 
+                REQUIRE(!traits.isInvalid()); 
+            }
         }
     }
 }
