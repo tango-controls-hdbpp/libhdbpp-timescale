@@ -65,18 +65,20 @@ The following is a list of common useful CMake flags and their use:
 
 | Flag | Setting | Default | Description |
 |------|-----|-----|-----|
-| HDBPP_TDB_BUILD_TESTS | ON/OFF | OFF | Build unit tests |
-| HDBPP_TDB_BUILD_DEBUG_SYMBOLS | ON/OFF | OFF | Add additional debug systems to the library |
-| HDBPP_TDB_ENABLE_CLANG | ON/OFF | OFF | Clang code static analysis, readability, and cppcore guideline enforcement |
+| BUILD_UNIT_TESTS | ON/OFF | OFF | Build unit tests |
+| BUILD_BENCHMARK_TESTS | ON/OFF | OFF | Build benchmark tests (Forces a Release build) |
+| ENABLE_CLANG | ON/OFF | OFF | Clang code static analysis, readability, and cppcore guideline enforcement |
 
 ## Running Tests
+
+### Unit Tests
 
 The project has extensive unit tests to ensure its functioning as expect. Build the project with testing enabled:
 
 ```bash
 mkdir -p build
 cd build
-cmake -DHDBPP_TDB_BUILD_TESTS=ON ..
+cmake -DBUILD_UNIT_TESTS=ON ..
 make
 ```
 
@@ -102,4 +104,19 @@ To see more options for the unit-test command line binary:
 
 ```bash
 ./bin/unit-tests --help
+```
+
+### Benchmark Tests
+
+These are a work in progress to explore future optimisation point. If built, they can be run as follows:
+
+```bash
+mkdir -p build
+cd build
+cmake -DBUILD_BENCHMARK_TESTS=ON ..
+make
+```
+
+```bash
+./benchmark/benchmark-tests
 ```
