@@ -30,7 +30,7 @@
 
 namespace std
 {
-// This is a custom compariator for the AttributeTraits class to allow its
+// This is a custom comparator for the AttributeTraits class to allow its
 // use as a key in a map. The traits class is used as a key to reference
 // cached queries
 template<>

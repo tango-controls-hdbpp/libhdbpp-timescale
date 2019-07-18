@@ -175,8 +175,17 @@ void LogConfigurator::initLogging(bool enable_file, bool enable_console, const s
     catch (const spdlog::spdlog_ex &ex)
     {
         string msg {"Failed to initialise the logging system, caught error: " + string(ex.what())};
+        cout << msg << endl;
         Tango::Except::throw_exception("Runtime Error", msg, LOCATION_INFO);
     }
+}
+
+//=============================================================================
+//=============================================================================
+void LogConfigurator::initLoggingMetrics(bool enable_file, bool enable_console, const string &log_file_name)
+{
+    auto logger = spdlog::get(LibLoggerName);
+    if (!logger) initLogging(enable_file, enable_console, log_file_name);
 }
 
 //=============================================================================

@@ -7,3 +7,9 @@
 [submodule "thirdparty/Catch2"]
 	path = thirdparty/Catch2
 	url = https://github.com/catchorg/Catch2.git
+[submodule "thirdparty/google/googletest"]
+	path = thirdparty/google/googletest
+	url = https://github.com/google/googletest.git
+[submodule "thirdparty/google/benchmark"]
+	path = thirdparty/google/benchmark
+	url = https://github.com/google/benchmark.git

@@ -7,8 +7,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- Google benchmark submodule for micro benchmarking. This will enabled future optimisation
+  - Benchmark tests for QueryBuilder
+
 ## [0.9.0] - 2019-07-12
 
 ### Added
 
-* Pre v1 release of the library. This is an almost complete version of the library. Next couple of versions will complete the library before a v1 release.
+- Pre v1 release of the library. 
+  - This is an almost complete version of the library. 
+  - Next couple of versions will complete the library before a v1 release.

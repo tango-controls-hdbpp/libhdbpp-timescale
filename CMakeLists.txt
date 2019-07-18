@@ -34,11 +34,17 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Build options
 option(BUILD_UNIT_TESTS "Build unit tests" OFF)
+option(BUILD_BENCHMARK_TESTS "Build benchmarking tests (Forces RELEASE build)" OFF)
 option(ENABLE_CLANG "Enable clang code and layout analysis" OFF)
 
 if(BUILD_UNIT_TESTS)
     message(STATUS "Unit tests will be built")
 endif(BUILD_UNIT_TESTS)
+
+if(BUILD_BENCHMARK_TESTS)
+    message(STATUS "Benchmark tests will be built (Forces RELEASE build)")
+    set(CMAKE_BUILD_TYPE "Release")
+endif(BUILD_BENCHMARK_TESTS)
 
 # arch install definitions
 include(GNUInstallDirs)
@@ -68,6 +74,16 @@ find_package(Tango)
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
+
+# Thirdparty Integration -----------------------------------
+
+# build google benchmark (target: benchmark)
+# do not build tests of benchmarking lib
+set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "Suppressing benchmark's tests" FORCE)
+add_subdirectory(thirdparty/google/benchmark)
+
+# build tests (targets: gtest_main, gtest)
+add_subdirectory(thirdparty/google/googletest/googletest)
 
 # Include the thirdparty projects
 add_subdirectory(thirdparty/libhdbpp EXCLUDE_FROM_ALL)
@@ -169,3 +185,7 @@ install(
 if(BUILD_UNIT_TESTS)
     add_subdirectory(test)
 endif(BUILD_UNIT_TESTS)
+
+if(BUILD_BENCHMARK_TESTS)
+    add_subdirectory(benchmark)
+endif(BUILD_BENCHMARK_TESTS)
