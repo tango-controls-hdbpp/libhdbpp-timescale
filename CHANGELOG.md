@@ -7,10 +7,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.9.1] - 2019-07-18
+
 ### Added
 
 - Google benchmark submodule for micro benchmarking. This will enabled future optimisation
   - Benchmark tests for QueryBuilder
+
+### Fixed
+
+- Fix to build system - can build without Clang enabled now.
+- Updates/corrections to docs
 
 ## [0.9.0] - 2019-07-12
 

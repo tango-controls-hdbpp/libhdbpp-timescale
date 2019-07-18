@@ -20,7 +20,7 @@ set(LIBHDBPP_TIMESCALE_NAME "libhdb++timescale")
 # Versioning
 set(VERSION_MAJOR "0")
 set(VERSION_MINOR "9")
-set(VERSION_PATCH "0")
+set(VERSION_PATCH "1")
 set(VERSION_METADATA "")
 set(VERSION_STRING ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
 
@@ -145,9 +145,14 @@ set_target_properties(libhdbpp_timescale_shared_library
         LINK_FLAGS "-Wl,--no-undefined"
         CXX_STANDARD 14
         POSITION_INDEPENDENT_CODE 1
-        CXX_CLANG_TIDY ${DO_CLANG_TIDY}
         VERSION ${VERSION_STRING}
         SOVERSION ${VERSION_STRING})
+
+if(DO_CLANG_TIDY)
+    set_target_properties(libhdbpp_timescale_shared_library 
+        PROPERTIES 
+            CXX_CLANG_TIDY ${DO_CLANG_TIDY})
+endif(DO_CLANG_TIDY)
 
 target_compile_options(libhdbpp_timescale_shared_library 
     PRIVATE "$<$<CONFIG:DEBUG>:-g>")
@@ -166,7 +171,8 @@ set_target_properties(libhdbpp_timescale_static_library
         CXX_STANDARD 14
         EXCLUDE_FROM_ALL 1)
 
-target_compile_options(libhdbpp_timescale_static_library PRIVATE "$<$<CONFIG:DEBUG>:-g>")
+target_compile_options(libhdbpp_timescale_static_library 
+    PRIVATE "$<$<CONFIG:DEBUG>:-g>")
 
 # Install Config -----------------------------------
 install(
