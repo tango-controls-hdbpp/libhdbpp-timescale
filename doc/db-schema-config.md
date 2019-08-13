@@ -77,7 +77,6 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE ON SEQUENCES TO readwrite;
 GRANT ALL ON SCHEMA public TO readwrite;
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO readwrite;
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO readwrite;
-After this it is a matter of creating users and allocating them to roles:
 
 -- Users
 CREATE ROLE hdb_cfg_man WITH LOGIN PASSWORD 'hdbpp';
