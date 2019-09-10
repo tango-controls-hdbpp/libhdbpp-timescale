@@ -35,6 +35,7 @@ Rather than create and manage the tables via a superuser, we create and admin us
 ```sql
 CREATE ROLE hdb_admin WITH LOGIN PASSWORD 'hdbpp';
 ALTER USER hdb_admin CREATEDB;
+ALTER USER hdb_admin CREATEROLE;
 ALTER USER hdb_admin SUPERUSER;
 ```
 

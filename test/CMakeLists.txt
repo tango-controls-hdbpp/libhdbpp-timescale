@@ -28,11 +28,13 @@ target_link_libraries(unit-tests
 target_include_directories(unit-tests 
     PRIVATE ${CMAKE_SOURCE_DIR}/src ${PROJECT_SOURCE_DIR})
 
-target_compile_definitions(unit-tests 
-    PRIVATE -DDEBUG_ENABLED)
-
 set_target_properties(unit-tests 
     PROPERTIES 
         LINK_FLAGS "-Wl,--no-undefined"
-        CXX_CLANG_TIDY ${DO_CLANG_TIDY}
         CXX_STANDARD 14)
+
+if(DO_CLANG_TIDY)
+    set_target_properties(unit-tests  
+        PROPERTIES 
+            CXX_CLANG_TIDY ${DO_CLANG_TIDY})
+endif(DO_CLANG_TIDY)

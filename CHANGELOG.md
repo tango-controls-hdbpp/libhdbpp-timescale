@@ -7,11 +7,22 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fixed
+
+- Close logging down in destructor so linked device server can be restarted.
+
+### Changed
+
+- Build system correctly produces a major version shared object
+- Removed Clang path from build (CMake checks PATH)
+- Corrected static library build
+- Install now places header in include/hdb++/
+
 ## [0.9.1] - 2019-07-18
 
 ### Added
 
-- Google benchmark submodule for micro benchmarking. This will enabled future optimisation
+- Google benchmark sub-module for micro benchmarking. This will enabled future optimisation
   - Benchmark tests for QueryBuilder
 
 ### Fixed

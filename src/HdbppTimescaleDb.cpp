@@ -17,7 +17,7 @@
    You should have received a copy of the Lesser GNU General Public License
    along with libhdb++timescale.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include "HdbppTimescaleDb.hpp"
+#include "hdb++/HdbppTimescaleDb.hpp"
 
 #include "DbConnection.hpp"
 #include "HdbppTxDataEvent.hpp"
@@ -148,6 +148,8 @@ HdbppTimescaleDb::~HdbppTimescaleDb()
 {
     if (Conn->isOpen())
         Conn->disconnect();
+
+    LogConfigurator::shutdownLogging();
 }
 
 //=============================================================================
@@ -163,7 +165,7 @@ void HdbppTimescaleDb::insert_Attr(Tango::EventData *event_data, HdbEventDataTyp
     {
         spdlog::trace("Event type is error for attribute: {}", event_data->attr_name);
 
-        // now time data is passed for errors, so make something up
+        // no time data is passed for errors, so make something up
         struct timeval tv
         {};
 
@@ -269,5 +271,5 @@ AbstractDB *HdbppTimescaleDbFactory::create_db(vector<string> configuration)
 DBFactory *getDBFactory()
 {
     auto *factory = new hdbpp::HdbppTimescaleDbFactory();
-    return static_cast<DBFactory *>(factory);
+    return static_cast<DBFactory*>(factory);
 }

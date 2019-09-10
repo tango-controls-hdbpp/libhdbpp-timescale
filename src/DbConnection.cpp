@@ -58,7 +58,8 @@ namespace pqxx_conn
         }
         catch (const pqxx::broken_connection &ex)
         {
-            string msg {"Failed to connect to database. Ensure parameters are correct and database is running"};
+            string msg {"Failed to connect to database. Exception: "};
+            msg += ex.what();
 
             _logger->error("Error: Connecting to postgres database with connect string: \"{}\"", connect_string);
             _logger->error("Caught error: \"{}\"", ex.what());
@@ -622,7 +623,7 @@ namespace pqxx_conn
                 "] does not exist in the database. Unable to work with this attribute until it is added."};
 
             _logger->error("Error: The attribute does not exist in the database, add it first.");
-            _logger->error("Attribute details. Name: {} traits: {}", full_attr_name);
+            _logger->error("Attribute details. Name: {}", full_attr_name);
             _logger->error("Throwing consistency error with message: \"{}\"", msg);
             Tango::Except::throw_exception("Consistency Error", msg, location);
         }

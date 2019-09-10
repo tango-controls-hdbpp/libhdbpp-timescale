@@ -106,7 +106,7 @@ Tango::DeviceAttribute createDeviceAttribute(const AttributeTraits &traits)
     };
 
     // hack hack hack.... this mess of forced public (!) variable setting actually
-    // sets up the consitions for valid extracts inside the HdbppTxDataEvent class.
+    // sets up the conditions for valid extracts inside the HdbppTxDataEvent class.
     // Should the Tango API ever be improved then this hack is doomed.
     auto attr = attr_gen(select_size(traits.hasReadData(), 1), select_size(traits.hasWriteData(), 1));
     attr.dim_x = select_size(traits.hasReadData(), 1);

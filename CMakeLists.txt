@@ -20,9 +20,14 @@ set(LIBHDBPP_TIMESCALE_NAME "libhdb++timescale")
 # Versioning
 set(VERSION_MAJOR "0")
 set(VERSION_MINOR "9")
-set(VERSION_PATCH "1")
+set(VERSION_PATCH "2")
 set(VERSION_METADATA "")
 set(VERSION_STRING ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
+
+# Add any include paths from the command line
+list(APPEND INCLUDE_PATHS ${CMAKE_INCLUDE_PATH})
+list(APPEND INCLUDE_PATHS ${CMAKE_SOURCE_DIR})
+list(APPEND LIBRARY_PATHS ${CMAKE_LIBRARY_PATH})
 
 # Start the project
 project(libhdbpp_timescale VERSION ${VERSION_STRING} LANGUAGES CXX)
@@ -80,10 +85,10 @@ find_package(Threads REQUIRED)
 # build google benchmark (target: benchmark)
 # do not build tests of benchmarking lib
 set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "Suppressing benchmark's tests" FORCE)
-add_subdirectory(thirdparty/google/benchmark)
+add_subdirectory(thirdparty/google/benchmark EXCLUDE_FROM_ALL)
 
 # build tests (targets: gtest_main, gtest)
-add_subdirectory(thirdparty/google/googletest/googletest)
+add_subdirectory(thirdparty/google/googletest/googletest EXCLUDE_FROM_ALL)
 
 # Include the thirdparty projects
 add_subdirectory(thirdparty/libhdbpp EXCLUDE_FROM_ALL)
@@ -107,9 +112,11 @@ set_target_properties(pqxx_static
 if(ENABLE_CLANG)
     set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+    # To find clang, find_program will search your PATH environment variable.
+    # Ensure if you have a non-standard clang install, that it has been added
+    # to your path.
     find_program(CLANG_TIDY_EXE 
         NAMES "clang-tidy" 
-        HINTS "/users/sjames/workspace/tools/clang/bin"
         DOC "Path to clang-tidy executable")
 
     if(NOT CLANG_TIDY_EXE)
@@ -119,6 +126,8 @@ if(ENABLE_CLANG)
         set(DO_CLANG_TIDY "${CLANG_TIDY_EXE}")
     endif(NOT CLANG_TIDY_EXE)
 endif(ENABLE_CLANG)
+
+# Source -----------------------------------
 
 add_subdirectory(src)
 
@@ -146,7 +155,7 @@ set_target_properties(libhdbpp_timescale_shared_library
         CXX_STANDARD 14
         POSITION_INDEPENDENT_CODE 1
         VERSION ${VERSION_STRING}
-        SOVERSION ${VERSION_STRING})
+        SOVERSION ${VERSION_MAJOR})
 
 if(DO_CLANG_TIDY)
     set_target_properties(libhdbpp_timescale_shared_library 
@@ -157,16 +166,25 @@ endif(DO_CLANG_TIDY)
 target_compile_options(libhdbpp_timescale_shared_library 
     PRIVATE "$<$<CONFIG:DEBUG>:-g>")
 
-# Libhdbpp shared library --------
-add_library(libhdbpp_timescale_static_library STATIC ${SRC_FILES})
+# Static library --------
+add_library(libhdbpp_timescale_static_library STATIC EXCLUDE_FROM_ALL ${SRC_FILES})
 
 target_link_libraries(libhdbpp_timescale_static_library 
-    PUBLIC ${TDB_FOUND_LIBRARIES} 
+    PUBLIC ${TDB_FOUND_LIBRARIES} pqxx_static libhdbpp_headers spdlog Threads::Threads
     PRIVATE TangoInterfaceLibrary)
+
+target_include_directories(libhdbpp_timescale_static_library 
+    PUBLIC
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+    PRIVATE 
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>
+        ${INCLUDE_PATHS}
+        "${PROJECT_BINARY_DIR}")
+
 
 set_target_properties(libhdbpp_timescale_static_library 
     PROPERTIES 
-        OUTPUT_NAME hdb++
+        OUTPUT_NAME hdb++timescale
         LINK_FLAGS "-Wl,--no-undefined"
         CXX_STANDARD 14
         EXCLUDE_FROM_ALL 1)
@@ -183,7 +201,7 @@ install(
 
 install(
     DIRECTORY ${PROJECT_SOURCE_DIR}/include/
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/hdb++
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     FILES_MATCHING
     PATTERN HdbppTimescaleDb.hpp)
 

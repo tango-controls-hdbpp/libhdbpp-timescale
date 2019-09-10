@@ -38,7 +38,7 @@ public:
     HdbppTxDataEventError(Conn &conn) : HdbppTxDataEventBase<Conn, HdbppTxDataEventError>(conn) {}
     virtual ~HdbppTxDataEventError() {}
 
-    HdbppTxDataEventError<Conn> &withError(const string &error_msg)
+    HdbppTxDataEventError<Conn> &withError(const std::string &error_msg)
     {
         _error_msg = error_msg;
         return *this;

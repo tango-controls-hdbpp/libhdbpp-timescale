@@ -35,8 +35,6 @@ To compile this library, first ensure it has been recursively cloned so all subm
 export PKG_CONFIG_PATH=/non/standard/tango/install/location
 ```
 
-CMake is also set to search any paths added to CMAKE_PREFIX_PATH. This can be set and passed into CMake instead.
-
 Then to build just the library:
 
 ```bash
@@ -44,6 +42,14 @@ mkdir -p build
 cd build
 cmake ..
 make
+```
+
+The pkg-config path can also be set with the cmake argument CMAKE_PREFIX_PATH. This can be set on the command line at configuration time, i.e.:
+
+```bash
+...
+cmake -DCMAKE_PREFIX_PATH=/non/standard/tango/install/location ..
+...
 ```
 
 ## Build Flags

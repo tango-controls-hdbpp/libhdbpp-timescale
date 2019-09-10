@@ -59,7 +59,7 @@ std::ostream &operator<<(std::ostream &os, Tango::CmdArgType type);
 std::ostream &operator<<(std::ostream &os, Tango::AttrQuality quality);
 
 // SPDLOG config and setup
-const string LibLoggerName = "hdbpp";
+const std::string LibLoggerName = "hdbpp";
 
 struct LogConfigurator
 {
