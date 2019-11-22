@@ -25,7 +25,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 #### Submodules
 
-- Updated spdlog submodule to release v1.4.3
+- Updated spdlog submodule to release v1.4.2
 
 ## [0.9.1] - 2019-07-18
 
