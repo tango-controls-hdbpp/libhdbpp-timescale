@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- Added support for syslog logging.
+
 ### Fixed
 
 - Close logging down in destructor so linked device server can be restarted.
@@ -17,6 +21,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Removed Clang path from build (CMake checks PATH)
 - Corrected static library build
 - Install now places header in include/hdb++/
+- Entire library now uses the global default logger from spdlog.
+
+#### Submodules
+
+- Updated spdlog submodule to release v1.4.3
 
 ## [0.9.1] - 2019-07-18
 

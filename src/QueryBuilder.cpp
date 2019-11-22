@@ -247,8 +247,8 @@ namespace pqxx_conn
             // cache the query string against the traits
             _data_event_error_queries.emplace(traits, query);
 
-            _logger->debug("Built new data event error query and cached it against traits: {}", traits);
-            _logger->debug("New data event error query is: {}", query);
+            spdlog::debug("Built new data event error query and cached it against traits: {}", traits);
+            spdlog::debug("New data event error query is: {}", query);
 
             // now return it (must dereference the map again to get the static version)
             return _data_event_error_queries[traits];
@@ -392,7 +392,7 @@ namespace pqxx_conn
             // add to the cache for future hits
             cache.emplace(traits, new_name);
 
-            _logger->debug("New query name: {} cached against traits:", new_name, traits);
+            spdlog::debug("New query name: {} cached against traits:", new_name, traits);
             return cache[traits];
         }
 

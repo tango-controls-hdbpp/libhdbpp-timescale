@@ -38,3 +38,17 @@ if(DO_CLANG_TIDY)
         PROPERTIES 
             CXX_CLANG_TIDY ${DO_CLANG_TIDY})
 endif(DO_CLANG_TIDY)
+
+add_executable(tester test.cpp)
+target_compile_options(tester PRIVATE -Wall -Wextra -g)
+
+target_link_libraries(tester 
+    PRIVATE libhdbpp_headers libhdbpp_timescale_shared_library Catch2 TangoInterfaceLibrary)
+
+target_include_directories(tester 
+    PRIVATE ${CMAKE_SOURCE_DIR}/src ${PROJECT_SOURCE_DIR})
+
+set_target_properties(tester
+    PROPERTIES 
+        LINK_FLAGS "-Wl,--no-undefined"
+        CXX_STANDARD 14)

@@ -38,9 +38,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Build options
-option(BUILD_UNIT_TESTS "Build unit tests" OFF)
-option(BUILD_BENCHMARK_TESTS "Build benchmarking tests (Forces RELEASE build)" OFF)
-option(ENABLE_CLANG "Enable clang code and layout analysis" OFF)
+option(BUILD_UNIT_TESTS "Build unit tests" ON)
+option(BUILD_BENCHMARK_TESTS "Build benchmarking tests (Forces RELEASE build)" ON)
+option(ENABLE_CLANG "Enable clang code and layout analysis" ON)
 
 if(BUILD_UNIT_TESTS)
     message(STATUS "Unit tests will be built")
@@ -137,7 +137,7 @@ add_subdirectory(src)
 add_library(libhdbpp_timescale_shared_library SHARED ${SRC_FILES})
 
 target_link_libraries(libhdbpp_timescale_shared_library 
-    PUBLIC ${TDB_FOUND_LIBRARIES} pqxx_static libhdbpp_headers spdlog Threads::Threads
+    PUBLIC ${TDB_FOUND_LIBRARIES} pqxx_static libhdbpp_headers spdlog::spdlog_header_only Threads::Threads
     PRIVATE TangoInterfaceLibrary)
 
 target_include_directories(libhdbpp_timescale_shared_library 

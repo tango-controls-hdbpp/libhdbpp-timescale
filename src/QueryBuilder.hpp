@@ -81,7 +81,6 @@ namespace pqxx_conn
     class QueryBuilder
     {
     public:
-        QueryBuilder() { _logger = spdlog::get(LibLoggerName); }
 
         // Non-static methods
 
@@ -96,12 +95,12 @@ namespace pqxx_conn
         const std::string &storeDataEventQuery(const AttributeTraits &traits);
 
         const std::string &storeDataEventErrorQuery(const AttributeTraits &traits);
-        std::string tableName(const AttributeTraits &traits);
 
         void print(std::ostream &os) const noexcept;
 
         // Static methods
 
+        static std::string tableName(const AttributeTraits &traits);
         static const std::string &storeAttributeQuery();
         static const std::string &storeHistoryEventQuery();
         static const std::string &storeHistoryStringQuery();
@@ -128,11 +127,8 @@ namespace pqxx_conn
         std::map<AttributeTraits, std::string> _data_event_error_query_names;
 
         // cached insert query strings built from the traits object
-        map<AttributeTraits, std::string> _data_event_queries;
-        map<AttributeTraits, std::string> _data_event_error_queries;
-
-        // logging subsystem
-        std::shared_ptr<spdlog::logger> _logger;
+        std::map<AttributeTraits, std::string> _data_event_queries;
+        std::map<AttributeTraits, std::string> _data_event_error_queries;
     };
 
     //=============================================================================
@@ -176,8 +172,8 @@ namespace pqxx_conn
             // cache the query string against the traits
             _data_event_queries.emplace(traits, query);
 
-            _logger->debug("Built new data event query and cached it against traits: {}", traits);
-            _logger->debug("New data event query is: {}", query);
+            spdlog::debug("Built new data event query and cached it against traits: {}", traits);
+            spdlog::debug("New data event query is: {}", query);
 
             // now return it (must dereference the map again to get the static version)
             return _data_event_queries[traits];

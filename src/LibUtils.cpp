@@ -23,6 +23,7 @@
 #include "spdlog/sinks/null_sink.h"
 #include "spdlog/sinks/rotating_file_sink.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
+#include "spdlog/sinks/dist_sink.h"
 #include "spdlog/sinks/syslog_sink.h"
 
 namespace hdbpp_internal
@@ -134,47 +135,51 @@ ostream &operator<<(ostream &os, Tango::AttrQuality quality)
 
 //=============================================================================
 //=============================================================================
-void LogConfigurator::initLogging(bool enable_file, bool enable_console, const string &log_file_name)
+void LogConfigurator::initLogging()
+{
+    auto logger = spdlog::get(logging_utils::LibLoggerName);
+
+    if (!logger)
+    {
+        try
+        {
+            spdlog::init_thread_pool(8192, 1);
+
+            auto dist_sink = make_shared<spdlog::sinks::dist_sink_mt>();
+            
+            auto logger = make_shared<spdlog::async_logger>(logging_utils::LibLoggerName,
+                dist_sink,
+                spdlog::thread_pool(),
+                spdlog::async_overflow_policy::overrun_oldest);
+
+            // set the logger as the default so it can be accessed all over the library
+            spdlog::register_logger(logger);
+            spdlog::flush_every(std::chrono::seconds(1));
+            spdlog::flush_on(spdlog::level::warn);
+            spdlog::set_default_logger(logger);
+        }
+        catch (const spdlog::spdlog_ex &ex)
+        {
+            string msg {"Failed to initialise the logging system, caught error: " + string(ex.what())};
+            cout << msg << endl;
+            Tango::Except::throw_exception("Runtime Error", msg, LOCATION_INFO);
+        }
+    }
+}
+
+//=============================================================================
+//=============================================================================
+void LogConfigurator::initSyslogLogging()
 {
     try
     {
-        spdlog::init_thread_pool(8192, 1);
-
-        vector<spdlog::sink_ptr> sinks;
-
-        // attempt to create a rotating log files of size 10MB and 3 rotations
-        if (enable_file && !log_file_name.empty())
-            sinks.push_back(make_shared<spdlog::sinks::rotating_file_sink_mt>(log_file_name, 1024 * 1024 * 10, 3));
-
-        if (enable_console)
-            sinks.push_back(make_shared<spdlog::sinks::stdout_color_sink_mt>());
-
-        if (sinks.empty())
-            sinks.push_back(make_shared<spdlog::sinks::null_sink_mt>());
-
-        auto logger = make_shared<spdlog::async_logger>(LibLoggerName,
-            sinks.begin(),
-            sinks.end(),
-            spdlog::thread_pool(),
-            spdlog::async_overflow_policy::overrun_oldest);
-
-        // set the logger as the default so it can be accessed all over the library
-        spdlog::register_logger(logger);
-        spdlog::flush_every(std::chrono::seconds(1));
-        spdlog::flush_on(spdlog::level::warn);
-        spdlog::set_default_logger(logger);
-
-        spdlog::debug("Initialised the logging system...");
-
-        if (enable_file && !log_file_name.empty())
-            spdlog::debug("File logging enabled. Log file at: {}", log_file_name);
-
-        if (enable_console)
-            spdlog::debug("Console logging enabled.");
+        auto logger = spdlog::get(logging_utils::LibLoggerName);
+        auto &sinks_tmp = dynamic_pointer_cast<spdlog::sinks::dist_sink_mt>(*(logger->sinks().begin()))->sinks();
+        sinks_tmp.push_back(make_shared<spdlog::sinks::syslog_sink_mt>(logging_utils::SyslogIdent, 0, LOG_USER, false));
     }
     catch (const spdlog::spdlog_ex &ex)
     {
-        string msg {"Failed to initialise the logging system, caught error: " + string(ex.what())};
+        string msg {"Failed to initialise the syslog logging system, caught error: " + string(ex.what())};
         cout << msg << endl;
         Tango::Except::throw_exception("Runtime Error", msg, LOCATION_INFO);
     }
@@ -182,17 +187,45 @@ void LogConfigurator::initLogging(bool enable_file, bool enable_console, const s
 
 //=============================================================================
 //=============================================================================
-void LogConfigurator::initLoggingMetrics(bool enable_file, bool enable_console, const string &log_file_name)
+void LogConfigurator::initConsoleLogging()
 {
-    auto logger = spdlog::get(LibLoggerName);
-    if (!logger) initLogging(enable_file, enable_console, log_file_name);
+    try
+    {
+        auto logger = spdlog::get(logging_utils::LibLoggerName);
+        auto &sinks_tmp = dynamic_pointer_cast<spdlog::sinks::dist_sink_mt>(*(logger->sinks().begin()))->sinks();
+        sinks_tmp.push_back(make_shared<spdlog::sinks::stdout_color_sink_mt>());
+    }
+    catch (const spdlog::spdlog_ex &ex)
+    {
+        string msg {"Failed to initialise the console logging system, caught error: " + string(ex.what())};
+        cout << msg << endl;
+        Tango::Except::throw_exception("Runtime Error", msg, LOCATION_INFO);
+    }
+}
+
+//=============================================================================
+//=============================================================================
+void LogConfigurator::initFileLogging(const std::string &log_file_name)
+{
+    try
+    {
+        auto logger = spdlog::get(logging_utils::LibLoggerName);
+        auto &sinks_tmp = dynamic_pointer_cast<spdlog::sinks::dist_sink_mt>(*(logger->sinks().begin()))->sinks();
+        sinks_tmp.push_back(make_shared<spdlog::sinks::rotating_file_sink_mt>(log_file_name, 1024 * 1024 * 10, 3));
+    }
+    catch (const spdlog::spdlog_ex &ex)
+    {
+        string msg {"Failed to initialise the file logging system, caught error: " + string(ex.what())};
+        cout << msg << endl;
+        Tango::Except::throw_exception("Runtime Error", msg, LOCATION_INFO);
+    }
 }
 
 //=============================================================================
 //=============================================================================
 void LogConfigurator::shutdownLogging()
 {
-    auto logger = spdlog::get(LibLoggerName);
+    auto logger = spdlog::get(logging_utils::LibLoggerName);
 
     if (!logger)
     {

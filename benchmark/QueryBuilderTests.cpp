@@ -26,8 +26,7 @@ void bmAllocateQueryBuilder(benchmark::State& state)
 {
     // Test - Testing the time it takes to allocate a QueryBuilder, mainly for future test
     // reference
-    hdbpp_internal::LogConfigurator::initLoggingMetrics(false, false);
-    hdbpp_internal::LogConfigurator::setLoggingLevel(spdlog::level::err);
+    hdbpp_internal::LogConfigurator::initLogging();
 
     for (auto _ : state)
         hdbpp_internal::pqxx_conn::QueryBuilder query_builder;

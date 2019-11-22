@@ -176,9 +176,10 @@ public:
     }
 };
 
-// This specialisation is for string types to ensure the string is quoted
-// for storage
-template<>
+// This specialisation is for string types. Unlike other types the string type requires
+// the use of the ARRAY notation and dollar quoting to ensure the strings are stored
+// without escape characters. 
+/*template<>
 struct string_traits<std::vector<std::string>>
 {
 public:
@@ -217,12 +218,27 @@ public:
         }
     }
 
+    // unlike other types, when encoed to a string th
     static std::string to_string(const std::vector<std::string> &value)
     {
-        // simply use the pqxx utilities for this, rather than reinvent the wheel
-        return "{" + separated_list(",", value.begin(), value.end()) + "}";
+        if (value.empty())
+            return {};
+
+        auto iter = value.begin()l
+        auto result = "ARRAY["
+
+        result = "$$" + to_string((*iter)) + "$$";
+
+        for (++iter; iter != value.end(); ++iter)
+        {
+            result += ",";
+            result += "$$" + to_string((*iter)) + "$$";
+        }
+
+        result += "]"
+        return result;
     }
-};
+};*/
 
 // This specialisation is for bool, since it is not a normal container class, but
 // rather some kind of alien bitfield. We have to adjust the from_string to take into

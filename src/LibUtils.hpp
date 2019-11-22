@@ -58,40 +58,44 @@ std::ostream &operator<<(std::ostream &os, Tango::AttrDataFormat format);
 std::ostream &operator<<(std::ostream &os, Tango::CmdArgType type);
 std::ostream &operator<<(std::ostream &os, Tango::AttrQuality quality);
 
-// SPDLOG config and setup
-const std::string LibLoggerName = "hdbpp";
-
 struct LogConfigurator
 {
-    static void initLogging(bool enable_file, bool enable_console, const std::string &log_file_name = "");
-
-    // this version is used for metrics testing, and ignores the call if the
-    // logger already exists
-    static void initLoggingMetrics(bool enable_file, bool enable_console, const std::string &log_file_name = "");
+    static void initLogging();
+    static void initSyslogLogging();
+    static void initConsoleLogging();
+    static void initFileLogging(const std::string &log_file_name);
 
     static void shutdownLogging();
     static void setLoggingLevel(spdlog::level::level_enum level);
 };
 
-// get the file name from the __FILE__ variable for error messages
-constexpr auto* getFileName(const char* const path)
+namespace logging_utils
 {
-    const auto* start_position = path;
+    // SPDLOG config and setup
+    const std::string LibLoggerName = "hdbpp";
+    const std::string SyslogIdent = "hdbpp-timescale";
 
-    for (const auto* current_character = path; *current_character != '\0'; ++current_character)
-        if (*current_character == '\\' || *current_character == '/')
-            start_position = current_character;
+    // get the file name from the __FILE__ variable for error messages
+    constexpr auto* getFileName(const char* const path)
+    {
+        const auto* start_position = path;
 
-    if (start_position != path)
-        ++start_position;
+        for (const auto* current_character = path; *current_character != '\0'; ++current_character)
+            if (*current_character == '\\' || *current_character == '/')
+                start_position = current_character;
 
-    return start_position;
-}
+        if (start_position != path)
+            ++start_position;
+
+        return start_position;
+    }
+} // namespace logging_utils
 
 // Macros to get the location for reporting errors
 #define S1(x) #x
 #define S2(x) S1(x)
-#define LOCATION_INFO string(getFileName(__FILE__)) + ":" + string(__func__) + ":" S2(__LINE__)
+
+#define LOCATION_INFO std::string(logging_utils::getFileName(__FILE__)) + ":" + std::string(__func__) + ":" S2(__LINE__)
 
 }; // namespace hdbpp_internal
 #endif // _LIBUTILS_H

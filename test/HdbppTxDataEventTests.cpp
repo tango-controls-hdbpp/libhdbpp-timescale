@@ -173,8 +173,10 @@ SCENARIO("Construct a valid HdbppTxDataEvent data event for storage", "[hdbpp-tx
     // ugly, how is this dealt with in Tango!?!
     struct timeval tv
     {};
+    
     struct Tango::TimeVal tango_tv
     {};
+
     gettimeofday(&tv, nullptr);
     tango_tv.tv_sec = tv.tv_sec;
     tango_tv.tv_usec = tv.tv_usec;
@@ -240,8 +242,10 @@ SCENARIO("An invalid quality results in an HdbppTxDataEvent event with no data",
     // ugly, how is this dealt with in Tango!?!
     struct timeval tv
     {};
+
     struct Tango::TimeVal tango_tv
     {};
+
     gettimeofday(&tv, nullptr);
     tango_tv.tv_sec = tv.tv_sec;
     tango_tv.tv_usec = tv.tv_usec;
@@ -284,8 +288,10 @@ SCENARIO("A DeviceAttribute with no data results in an HdbppTxDataEvent event wi
     // ugly, how is this dealt with in Tango!?!
     struct timeval tv
     {};
+
     struct Tango::TimeVal tango_tv
     {};
+
     gettimeofday(&tv, nullptr);
     tango_tv.tv_sec = tv.tv_sec;
     tango_tv.tv_usec = tv.tv_usec;
@@ -328,8 +334,10 @@ SCENARIO(
     // ugly, how is this dealt with in Tango!?!
     struct timeval tv
     {};
+
     struct Tango::TimeVal tango_tv
     {};
+
     gettimeofday(&tv, nullptr);
     tango_tv.tv_sec = tv.tv_sec;
     tango_tv.tv_usec = tv.tv_usec;
@@ -409,8 +417,10 @@ TEST_CASE("Creating HdbppTxDataEvents for each tango type and storing them", "[d
     // ugly, how is this dealt with in Tango!?!
     struct timeval tv
     {};
+
     struct Tango::TimeVal tango_tv
     {};
+
     gettimeofday(&tv, nullptr);
     tango_tv.tv_sec = tv.tv_sec;
     tango_tv.tv_usec = tv.tv_usec;

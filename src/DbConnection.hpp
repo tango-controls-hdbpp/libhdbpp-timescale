@@ -144,9 +144,6 @@ namespace pqxx_conn
         std::unique_ptr<ColumnCache<int, std::string>> _error_desc_id_cache;
         std::unique_ptr<ColumnCache<int, std::string>> _event_id_cache;
         std::unique_ptr<ColumnCache<int, int>> _type_id_cache;
-
-        // logging subsystem
-        std::shared_ptr<spdlog::logger> _logger;
     };
 } // namespace pqxx_conn
 } // namespace hdbpp_internal
