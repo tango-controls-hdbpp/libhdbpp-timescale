@@ -19,14 +19,107 @@
 
 #include "QueryBuilder.hpp"
 #include "TimescaleSchema.hpp"
+#include "TestHelpers.hpp"
 #include "catch2/catch.hpp"
 
 using namespace std;
 using namespace hdbpp_internal;
 using namespace hdbpp_internal::pqxx_conn;
+using namespace hdbpp_test::attr_name;
 using namespace Catch::Matchers;
 
-SCENARIO("storeDataEventQuery() returns the correct Value fields for the given traits", "[query-string]")
+SCENARIO("storeDataEventString() returns the correct Value fields for the given traits", "[query-string]")
+{
+    GIVEN("A query builder object with nothing cached")
+    {
+        QueryBuilder query_builder;
+        auto value_r = make_unique<vector<double>>(1.1, 2.2);
+        auto value_r_empty = make_unique<vector<double>>();
+        auto value_w = make_unique<vector<double>>(3.3, 4.4);
+        auto value_w_empty = make_unique<vector<double>>();
+
+        WHEN("Requesting a query string for traits configured for Tango::READ")
+        {
+           AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE};
+
+            auto result = query_builder.storeDataEventString<double>(
+                TestAttrFQDName,
+                string("0"),
+                string("1"),
+                value_r,
+                value_w_empty,
+                traits);
+
+            THEN("The result must include the DAT_COL_VALUE_R field only")
+            {
+                REQUIRE_THAT(result, Contains(DAT_COL_VALUE_R));
+                REQUIRE_THAT(result, !Contains(DAT_COL_VALUE_W));
+                REQUIRE_THAT(result, Contains(query_utils::ToString<double>::run(value_r, traits)));
+            }
+        }
+        WHEN("Requesting a query string for traits configured for Tango::WRITE")
+        {
+            AttributeTraits traits {Tango::WRITE, Tango::SCALAR, Tango::DEV_DOUBLE};
+
+            auto result = query_builder.storeDataEventString<double>(
+                TestAttrFQDName,
+                string("0"),
+                string("1"),
+                value_r_empty,
+                value_w,
+                traits);
+
+            THEN("The result must include the DAT_COL_VALUE_W field only")
+            {
+                REQUIRE_THAT(result, !Contains(DAT_COL_VALUE_R));
+                REQUIRE_THAT(result, Contains(DAT_COL_VALUE_W));
+                REQUIRE_THAT(result, Contains(query_utils::ToString<double>::run(value_w, traits)));
+            }
+        }
+        WHEN("Requesting a query string for traits configured for Tango::READ_WRITE")
+        {
+            AttributeTraits traits {Tango::READ_WRITE, Tango::SCALAR, Tango::DEV_DOUBLE};
+
+            auto result = query_builder.storeDataEventString<double>(
+                TestAttrFQDName,
+                string("0"),
+                string("1"),
+                value_r,
+                value_w,
+                traits);
+
+            THEN("The result must include both the DAT_COL_VALUE_R and DAT_COL_VALUE_W field")
+            {
+                REQUIRE_THAT(result, Contains(DAT_COL_VALUE_R));
+                REQUIRE_THAT(result, Contains(DAT_COL_VALUE_W));
+                REQUIRE_THAT(result, Contains(query_utils::ToString<double>::run(value_r, traits)));
+                REQUIRE_THAT(result, Contains(query_utils::ToString<double>::run(value_w, traits)));
+            }
+        }
+        WHEN("Requesting a query string for traits configured for Tango::READ_WITH_WRITE")
+        {
+            AttributeTraits traits {Tango::READ_WITH_WRITE, Tango::SCALAR, Tango::DEV_DOUBLE};
+
+            auto result = query_builder.storeDataEventString<double>(
+                TestAttrFQDName,
+                string("0"),
+                string("1"),
+                value_r,
+                value_w,
+                traits);
+
+            THEN("The result must include both the DAT_COL_VALUE_R and DAT_COL_VALUE_W field")
+            {
+                REQUIRE_THAT(result, Contains(DAT_COL_VALUE_R));
+                REQUIRE_THAT(result, Contains(DAT_COL_VALUE_W));
+                REQUIRE_THAT(result, Contains(query_utils::ToString<double>::run(value_r, traits)));
+                REQUIRE_THAT(result, Contains(query_utils::ToString<double>::run(value_w, traits)));
+            }
+        }
+    }
+}
+
+SCENARIO("storeDataEventStatement() returns the correct Value fields for the given traits", "[query-string]")
 {
     GIVEN("A query builder object with nothing cached")
     {
@@ -35,7 +128,7 @@ SCENARIO("storeDataEventQuery() returns the correct Value fields for the given t
         WHEN("Requesting a query string for traits configured for Tango::READ")
         {
             AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE};
-            auto result = query_builder.storeDataEventQuery<double>(traits);
+            auto result = query_builder.storeDataEventStatement<double>(traits);
 
             THEN("The result must include the DAT_COL_VALUE_R field only")
             {
@@ -48,7 +141,7 @@ SCENARIO("storeDataEventQuery() returns the correct Value fields for the given t
         WHEN("Requesting a query string for traits configured for Tango::WRITE")
         {
             AttributeTraits traits {Tango::WRITE, Tango::SCALAR, Tango::DEV_DOUBLE};
-            auto result = query_builder.storeDataEventQuery<double>(traits);
+            auto result = query_builder.storeDataEventStatement<double>(traits);
 
             THEN("The result must include the DAT_COL_VALUE_W field only")
             {
@@ -61,7 +154,7 @@ SCENARIO("storeDataEventQuery() returns the correct Value fields for the given t
         WHEN("Requesting a query string for traits configured for Tango::READ_WRITE")
         {
             AttributeTraits traits {Tango::READ_WRITE, Tango::SCALAR, Tango::DEV_DOUBLE};
-            auto result = query_builder.storeDataEventQuery<double>(traits);
+            auto result = query_builder.storeDataEventStatement<double>(traits);
 
             THEN("The result must include both the DAT_COL_VALUE_R and DAT_COL_VALUE_W field")
             {
@@ -74,7 +167,7 @@ SCENARIO("storeDataEventQuery() returns the correct Value fields for the given t
         WHEN("Requesting a query string for traits configured for Tango::READ_WITH_WRITE")
         {
             AttributeTraits traits {Tango::READ_WITH_WRITE, Tango::SCALAR, Tango::DEV_DOUBLE};
-            auto result = query_builder.storeDataEventQuery<double>(traits);
+            auto result = query_builder.storeDataEventStatement<double>(traits);
 
             THEN("The result must include both the DAT_COL_VALUE_R and DAT_COL_VALUE_W field")
             {

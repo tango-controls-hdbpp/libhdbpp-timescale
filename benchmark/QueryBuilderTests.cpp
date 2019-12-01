@@ -99,8 +99,7 @@ void bmStoreDataEventQueryNoCache(benchmark::State& state)
 {
     // TEST - Testing how long it takes to build an Insert Data Event query with
     // an empty cache (this forces the full string to be built)
-    hdbpp_internal::LogConfigurator::initLoggingMetrics(false, false);
-    hdbpp_internal::LogConfigurator::setLoggingLevel(spdlog::level::err);
+    hdbpp_internal::LogConfigurator::initLogging();
 
     hdbpp_internal::AttributeTraits traits 
         {static_cast<Tango::AttrWriteType>(state.range(0)), Tango::SCALAR, Tango::DEV_DOUBLE};
@@ -109,7 +108,7 @@ void bmStoreDataEventQueryNoCache(benchmark::State& state)
     {
         // define the builder here so its cache is always fresh
         hdbpp_internal::pqxx_conn::QueryBuilder query_builder;
-        query_builder.storeDataEventQuery<T>(traits);
+        query_builder.storeDataEventStatement<T>(traits);
     }
 }
 
@@ -120,8 +119,7 @@ void bmStoreDataEventQueryCache(benchmark::State& state)
 {
     // TEST - Testing the full lookup for an Insert Data QueryEvent query when the cache
     // map is fully populated 
-    hdbpp_internal::LogConfigurator::initLoggingMetrics(false, false);
-    hdbpp_internal::LogConfigurator::setLoggingLevel(spdlog::level::err);
+    hdbpp_internal::LogConfigurator::initLogging();
 
     hdbpp_internal::AttributeTraits traits 
         {static_cast<Tango::AttrWriteType>(state.range(0)), Tango::SCALAR, Tango::DEV_DOUBLE};
@@ -149,10 +147,10 @@ void bmStoreDataEventQueryCache(benchmark::State& state)
     for (auto &type : types)
         for (auto &format : format_types)
             for (auto &write : write_types)
-                query_builder.storeDataEventQuery<T>(hdbpp_internal::AttributeTraits{write, format, type});
+                query_builder.storeDataEventStatement<T>(hdbpp_internal::AttributeTraits{write, format, type});
 
     for (auto _ : state)
-        query_builder.storeDataEventQuery<T>(traits);
+        query_builder.storeDataEventStatement<T>(traits);
 }
 
 BENCHMARK_TEMPLATE(bmStoreDataEventQueryNoCache, bool)->Apply(writeTypeArgs);

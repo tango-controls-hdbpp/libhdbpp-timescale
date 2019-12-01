@@ -23,6 +23,8 @@
 #include "AttributeTraits.hpp"
 #include "HdbppDefines.hpp"
 #include "TimescaleSchema.hpp"
+#include "PqxxExtension.hpp"
+
 #include "spdlog/spdlog.h"
 
 #include <iostream>
@@ -59,6 +61,71 @@ namespace pqxx_conn
         // queries, it is specialized for all possible tango types in the source file
         template<typename T>
         std::string postgresCast(bool is_array);
+
+        //=============================================================================
+        //=============================================================================
+        template<typename T>
+        struct ToString
+        {
+            static std::string run(std::unique_ptr<std::vector<T>> &value, const AttributeTraits&)
+            {
+                return pqxx::to_string(value);
+            }
+        };
+
+        //=============================================================================
+        //=============================================================================
+        template<>
+        struct ToString<bool>
+        {
+            static std::string run(std::unique_ptr<std::vector<bool>> &value, const AttributeTraits &traits)
+            {
+                // a vector<bool> is not actually a vector<bool>, rather its some kind of bitfield. When
+                // trying to return an element, we appear to get some kind of bitfield reference (?),
+                // so we return the value to a local variable to remove the referene to the bitfield and
+                // this ensure its actually a bool passed into the conversion framework
+                if (traits.isScalar())
+                {
+                    bool v = (*value)[0];
+                    return pqxx::to_string(v);
+                }
+
+                // handled by our own extensions
+                pqxx::to_string(value);
+            }
+        };
+
+        //=============================================================================
+        //=============================================================================
+        template<>
+        struct ToString<std::string>
+        {
+            static std::string run(std::unique_ptr<std::vector<std::string>> &value, const AttributeTraits &traits)
+            {
+                // arrays of strings need both the ARRAY keywords and dollar escaping, this is so we
+                // do not have to rely on the postgres escape functions that double and then store 
+                // escaped characters. This is a mess when extracting the array of strings.
+                if (traits.isScalar())
+                {
+                    // no special case needed for a scalar string
+                    return pqxx::to_string((*value)[0]);
+                }
+
+                auto iter = value->begin();
+                std::string result = "ARRAY[";
+
+                result = "$$" + pqxx::to_string((*iter)) + "$$";
+
+                for (++iter; iter != value->end(); ++iter)
+                {
+                    result += ",";
+                    result += "$$" + pqxx::to_string((*iter)) + "$$";
+                }
+
+                result += "]";
+                return result;
+            }
+        };
     }; // namespace query_utils
 
     // these are used as transactions names for pqxx, some are used to as prepared
@@ -82,40 +149,52 @@ namespace pqxx_conn
     {
     public:
 
-        // Non-static methods
+        // Static Prepared statement strings
+        // these builder functions require no caching, so can be simple static
+        // functions
 
-        // these builder functions cache the built query names, therefore they
-        // are not static like the others
+        static std::string tableName(const AttributeTraits &traits);
+        static const std::string &storeAttributeStatement();
+        static const std::string &storeHistoryEventStatement();
+        static const std::string &storeHistoryStringStatement();
+        static const std::string &storeParameterEventStatement();
+        static const std::string &storeErrorStatement();
+        static const std::string &fetchLastHistoryEventStatement();
+        static const std::string &fetchAttributeTraitsStatement();
+
+        static const std::string fetchValueStatement(
+            const std::string &column_name, const std::string &table_name, const std::string &reference);
+
+        static const std::string fetchAllValuesStatement(
+            const std::string &column_name, const std::string &table_name, const std::string &reference);
+
+        // Non-static prepared statements
+        // these builder functions cache the built queries, therefore they
+        // are not static like the others sincethey require data storage
+
         const std::string &storeDataEventName(const AttributeTraits &traits);
         const std::string &storeDataEventErrorName(const AttributeTraits &traits);
 
-        // like the query name functions, these cache data internally to speed up the
-        // process of putting data int the db
+        // builds a prepared statement for the given traits
         template<typename T>
-        const std::string &storeDataEventQuery(const AttributeTraits &traits);
+        const std::string &storeDataEventStatement(const AttributeTraits &traits);
 
-        const std::string &storeDataEventErrorQuery(const AttributeTraits &traits);
+        // A varient of storeDataEventStatement that builds a string based on the
+        // parameters, this is then executed. Does not benfit from caching
+        template<typename T>
+        const std::string storeDataEventString(
+            const std::string &full_attr_name, 
+            const std::string &event_time, 
+            const std::string &quality, 
+            std::unique_ptr<vector<T>> &value_r,
+            std::unique_ptr<vector<T>> &value_w,
+            const AttributeTraits &traits);
 
+        // Builds a prepared statement for data event errors 
+        const std::string &storeDataEventErrorStatement(const AttributeTraits &traits);
+
+        // Utility
         void print(std::ostream &os) const noexcept;
-
-        // Static methods
-
-        static std::string tableName(const AttributeTraits &traits);
-        static const std::string &storeAttributeQuery();
-        static const std::string &storeHistoryEventQuery();
-        static const std::string &storeHistoryStringQuery();
-        static const std::string &storeParameterEventQuery();
-        static const std::string &storeErrorQuery();
-        static const std::string &fetchLastHistoryEventQuery();
-        static const std::string &fetchAttributeTraitsQuery();
-
-        // these query strings are built each call, so are cached in the class
-        // that requests them
-        static const std::string fetchValueQuery(
-            const std::string &column_name, const std::string &table_name, const std::string &reference);
-
-        static const std::string fetchAllValuesQuery(
-            const std::string &column_name, const std::string &table_name, const std::string &reference);
 
     private:
         // generic function to handle caching items into the cache maps
@@ -134,7 +213,7 @@ namespace pqxx_conn
     //=============================================================================
     //=============================================================================
     template<typename T>
-    const string &QueryBuilder::storeDataEventQuery(const AttributeTraits &traits)
+    const string &QueryBuilder::storeDataEventStatement(const AttributeTraits &traits)
     {
         // search the cache for a previous entry
         auto result = _data_event_queries.find(traits);
@@ -182,6 +261,43 @@ namespace pqxx_conn
         // return the previously cached example
         return result->second;
     }
+
+    template<typename T>
+    const std::string QueryBuilder::storeDataEventString(const std::string &full_attr_name, 
+        const std::string &event_time, 
+        const std::string &quality, 
+        std::unique_ptr<vector<T>> &value_r,
+        std::unique_ptr<vector<T>> &value_w,
+        const AttributeTraits &traits)
+    {
+        auto query = "INSERT INTO " + QueryBuilder::tableName(traits) + " (" + DAT_COL_ID + "," + DAT_COL_DATA_TIME;
+
+        if (traits.hasReadData())
+            query = query + "," + DAT_COL_VALUE_R;
+
+        if (traits.hasWriteData())
+            query = query + "," + DAT_COL_VALUE_W;
+
+        // split to ensure increments are in the correct order
+        query = query + "," + DAT_COL_QUALITY + ") VALUES (" + full_attr_name;
+        query = query + ",TO_TIMESTAMP(" + event_time + ")";
+
+        // add the read parameter with cast
+        if (traits.hasReadData())
+            query = query + "," + query_utils::ToString<T>::run(value_r, traits) + 
+                "::" + query_utils::postgresCast<T>(traits.isArray());
+
+        // add the write parameter with cast
+        if (traits.hasWriteData())
+            query = query + "," + query_utils::ToString<T>::run(value_w, traits) + 
+                "::" + query_utils::postgresCast<T>(traits.isArray());
+
+        query = query + "," + quality + ")";
+
+        // now return the built query
+        return query;
+    }
+
 } // namespace pqxx_conn
 } // namespace hdbpp_internal
 #endif // _QUERY_BUILDER_HPP

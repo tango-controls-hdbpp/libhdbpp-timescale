@@ -103,43 +103,13 @@ namespace pqxx_conn
                 // to avoid the quoting. Its likely we will need more for DevEncoded and DevEnum
                 if (traits.isArray() && traits.type() == Tango::DEV_STRING)
                 {
-                    auto prepare_array = [](auto &value) {
-                        auto iter = value->begin();
-                        std::string result = "ARRAY[";
-
-                        result = "$$" + pqxx::to_string((*iter)) + "$$";
-
-                        for (++iter; iter != value->end(); ++iter)
-                        {
-                            result += ",";
-                            result += "$$" + pqxx::to_string((*iter)) + "$$";
-                        }
-
-                        result += "]";
-                        return result;
-                    };
-
-                    auto query = "INSERT INTO " + QueryBuilder::tableName(traits) + " (" + DAT_COL_ID + "," + DAT_COL_DATA_TIME;
-
-                    if (traits.hasReadData())
-                        query = query + "," + DAT_COL_VALUE_R;
-
-                    if (traits.hasWriteData())
-                        query = query + "," + DAT_COL_VALUE_W;
-
-                    // split to ensure increments are in the correct order
-                    query = query + "," + DAT_COL_QUALITY + ") VALUES (" + pqxx::to_string(full_attr_name);
-                    query = query + ",TO_TIMESTAMP(" + pqxx::to_string(event_time) + ")";
-
-                    // add the read parameter with cast
-                    if (traits.hasReadData())
-                        query = query + "," + prepare_array(value_r);
-
-                    // add the write parameter with cast
-                    if (traits.hasWriteData())
-                        query = query + "," + prepare_array(value_w);
-
-                    query = query + "," + pqxx::to_string(quality) + ")";
+                    auto query = _query_builder.storeDataEventString<T>(
+                        pqxx::to_string(full_attr_name),
+                        pqxx::to_string(event_time),
+                        pqxx::to_string(quality),
+                        value_r,
+                        value_w,
+                        traits);
 
                     tx.exec0(query);
                 }
@@ -150,7 +120,7 @@ namespace pqxx_conn
                     if (!tx.prepared(_query_builder.storeDataEventName(traits)).exists())
                     {
                         tx.conn().prepare(
-                            _query_builder.storeDataEventName(traits), _query_builder.storeDataEventQuery<T>(traits));
+                            _query_builder.storeDataEventName(traits), _query_builder.storeDataEventStatement<T>(traits));
                     }
 
                     // get the pqxx prepared statement invocation object to allow us to
@@ -200,7 +170,7 @@ namespace pqxx_conn
         {
             handlePqxxError("The attribute [" + full_attr_name + "] data event was not saved.",
                 ex.base().what(),
-                _query_builder.storeDataEventQuery<T>(traits),
+                _query_builder.storeDataEventStatement<T>(traits),
                 LOCATION_INFO);
         }
     }

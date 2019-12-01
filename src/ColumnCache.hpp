@@ -126,7 +126,7 @@ namespace pqxx_conn
                 if (!tx.prepared(_fetch_all_query_name).exists())
                 {
                     tx.conn().prepare(_fetch_all_query_name,
-                        QueryBuilder::fetchAllValuesQuery(_column_name, _table_name, _reference));
+                        QueryBuilder::fetchAllValuesStatement(_column_name, _table_name, _reference));
 
                     spdlog::trace("Created prepared statement for: {}", _fetch_all_query_name);
                 }
@@ -182,7 +182,7 @@ namespace pqxx_conn
                     if (!tx.prepared(_fetch_id_query_name).exists())
                     {
                         tx.conn().prepare(
-                            _fetch_id_query_name, QueryBuilder::fetchValueQuery(_column_name, _table_name, _reference));
+                            _fetch_id_query_name, QueryBuilder::fetchValueStatement(_column_name, _table_name, _reference));
 
                         spdlog::trace("Created prepared statement for: {}", _fetch_id_query_name);
                     }

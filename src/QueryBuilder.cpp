@@ -130,7 +130,7 @@ namespace pqxx_conn
 
     //=============================================================================
     //=============================================================================
-    const string &QueryBuilder::storeAttributeQuery()
+    const string &QueryBuilder::storeAttributeStatement()
     {
         // clang-format off
         static string query =
@@ -167,7 +167,7 @@ namespace pqxx_conn
 
     //=============================================================================
     //=============================================================================
-    const string &QueryBuilder::storeHistoryStringQuery()
+    const string &QueryBuilder::storeHistoryStringStatement()
     {
         // clang-format off
         static string query = 
@@ -181,7 +181,7 @@ namespace pqxx_conn
 
     //=============================================================================
     //=============================================================================
-    const string &QueryBuilder::storeHistoryEventQuery()
+    const string &QueryBuilder::storeHistoryEventStatement()
     {
         // clang-format off
         static string query =
@@ -200,7 +200,7 @@ namespace pqxx_conn
 
     //=============================================================================
     //=============================================================================
-    const string &QueryBuilder::storeParameterEventQuery()
+    const string &QueryBuilder::storeParameterEventStatement()
     {
         // clang-format off
         static string query =
@@ -225,7 +225,7 @@ namespace pqxx_conn
 
     //=============================================================================
     //=============================================================================
-    const string &QueryBuilder::storeDataEventErrorQuery(const AttributeTraits &traits)
+    const string &QueryBuilder::storeDataEventErrorStatement(const AttributeTraits &traits)
     {
         // search the cache for a previous entry
         auto result = _data_event_error_queries.find(traits);
@@ -260,7 +260,7 @@ namespace pqxx_conn
 
     //=============================================================================
     //=============================================================================
-    const string &QueryBuilder::storeErrorQuery()
+    const string &QueryBuilder::storeErrorStatement()
     {
         // clang-format off
         static string query = 
@@ -273,7 +273,7 @@ namespace pqxx_conn
 
     //=============================================================================
     //=============================================================================
-    const string QueryBuilder::fetchAllValuesQuery(
+    const string QueryBuilder::fetchAllValuesStatement(
         const string &column_name, const string &table_name, const string &reference)
     {
         return "SELECT " + column_name + ", " + reference + " " + "FROM " + table_name;
@@ -281,7 +281,7 @@ namespace pqxx_conn
 
     //=============================================================================
     //=============================================================================
-    const string QueryBuilder::fetchValueQuery(
+    const string QueryBuilder::fetchValueStatement(
         const string &column_name, const string &table_name, const string &reference)
     {
         return "SELECT " + column_name + " " + "FROM " + table_name + " WHERE " + reference + "=$1";
@@ -289,7 +289,7 @@ namespace pqxx_conn
 
     //=============================================================================
     //=============================================================================
-    const string &QueryBuilder::fetchLastHistoryEventQuery()
+    const string &QueryBuilder::fetchLastHistoryEventStatement()
     {
         // clang-format off
         static string query = 
@@ -307,7 +307,7 @@ namespace pqxx_conn
 
     //=============================================================================
     //=============================================================================
-    const std::string &QueryBuilder::fetchAttributeTraitsQuery()
+    const std::string &QueryBuilder::fetchAttributeTraitsStatement()
     {
         // clang-format off
         static string query = 

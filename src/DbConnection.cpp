@@ -146,7 +146,7 @@ namespace pqxx_conn
 
                 if (!tx.prepared(StoreAttribute).exists())
                 {
-                    tx.conn().prepare(StoreAttribute, QueryBuilder::storeAttributeQuery());
+                    tx.conn().prepare(StoreAttribute, QueryBuilder::storeAttributeStatement());
                     spdlog::trace("Created prepared statement for: {}", StoreAttribute);
                 }
 
@@ -180,7 +180,7 @@ namespace pqxx_conn
         {
             handlePqxxError("The attribute [" + full_attr_name + "] was not saved.",
                 ex.base().what(),
-                QueryBuilder::storeAttributeQuery(),
+                QueryBuilder::storeAttributeStatement(),
                 LOCATION_INFO);
         }
     }
@@ -225,7 +225,7 @@ namespace pqxx_conn
 
                 if (!tx.prepared(StoreHistoryEvent).exists())
                 {
-                    tx.conn().prepare(StoreHistoryEvent, QueryBuilder::storeHistoryEventQuery());
+                    tx.conn().prepare(StoreHistoryEvent, QueryBuilder::storeHistoryEventStatement());
                     spdlog::trace("Created prepared statement for: {}", StoreHistoryEvent);
                 }
 
@@ -240,7 +240,7 @@ namespace pqxx_conn
         {
             handlePqxxError("The attribute [" + full_attr_name + "] event [" + event + "] was not saved.",
                 ex.base().what(),
-                QueryBuilder::storeHistoryEventQuery(),
+                QueryBuilder::storeHistoryEventStatement(),
                 LOCATION_INFO);
         }
     }
@@ -300,7 +300,7 @@ namespace pqxx_conn
 
                 if (!tx.prepared(StoreParameterEvent).exists())
                 {
-                    tx.conn().prepare(StoreParameterEvent, QueryBuilder::storeParameterEventQuery());
+                    tx.conn().prepare(StoreParameterEvent, QueryBuilder::storeParameterEventStatement());
                     spdlog::trace("Created prepared statement for: {}", StoreParameterEvent);
                 }
 
@@ -327,7 +327,7 @@ namespace pqxx_conn
         {
             handlePqxxError("The attribute [" + full_attr_name + "] parameter event was not saved.",
                 ex.base().what(),
-                QueryBuilder::storeParameterEventQuery(),
+                QueryBuilder::storeParameterEventStatement(),
                 LOCATION_INFO);
         }
     }
@@ -384,7 +384,7 @@ namespace pqxx_conn
                 if (!tx.prepared(_query_builder.storeDataEventErrorName(traits)).exists())
                 {
                     tx.conn().prepare(_query_builder.storeDataEventErrorName(traits),
-                        _query_builder.storeDataEventErrorQuery(traits));
+                        _query_builder.storeDataEventErrorStatement(traits));
                     spdlog::trace(
                         "Created prepared statement for: {}", _query_builder.storeDataEventErrorName(traits));
                 }
@@ -434,7 +434,7 @@ namespace pqxx_conn
                 pqxx::work tx {(*_conn), FetchLastHistoryEvent};
 
                 if (!tx.prepared(FetchLastHistoryEvent).exists())
-                    tx.conn().prepare(FetchLastHistoryEvent, QueryBuilder::fetchLastHistoryEventQuery());
+                    tx.conn().prepare(FetchLastHistoryEvent, QueryBuilder::fetchLastHistoryEventStatement());
 
                 // unless this is the first time this attribute event history has
                 // been queried, then we expect something back
@@ -452,7 +452,7 @@ namespace pqxx_conn
         {
             handlePqxxError("Can not return last event for attribute [" + full_attr_name + "].",
                 ex.base().what(),
-                QueryBuilder::fetchLastHistoryEventQuery(),
+                QueryBuilder::fetchLastHistoryEventStatement(),
                 LOCATION_INFO);
         }
 
@@ -504,7 +504,7 @@ namespace pqxx_conn
                 pqxx::work tx {(*_conn), FetchAttributeTraits};
 
                 if (!tx.prepared(FetchAttributeTraits).exists())
-                    tx.conn().prepare(FetchAttributeTraits, QueryBuilder::fetchAttributeTraitsQuery());
+                    tx.conn().prepare(FetchAttributeTraits, QueryBuilder::fetchAttributeTraitsStatement());
 
                 // always expect a result, the type info for the attribute
                 auto row = tx.exec_prepared1(FetchAttributeTraits, full_attr_name);
@@ -519,7 +519,7 @@ namespace pqxx_conn
         {
             handlePqxxError("Can not return the type traits for attribute [" + full_attr_name + "].",
                 ex.base().what(),
-                QueryBuilder::fetchAttributeTraitsQuery(),
+                QueryBuilder::fetchAttributeTraitsStatement(),
                 LOCATION_INFO);
         }
 
@@ -541,7 +541,7 @@ namespace pqxx_conn
 
                 if (!tx.prepared(StoreHistoryString).exists())
                 {
-                    tx.conn().prepare(StoreHistoryString, QueryBuilder::storeHistoryStringQuery());
+                    tx.conn().prepare(StoreHistoryString, QueryBuilder::storeHistoryStringStatement());
                     spdlog::trace("Created prepared statement for: {}", StoreHistoryString);
                 }
 
@@ -562,7 +562,7 @@ namespace pqxx_conn
         {
             handlePqxxError("The event [" + event + "] for attribute [" + full_attr_name + "] was not saved.",
                 ex.base().what(),
-                QueryBuilder::storeHistoryStringQuery(),
+                QueryBuilder::storeHistoryStringStatement(),
                 LOCATION_INFO);
         }
     }
@@ -582,7 +582,7 @@ namespace pqxx_conn
 
                 if (!tx.prepared(StoreErrorString).exists())
                 {
-                    tx.conn().prepare(StoreErrorString, QueryBuilder::storeErrorQuery());
+                    tx.conn().prepare(StoreErrorString, QueryBuilder::storeErrorStatement());
                     spdlog::trace("Created prepared statement for: {}", StoreErrorString);
                 }
 
@@ -606,7 +606,7 @@ namespace pqxx_conn
         {
             handlePqxxError("The error string [" + error_msg + "] for attribute [" + full_attr_name + "] was not saved",
                 ex.base().what(),
-                QueryBuilder::storeErrorQuery(),
+                QueryBuilder::storeErrorStatement(),
                 LOCATION_INFO);
         }
     }
