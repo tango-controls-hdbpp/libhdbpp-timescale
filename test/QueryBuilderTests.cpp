@@ -54,7 +54,7 @@ SCENARIO("storeDataEventString() returns the correct Value fields for the given 
             {
                 REQUIRE_THAT(result, Contains(DAT_COL_VALUE_R));
                 REQUIRE_THAT(result, !Contains(DAT_COL_VALUE_W));
-                REQUIRE_THAT(result, Contains(query_utils::ToString<double>::run(value_r, traits)));
+                REQUIRE_THAT(result, Contains(query_utils::DataToString<double>::run(value_r, traits)));
             }
         }
         WHEN("Requesting a query string for traits configured for Tango::WRITE")
@@ -73,7 +73,7 @@ SCENARIO("storeDataEventString() returns the correct Value fields for the given 
             {
                 REQUIRE_THAT(result, !Contains(DAT_COL_VALUE_R));
                 REQUIRE_THAT(result, Contains(DAT_COL_VALUE_W));
-                REQUIRE_THAT(result, Contains(query_utils::ToString<double>::run(value_w, traits)));
+                REQUIRE_THAT(result, Contains(query_utils::DataToString<double>::run(value_w, traits)));
             }
         }
         WHEN("Requesting a query string for traits configured for Tango::READ_WRITE")
@@ -92,8 +92,8 @@ SCENARIO("storeDataEventString() returns the correct Value fields for the given 
             {
                 REQUIRE_THAT(result, Contains(DAT_COL_VALUE_R));
                 REQUIRE_THAT(result, Contains(DAT_COL_VALUE_W));
-                REQUIRE_THAT(result, Contains(query_utils::ToString<double>::run(value_r, traits)));
-                REQUIRE_THAT(result, Contains(query_utils::ToString<double>::run(value_w, traits)));
+                REQUIRE_THAT(result, Contains(query_utils::DataToString<double>::run(value_r, traits)));
+                REQUIRE_THAT(result, Contains(query_utils::DataToString<double>::run(value_w, traits)));
             }
         }
         WHEN("Requesting a query string for traits configured for Tango::READ_WITH_WRITE")
@@ -112,8 +112,61 @@ SCENARIO("storeDataEventString() returns the correct Value fields for the given 
             {
                 REQUIRE_THAT(result, Contains(DAT_COL_VALUE_R));
                 REQUIRE_THAT(result, Contains(DAT_COL_VALUE_W));
-                REQUIRE_THAT(result, Contains(query_utils::ToString<double>::run(value_r, traits)));
-                REQUIRE_THAT(result, Contains(query_utils::ToString<double>::run(value_w, traits)));
+                REQUIRE_THAT(result, Contains(query_utils::DataToString<double>::run(value_r, traits)));
+                REQUIRE_THAT(result, Contains(query_utils::DataToString<double>::run(value_w, traits)));
+            }
+        }
+    }
+}
+
+SCENARIO("storeDataEventString() adds a null when value is size zero", "[query-string]")
+{
+    GIVEN("A query builder object with nothing cached")
+    {
+        QueryBuilder query_builder;
+        auto value_r = make_unique<vector<double>>(1.1, 2.2);
+        auto value_r_empty = make_unique<vector<double>>();
+        auto value_w = make_unique<vector<double>>(3.3, 4.4);
+        auto value_w_empty = make_unique<vector<double>>();
+
+        WHEN("Requesting a query string with a size zero read value")
+        {
+            AttributeTraits traits {Tango::READ_WRITE, Tango::SCALAR, Tango::DEV_DOUBLE};
+
+            auto result = query_builder.storeDataEventString<double>(
+                TestAttrFQDName,
+                string("0"),
+                string("1"),
+                value_r,
+                value_w_empty,
+                traits);
+
+            THEN("The result must include both the DAT_COL_VALUE_R and DAT_COL_VALUE_W field")
+            {
+                REQUIRE_THAT(result, Contains(DAT_COL_VALUE_R));
+                REQUIRE_THAT(result, Contains(DAT_COL_VALUE_W));
+                REQUIRE_THAT(result, Contains(query_utils::DataToString<double>::run(value_r, traits)));
+                REQUIRE_THAT(result, Contains("NULL"));
+            }
+        }
+        WHEN("Requesting a query string with a size zero write value")
+        {
+            AttributeTraits traits {Tango::READ_WRITE, Tango::SCALAR, Tango::DEV_DOUBLE};
+
+            auto result = query_builder.storeDataEventString<double>(
+                TestAttrFQDName,
+                string("0"),
+                string("1"),
+                value_r_empty,
+                value_w,
+                traits);
+
+            THEN("The result must include both the DAT_COL_VALUE_R and DAT_COL_VALUE_W field")
+            {
+                REQUIRE_THAT(result, Contains(DAT_COL_VALUE_R));
+                REQUIRE_THAT(result, Contains(DAT_COL_VALUE_W));
+                REQUIRE_THAT(result, Contains(query_utils::DataToString<double>::run(value_w, traits)));
+                REQUIRE_THAT(result, Contains("NULL"));
             }
         }
     }
@@ -190,7 +243,7 @@ SCENARIO("Creating valid insert queries with storeDataEventErrorQuery()", "[quer
 
         WHEN("Requesting a table name for the traits")
         {
-            auto result = query_builder.tableName(traits);
+            auto result = QueryBuilder::tableName(traits);
 
             THEN("The result must include the TYPE_SCALAR from the schema")
             {
@@ -244,12 +297,11 @@ TEST_CASE("Creating valid database table names for types", "[query-string]")
         {
             for (auto &write_type : write_types)
             {
-                QueryBuilder query_builder;
                 AttributeTraits traits {write_type, format_types[f], types[t]};
 
                 DYNAMIC_SECTION("Testing table name for traits: " << traits)
                 {
-                    auto result = query_builder.tableName(traits);
+                    auto result = QueryBuilder::tableName(traits);
                     REQUIRE_THAT(result, Contains(types_str[t]));
                     REQUIRE_THAT(result, Contains(format_types_str[f]));
                 }

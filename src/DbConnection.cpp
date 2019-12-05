@@ -33,7 +33,7 @@ namespace pqxx_conn
 {
     //=============================================================================
     //=============================================================================
-    DbConnection::DbConnection() {}
+    DbConnection::DbConnection(DbStoreMethod db_store_method) : _db_store_method(db_store_method) {}
 
     //=============================================================================
     //=============================================================================
@@ -153,7 +153,7 @@ namespace pqxx_conn
                 // execute the statement with the expectation that we get a row back
                 auto row = tx.exec_prepared1(StoreAttribute,
                     full_attr_name,
-                    _query_builder.tableName(traits),
+                    QueryBuilder::tableName(traits),
                     control_system,
                     att_domain,
                     att_family,

@@ -147,7 +147,7 @@ HdbppTimescaleDb::HdbppTimescaleDb(const vector<string> &configuration)
     spdlog::info("Mandatory config parameter connect_string: {}", connection_string);
 
     // allocate a connection to store data with
-    Conn = make_unique<pqxx_conn::DbConnection>();
+    Conn = make_unique<pqxx_conn::DbConnection>(pqxx_conn::DbConnection::DbStoreMethod::PreparedStatement);
 
     // now bring up the connection
     Conn->connect(connection_string);

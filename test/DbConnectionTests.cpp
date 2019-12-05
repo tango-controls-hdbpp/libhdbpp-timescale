@@ -34,53 +34,12 @@ using namespace std;
 using namespace pqxx;
 using namespace hdbpp_internal;
 using namespace hdbpp_internal::pqxx_conn;
-using namespace hdbpp_test::attr_name;
-using namespace hdbpp_test::attr_info;
-using namespace hdbpp_test::psql_conn_test;
+using namespace hdbpp_test;
+using namespace hdbpp_test::psql_connection;
 using namespace hdbpp_test::data_gen;
 
-namespace psql_conn_test
+namespace pqxx_conn_test
 {
-// define it globally so we can use its cache during tests
-QueryBuilder TestQueryBuilder;
-
-void clearTable(pqxx::connection &conn, const string &table_name)
-{
-    {
-        work tx {conn};
-        tx.exec("TRUNCATE " + table_name + "  RESTART IDENTITY CASCADE");
-        tx.commit();
-    }
-}
-
-// wrapper to store an attribute
-void storeTestAttribute(DbConnection &conn, const AttributeTraits &traits)
-{
-    REQUIRE_NOTHROW(conn.storeAttribute(
-        TestAttrFinalName, TestAttrCs, TestAttrDomain, TestAttrFamily, TestAttrMember, TestAttrName, traits));
-}
-
-// wrapper to store some event data, and return the data for comparison
-template<Tango::CmdArgType Type>
-tuple<vector<typename TangoTypeTraits<Type>::type>, vector<typename TangoTypeTraits<Type>::type>> storeTestEventData(
-    DbConnection &conn, const AttributeTraits &traits, int quality = Tango::ATTR_VALID)
-{
-    struct timeval tv
-    {};
-    gettimeofday(&tv, nullptr);
-    double event_time = tv.tv_sec + tv.tv_usec / 1.0e6;
-
-    auto r = generateData<Type>(traits, !traits.hasReadData());
-    auto w = generateData<Type>(traits, !traits.hasWriteData());
-
-    // make a copy for the consistency check
-    auto ret = make_tuple((*r), (*w));
-
-    REQUIRE_NOTHROW(conn.storeDataEvent(TestAttrFinalName, event_time, quality, move(r), move(w), traits));
-
-    return ret;
-}
-
 // generic compare for most types
 template<typename T>
 bool compareData(T lhs, T rhs)
@@ -152,607 +111,136 @@ bool compareVector<double>(const vector<double> &lhs, const vector<double> &rhs)
     return true;
 }
 
-// taking the original data as a reference, this function loads the last line of data and compares
-// it to the reference data as a test
-template<typename T>
-void checkStoreTestEventData(
-    pqxx::connection &test_conn, const AttributeTraits &traits, const tuple<vector<T>, vector<T>> &data)
+class DbConnectionTestsFixture
 {
-    pqxx::work tx {test_conn};
+private:
 
-    auto data_row(tx.exec1(
-        "SELECT * FROM " + TestQueryBuilder.tableName(traits) + " ORDER BY " + DAT_COL_DATA_TIME + " LIMIT 1"));
+    DbConnection::DbStoreMethod _db_access = DbConnection::DbStoreMethod::PreparedStatement;
+    std::unique_ptr<DbConnection> _test_conn;
 
-    auto attr_row(tx.exec1("SELECT * FROM " + CONF_TABLE_NAME));
-    tx.commit();
+    static std::unique_ptr<pqxx::connection> _verify_conn;
+    static QueryBuilder _query_builder;
 
-    REQUIRE(data_row.at(DAT_COL_ID).as<int>() == attr_row.at(CONF_COL_ID).as<int>());
+protected:
 
-    if (traits.isScalar() && traits.hasReadData())
-    {
-        REQUIRE(data_row.at(DAT_COL_VALUE_R).size() > 0);
-        REQUIRE(compareData(data_row.at(DAT_COL_VALUE_R).as<T>(), get<0>(data)[0]) == true);
-    }
-    else if (traits.isArray() && traits.hasReadData())
-    {
-        REQUIRE(data_row.at(DAT_COL_VALUE_R).size() > 0);
-        REQUIRE(compareVector(data_row.at(DAT_COL_VALUE_R).as<vector<T>>(), get<0>(data)) == true);
+    void resetDbAccess(DbConnection::DbStoreMethod db_access) 
+    { 
+        _db_access = db_access;
+        _test_conn.reset(nullptr);
     }
 
-    if (traits.isScalar() && traits.hasWriteData())
+    DbConnection& testConn();
+    pqxx::connection& verifyConn();
+
+    void clearTables();
+    void storeAttribute(const AttributeTraits &traits);
+    string storeAttributeByTraits(const AttributeTraits &traits);
+
+    template<Tango::CmdArgType Type>
+    tuple<vector<typename TangoTypeTraits<Type>::type>, vector<typename TangoTypeTraits<Type>::type>> storeTestEventData(const string &att_name, const AttributeTraits &traits, int quality = Tango::ATTR_VALID);
+
+    template<typename T>
+    void checkStoreTestEventData(const string &att_name, const AttributeTraits &traits, const tuple<vector<T>, vector<T>> &data);
+
+    QueryBuilder& queryBuilder() { return _query_builder; }
+    vector<AttributeTraits> getTraits() const;
+    vector<AttributeTraits> getTraitsImplemented() const;
+
+public:
+
+    DbConnectionTestsFixture() = default;
+};
+
+std::unique_ptr<pqxx::connection> DbConnectionTestsFixture::_verify_conn = std::unique_ptr<pqxx::connection>{};
+
+//=============================================================================
+//=============================================================================
+DbConnection& DbConnectionTestsFixture::testConn() 
+{ 
+    if (_test_conn == nullptr)
     {
-        REQUIRE(data_row.at(DAT_COL_VALUE_W).size() > 0);
-        REQUIRE(compareData(data_row.at(DAT_COL_VALUE_W).as<T>(), get<1>(data)[0]) == true);
+        _test_conn = make_unique<DbConnection>(_db_access);
+        REQUIRE_NOTHROW(_test_conn->connect(postgres_db::HdbppConnectionString));
     }
-    else if (traits.isArray() && traits.hasWriteData())
-    {
-        REQUIRE(data_row.at(DAT_COL_VALUE_W).size() > 0);
-        REQUIRE(compareVector(data_row.at(DAT_COL_VALUE_W).as<vector<T>>(), get<1>(data)) == true);
-    }
-}
-}; // namespace psql_conn_test
 
-SCENARIO("The DbConnection class can open a valid connection to a postgres node",
-    "[db-access][hdbpp-db-access][db-connection][psql]")
-{
-    GIVEN("An unconnected DbConnection object")
-    {
-        DbConnection conn;
-
-        WHEN("Requesting a connection with a given connect string")
-        {
-            REQUIRE_NOTHROW(conn.connect(postgres_db::ConnectionString));
-
-            THEN("A connection is opened and reported as open") { REQUIRE(conn.isOpen()); }
-            AND_WHEN("The connection is disconnected")
-            {
-                REQUIRE_NOTHROW(conn.disconnect());
-
-                THEN("The connection reports closed") { REQUIRE(conn.isClosed()); }
-            }
-        }
-    }
+    return *_test_conn;
 }
 
-SCENARIO("The DbConnection class handles a bad connection attempt with an exception",
-    "[db-access][hdbpp-db-access][db-connection][psql]")
-{
-    GIVEN("An unconnected DbConnection object")
-    {
-        DbConnection conn;
+//=============================================================================
+//=============================================================================
+pqxx::connection& DbConnectionTestsFixture::verifyConn() 
+{ 
+    if (_verify_conn == nullptr)
+        _verify_conn = make_unique<pqxx::connection>(postgres_db::HdbppConnectionString);
 
-        WHEN("Requesting a connection with an invalid host")
+    return *_verify_conn; 
+}
+
+//=============================================================================
+//=============================================================================
+void DbConnectionTestsFixture::clearTables()
+{
+    vector<AttributeTraits> traits_array = getTraits();
+
+    {
+        string query = "TRUNCATE ";
+
+        work tx {verifyConn()};
+
+        for (auto &traits : traits_array)
         {
-            THEN("A connection_error is thrown")
-            {
-                REQUIRE_THROWS_AS(conn.connect("user=postgres password=password host=unknown"), Tango::DevFailed);
-            }
+            query += QueryBuilder::tableName(traits);
+            query += ",";
         }
-        WHEN("Requesting a connection with an invalid user")
-        {
-            THEN("A connection_error is thrown")
-            {
-                REQUIRE_THROWS_AS(conn.connect("user=invalid password=password host=hdb1"), Tango::DevFailed);
-            }
-        }
-        WHEN("Requesting a connection with an invalid password")
-        {
-            THEN("A connection_error is thrown")
-            {
-                REQUIRE_THROWS_AS(conn.connect("user=postgres password=invalid host=hdb1"), Tango::DevFailed);
-            }
-        }
+
+        query += ERR_TABLE_NAME + ",";
+        query += PARAM_TABLE_NAME + ",";
+        query += HISTORY_EVENT_TABLE_NAME + ",";
+        query += HISTORY_TABLE_NAME + ",";
+        query += CONF_TABLE_NAME + " RESTART IDENTITY";
+
+        REQUIRE_NOTHROW(tx.exec(query));
+        tx.commit();
     }
 }
 
-SCENARIO("Storing Attributes in the database", "[db-access][hdbpp-db-access][db-connection][psql]")
+//=============================================================================
+//=============================================================================
+void DbConnectionTestsFixture::storeAttribute(const AttributeTraits &traits)
 {
-    DbConnection conn;
-    REQUIRE_NOTHROW(conn.connect(postgres_db::HdbppConnectionString));
-
-    // used for verification
-    pqxx::connection test_conn(postgres_db::HdbppConnectionString);
-    psql_conn_test::clearTable(test_conn, CONF_TABLE_NAME);
-
-    AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE};
-
-    GIVEN("A valid DbConnection connected to a hdbpp database")
-    {
-        WHEN("Storing a test attribute data set to the database")
-        {
-            psql_conn_test::storeTestAttribute(conn, traits);
-
-            THEN("The data exists in the database, and can be read back and verified")
-            {
-                {
-                    pqxx::work tx {test_conn};
-                    auto attr_row(tx.exec1("SELECT * FROM " + CONF_TABLE_NAME));
-
-                    auto type_row(tx.exec1("SELECT " + CONF_TYPE_COL_TYPE_ID + " FROM " + CONF_TYPE_TABLE_NAME +
-                        " WHERE " + CONF_TYPE_COL_TYPE_NUM + " = " + std::to_string(traits.type())));
-
-                    auto format_row(tx.exec1("SELECT " + CONF_FORMAT_COL_FORMAT_ID + " FROM " + CONF_FORMAT_TABLE_NAME +
-                        " WHERE " + CONF_FORMAT_COL_FORMAT_NUM + " = " + std::to_string(traits.formatType())));
-
-                    auto access_row(tx.exec1("SELECT " + CONF_WRITE_COL_WRITE_ID + " FROM " + CONF_WRITE_TABLE_NAME +
-                        " WHERE " + CONF_WRITE_COL_WRITE_NUM + " = " + std::to_string(traits.writeType())));
-
-                    tx.commit();
-
-                    REQUIRE(attr_row.at(CONF_COL_NAME).as<string>() == TestAttrFQDName);
-                    REQUIRE(attr_row.at(CONF_COL_CS_NAME).as<string>() == TestAttrCs);
-                    REQUIRE(attr_row.at(CONF_COL_DOMAIN).as<string>() == TestAttrDomain);
-                    REQUIRE(attr_row.at(CONF_COL_FAMILY).as<string>() == TestAttrFamily);
-                    REQUIRE(attr_row.at(CONF_COL_MEMBER).as<string>() == TestAttrMember);
-                    REQUIRE(attr_row.at(CONF_COL_LAST_NAME).as<string>() == TestAttrName);
-                    REQUIRE(attr_row.at(CONF_COL_TABLE_NAME).as<string>() == QueryBuilder().tableName(traits));
-                    REQUIRE(attr_row.at(CONF_COL_TYPE_ID).as<int>() == type_row.at(CONF_TYPE_COL_TYPE_ID).as<int>());
-                    REQUIRE(attr_row.at(CONF_COL_FORMAT_TYPE_ID).as<int>() ==
-                        format_row.at(CONF_FORMAT_COL_FORMAT_ID).as<int>());
-                    REQUIRE(attr_row.at(CONF_COL_WRITE_TYPE_ID).as<int>() ==
-                        access_row.at(CONF_WRITE_COL_WRITE_ID).as<int>());
-                }
-            }
-            AND_WHEN("Trying to store the attribute again")
-            {
-                THEN("An exception is throw as the entry already exists in the database")
-                {
-                    REQUIRE_THROWS_AS(conn.storeAttribute(TestAttrFinalName,
-                                          TestAttrCs,
-                                          TestAttrDomain,
-                                          TestAttrFamily,
-                                          TestAttrMember,
-                                          TestAttrName,
-                                          traits),
-                        Tango::DevFailed);
-                }
-            }
-        }
-    }
-
-    if (conn.isOpen())
-        REQUIRE_NOTHROW(conn.disconnect());
-
-    if (test_conn.is_open())
-        test_conn.disconnect();
+    REQUIRE_NOTHROW(testConn().storeAttribute(
+        attr_name::TestAttrFinalName, 
+        attr_name::TestAttrCs, 
+        attr_name::TestAttrDomain, 
+        attr_name::TestAttrFamily, 
+        attr_name::TestAttrMember, 
+        attr_name::TestAttrName, traits));
 }
 
-SCENARIO("Storing Attributes in a disconnected state", "[db-access][hdbpp-db-access][db-connection][psql]")
+//=============================================================================
+//=============================================================================
+string DbConnectionTestsFixture::storeAttributeByTraits(const AttributeTraits &traits)
 {
-    DbConnection conn;
-    REQUIRE_NOTHROW(conn.connect(postgres_db::HdbppConnectionString));
+    auto name = attr_name::TestAttrFinalName + 
+        "_" + tangoEnumToString(traits.type()) +
+        "_" + tangoEnumToString(traits.writeType()) +
+        "_" + tangoEnumToString(traits.formatType());
 
-    // used for verification
-    pqxx::connection test_conn(postgres_db::HdbppConnectionString);
-    psql_conn_test::clearTable(test_conn, CONF_TABLE_NAME);
+    REQUIRE_NOTHROW(testConn().storeAttribute(name, 
+        attr_name::TestAttrCs, 
+        attr_name::TestAttrDomain, 
+        attr_name::TestAttrFamily, 
+        attr_name::TestAttrMember, 
+        attr_name::TestAttrName, traits));
 
-    AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE};
-
-    GIVEN("A valid DbConnection connected to a hdbpp database")
-    {
-        WHEN("Disconnecting from the database and trying to store event")
-        {
-            conn.disconnect();
-
-            THEN("An exception is throw as the database connection is down")
-            {
-                REQUIRE_THROWS_AS(conn.storeAttribute(TestAttrFinalName,
-                                      TestAttrCs,
-                                      TestAttrDomain,
-                                      TestAttrFamily,
-                                      TestAttrMember,
-                                      TestAttrName,
-                                      traits),
-                    Tango::DevFailed);
-            }
-        }
-    }
-
-    if (conn.isOpen())
-        REQUIRE_NOTHROW(conn.disconnect());
-
-    if (test_conn.is_open())
-        test_conn.disconnect();
+    return name;
 }
 
-SCENARIO("Storing History Events in the database", "[db-access][hdbpp-db-access][db-connection][psql]")
+//=============================================================================
+//=============================================================================
+vector<AttributeTraits> DbConnectionTestsFixture::getTraits() const
 {
-    DbConnection conn;
-    REQUIRE_NOTHROW(conn.connect(postgres_db::HdbppConnectionString));
-
-    // used for verification
-    pqxx::connection test_conn(postgres_db::HdbppConnectionString);
-
-    GIVEN("A valid DbConnection connected to a hdbpp database with an attribute stored in it")
-    {
-        psql_conn_test::clearTable(test_conn, CONF_TABLE_NAME);
-        psql_conn_test::clearTable(test_conn, HISTORY_TABLE_NAME);
-        psql_conn_test::clearTable(test_conn, HISTORY_EVENT_TABLE_NAME);
-
-        AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE};
-        psql_conn_test::storeTestAttribute(conn, traits);
-
-        WHEN("Storing a new history event in the database")
-        {
-            REQUIRE_NOTHROW(conn.storeHistoryEvent(TestAttrFQDName, events::PauseEvent));
-
-            THEN("Then both the event and history event exists in the database, and can be read back and verified")
-            {
-                {
-                    pqxx::work tx {test_conn};
-                    auto event_row(tx.exec1("SELECT * FROM " + HISTORY_EVENT_TABLE_NAME));
-                    auto history_row(tx.exec1("SELECT * FROM " + HISTORY_TABLE_NAME));
-                    auto attr_row(tx.exec1("SELECT * FROM " + CONF_TABLE_NAME));
-                    tx.commit();
-
-                    // check event type
-                    REQUIRE(event_row.at(HISTORY_EVENT_COL_EVENT).as<string>() == events::PauseEvent);
-
-                    // check event id matches event table id
-                    REQUIRE(event_row.at(HISTORY_EVENT_COL_EVENT_ID).as<int>() ==
-                        history_row.at(HISTORY_COL_EVENT_ID).as<int>());
-
-                    // check attribute id match
-                    REQUIRE(attr_row.at(CONF_COL_ID).as<int>() == history_row.at(HISTORY_COL_ID).as<int>());
-                }
-            }
-            AND_WHEN("Trying to store a second history event with the same event")
-            {
-                REQUIRE_NOTHROW(conn.storeHistoryEvent(TestAttrFQDName, events::PauseEvent));
-
-                THEN("A second history event is added to the database")
-                {
-                    {
-                        pqxx::work tx {test_conn};
-                        auto event_result(tx.exec1("SELECT * FROM " + HISTORY_EVENT_TABLE_NAME));
-                        auto history_row(tx.exec_n(2, "SELECT * FROM " + HISTORY_TABLE_NAME));
-                        auto attr_row(tx.exec1("SELECT * FROM " + CONF_TABLE_NAME));
-                        tx.commit();
-
-                        REQUIRE(event_result.at(HISTORY_EVENT_COL_EVENT).as<string>() == events::PauseEvent);
-
-                        // check event type
-                        for (const auto &row : history_row)
-                        {
-                            REQUIRE(attr_row.at(CONF_COL_ID).as<int>() == row.at(HISTORY_COL_ID).as<int>());
-
-                            // check event id matches event table id
-                            REQUIRE(row.at(HISTORY_COL_EVENT_ID).as<int>() ==
-                                event_result.at(HISTORY_COL_EVENT_ID).as<int>());
-                        }
-                    }
-                }
-            }
-        }
-        WHEN("Storing a two different history event in the database in a row")
-        {
-            vector<string> events {events::StartEvent, events::PauseEvent};
-
-            REQUIRE_NOTHROW(conn.storeHistoryEvent(TestAttrFQDName, events[0]));
-            REQUIRE_NOTHROW(conn.storeHistoryEvent(TestAttrFQDName, events[1]));
-
-            THEN("Then both the events exists in the history event table, and can be read back and verified")
-            {
-                {
-                    pqxx::work tx {test_conn};
-                    auto result(tx.exec_n(2, "SELECT * FROM " + HISTORY_EVENT_TABLE_NAME));
-                    tx.commit();
-
-                    int i = 0;
-
-                    // check event type
-                    for (auto row : result)
-                        REQUIRE(row.at(HISTORY_EVENT_COL_EVENT).as<string>() == events[i++]);
-                }
-            }
-        }
-    }
-
-    if (conn.isOpen())
-        REQUIRE_NOTHROW(conn.disconnect());
-
-    if (test_conn.is_open())
-        test_conn.disconnect();
-}
-
-SCENARIO("Storing History Events unrelated to any known Attribute", "[db-access][hdbpp-db-access][db-connection][psql]")
-{
-    DbConnection conn;
-    REQUIRE_NOTHROW(conn.connect(postgres_db::HdbppConnectionString));
-
-    // used for verification
-    pqxx::connection test_conn(postgres_db::HdbppConnectionString);
-
-    GIVEN("A valid DbConnection connected to a hdbpp database with no attribute stored in it")
-    {
-        psql_conn_test::clearTable(test_conn, CONF_TABLE_NAME);
-        psql_conn_test::clearTable(test_conn, HISTORY_TABLE_NAME);
-        psql_conn_test::clearTable(test_conn, HISTORY_EVENT_TABLE_NAME);
-
-        WHEN("Storing a new history event in the database")
-        {
-            THEN("An exception is raised")
-            {
-                REQUIRE_THROWS_AS(conn.storeHistoryEvent(TestAttrFQDName, events::PauseEvent), Tango::DevFailed);
-            }
-        }
-    }
-
-    if (conn.isOpen())
-        REQUIRE_NOTHROW(conn.disconnect());
-
-    if (test_conn.is_open())
-        test_conn.disconnect();
-}
-
-SCENARIO("Storing History Events in a disconnected state", "[db-access][hdbpp-db-access][db-connection][psql]")
-{
-    DbConnection conn;
-    REQUIRE_NOTHROW(conn.connect(postgres_db::HdbppConnectionString));
-
-    // used for verification
-    pqxx::connection test_conn(postgres_db::HdbppConnectionString);
-
-    GIVEN("A valid DbConnection connected to a hdbpp database with an attribute stored in it")
-    {
-        psql_conn_test::clearTable(test_conn, CONF_TABLE_NAME);
-        psql_conn_test::clearTable(test_conn, HISTORY_TABLE_NAME);
-        psql_conn_test::clearTable(test_conn, HISTORY_EVENT_TABLE_NAME);
-
-        AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE};
-        psql_conn_test::storeTestAttribute(conn, traits);
-
-        WHEN("Disconnecting from the database and trying again")
-        {
-            REQUIRE_NOTHROW(conn.disconnect());
-
-            THEN("An exception is throw as the database connection is down")
-            {
-                REQUIRE_THROWS_AS(conn.storeHistoryEvent(TestAttrFQDName, events::PauseEvent), Tango::DevFailed);
-            }
-        }
-    }
-
-    if (conn.isOpen())
-        REQUIRE_NOTHROW(conn.disconnect());
-
-    if (test_conn.is_open())
-        test_conn.disconnect();
-}
-
-SCENARIO("Storing Parameter Events in the database", "[db-access][hdbpp-db-access][db-connection][psql]")
-{
-    struct timeval tv
-    {};
-    gettimeofday(&tv, nullptr);
-    double event_time = tv.tv_sec + tv.tv_usec / 1.0e6;
-
-    DbConnection conn;
-    REQUIRE_NOTHROW(conn.connect(postgres_db::HdbppConnectionString));
-
-    // used for verification
-    pqxx::connection test_conn(postgres_db::HdbppConnectionString);
-
-    GIVEN("A valid DbConnection connected to a hdbpp database with an attribute stored in it")
-    {
-        psql_conn_test::clearTable(test_conn, CONF_TABLE_NAME);
-        psql_conn_test::clearTable(test_conn, PARAM_TABLE_NAME);
-
-        AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE};
-        psql_conn_test::storeTestAttribute(conn, traits);
-
-        WHEN("Storing a new parameter event in the database")
-        {
-            REQUIRE_NOTHROW(conn.storeParameterEvent(TestAttrFinalName,
-                event_time,
-                AttrInfoLabel,
-                AttrInfoUnit,
-                AttrInfoStandardUnit,
-                AttrInfoDisplayUnit,
-                AttrInfoFormat,
-                AttrInfoRel,
-                AttrInfoAbs,
-                AttrInfoPeriod,
-                AttrInfoDescription));
-
-            THEN("The data exists in the database, and can be read back and verified")
-            {
-                {
-                    pqxx::work tx {test_conn};
-                    auto attr_row(tx.exec1("SELECT * FROM " + CONF_TABLE_NAME));
-                    auto param_row(tx.exec1("SELECT * FROM " + PARAM_TABLE_NAME));
-                    tx.commit();
-
-                    // TODO check event time
-                    //REQUIRE(param_row.at(PARAM_COL_EV_TIME).as<double>() == event_time);
-                    REQUIRE(param_row.at(PARAM_COL_LABEL).as<string>() == AttrInfoLabel);
-                    REQUIRE(param_row.at(PARAM_COL_UNIT).as<string>() == AttrInfoUnit);
-                    REQUIRE(param_row.at(PARAM_COL_STANDARDUNIT).as<string>() == AttrInfoStandardUnit);
-                    REQUIRE(param_row.at(PARAM_COL_DISPLAYUNIT).as<string>() == AttrInfoDisplayUnit);
-                    REQUIRE(param_row.at(PARAM_COL_FORMAT).as<string>() == AttrInfoFormat);
-                    REQUIRE(param_row.at(PARAM_COL_ARCHIVERELCHANGE).as<string>() == AttrInfoRel);
-                    REQUIRE(param_row.at(PARAM_COL_ARCHIVEABSCHANGE).as<string>() == AttrInfoAbs);
-                    REQUIRE(param_row.at(PARAM_COL_ARCHIVEPERIOD).as<string>() == AttrInfoPeriod);
-                    REQUIRE(param_row.at(PARAM_COL_DESCRIPTION).as<string>() == AttrInfoDescription);
-
-                    // check attribute id match
-                    REQUIRE(attr_row.at(CONF_COL_ID).as<int>() == param_row.at(PARAM_COL_ID).as<int>());
-                }
-            }
-            AND_WHEN("Trying to store another parameter event for the same attribute")
-            {
-                REQUIRE_NOTHROW(conn.storeParameterEvent(TestAttrFinalName,
-                    event_time,
-                    AttrInfoLabel,
-                    AttrInfoUnit,
-                    AttrInfoStandardUnit,
-                    AttrInfoDisplayUnit,
-                    AttrInfoFormat,
-                    AttrInfoRel,
-                    AttrInfoAbs,
-                    AttrInfoPeriod,
-                    AttrInfoDescription));
-
-                THEN("A second parameter event is added to the database")
-                {
-                    {
-                        pqxx::work tx {test_conn};
-                        auto result(tx.exec_n(2, "SELECT * FROM " + PARAM_TABLE_NAME));
-                        tx.commit();
-
-                        REQUIRE(result.size() == 2);
-                    }
-                }
-            }
-        }
-    }
-
-    if (conn.isOpen())
-        REQUIRE_NOTHROW(conn.disconnect());
-
-    if (test_conn.is_open())
-        test_conn.disconnect();
-}
-
-SCENARIO("Storing Parameter Events in a disconnected state", "[db-access][hdbpp-db-access][db-connection][psql]")
-{
-    struct timeval tv
-    {};
-    gettimeofday(&tv, nullptr);
-    double event_time = tv.tv_sec + tv.tv_usec / 1.0e6;
-
-    DbConnection conn;
-    REQUIRE_NOTHROW(conn.connect(postgres_db::HdbppConnectionString));
-
-    // used for verification
-    pqxx::connection test_conn(postgres_db::HdbppConnectionString);
-
-    GIVEN("A valid DbConnection connected to a hdbpp database with an attribute stored in it")
-    {
-        psql_conn_test::clearTable(test_conn, CONF_TABLE_NAME);
-        psql_conn_test::clearTable(test_conn, HISTORY_TABLE_NAME);
-        psql_conn_test::clearTable(test_conn, HISTORY_EVENT_TABLE_NAME);
-
-        AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE};
-        psql_conn_test::storeTestAttribute(conn, traits);
-
-        WHEN("Disconnecting from the database and trying again")
-        {
-            conn.disconnect();
-
-            THEN("An exception is throw as the database connection is down")
-            {
-                REQUIRE_THROWS_AS(conn.storeParameterEvent(TestAttrFinalName,
-                                      event_time,
-                                      AttrInfoLabel,
-                                      AttrInfoUnit,
-                                      AttrInfoStandardUnit,
-                                      AttrInfoDisplayUnit,
-                                      AttrInfoFormat,
-                                      AttrInfoRel,
-                                      AttrInfoAbs,
-                                      AttrInfoPeriod,
-                                      AttrInfoDescription),
-                    Tango::DevFailed);
-            }
-        }
-    }
-
-    if (conn.isOpen())
-        REQUIRE_NOTHROW(conn.disconnect());
-
-    if (test_conn.is_open())
-        test_conn.disconnect();
-}
-
-SCENARIO("Storing event data which is invalid", "[db-access][hdbpp-db-access][db-connection][psql]")
-{
-    struct timeval tv
-    {};
-    gettimeofday(&tv, nullptr);
-    double event_time = tv.tv_sec + tv.tv_usec / 1.0e6;
-
-    DbConnection conn;
-    REQUIRE_NOTHROW(conn.connect(postgres_db::HdbppConnectionString));
-
-    // used for verification
-    pqxx::connection test_conn(postgres_db::HdbppConnectionString);
-
-    GIVEN("A valid DbConnection connected to a hdbpp database with an attribute stored in it")
-    {
-        psql_conn_test::clearTable(test_conn, CONF_TABLE_NAME);
-
-        WHEN("Storing a read only scalar data event with no data")
-        {
-            AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE};
-            psql_conn_test::storeTestAttribute(conn, traits);
-
-            REQUIRE_NOTHROW(conn.storeDataEvent(TestAttrFinalName,
-                event_time,
-                Tango::ATTR_VALID,
-                move(make_unique<std::vector<double>>()),
-                move(make_unique<std::vector<double>>()),
-                traits));
-
-            THEN("The event is stored, with no data, and can be read back")
-            {
-                {
-                    pqxx::work tx {test_conn};
-                    auto data_row(tx.exec1("SELECT * FROM " + psql_conn_test::TestQueryBuilder.tableName(traits) +
-                        " ORDER BY " + DAT_COL_DATA_TIME + " LIMIT 1"));
-                    auto attr_row(tx.exec1("SELECT * FROM " + CONF_TABLE_NAME));
-                    tx.commit();
-
-                    REQUIRE(data_row.at(DAT_COL_ID).as<int>() == attr_row.at(CONF_COL_ID).as<int>());
-                    REQUIRE(data_row.at(DAT_COL_VALUE_R).is_null() == true);
-                }
-            }
-        }
-        WHEN("Storing a read/write spectrum data event with no data")
-        {
-            AttributeTraits traits {Tango::READ_WRITE, Tango::SPECTRUM, Tango::DEV_DOUBLE};
-            psql_conn_test::storeTestAttribute(conn, traits);
-
-            REQUIRE_NOTHROW(conn.storeDataEvent(TestAttrFinalName,
-                event_time,
-                Tango::ATTR_VALID,
-                move(make_unique<std::vector<double>>()),
-                move(make_unique<std::vector<double>>()),
-                traits));
-
-            THEN("The event is stored, with no data, and can be read back")
-            {
-                {
-                    pqxx::work tx {test_conn};
-                    auto data_row(tx.exec1("SELECT * FROM " + psql_conn_test::TestQueryBuilder.tableName(traits) +
-                        " ORDER BY " + DAT_COL_DATA_TIME + " LIMIT 1"));
-                    auto attr_row(tx.exec1("SELECT * FROM " + CONF_TABLE_NAME));
-                    tx.commit();
-
-                    REQUIRE(data_row.at(DAT_COL_ID).as<int>() == attr_row.at(CONF_COL_ID).as<int>());
-                    REQUIRE(data_row.at(DAT_COL_VALUE_R).is_null() == true);
-                    REQUIRE(data_row.at(DAT_COL_VALUE_W).is_null() == true);
-                }
-            }
-        }
-    }
-
-    if (conn.isOpen())
-        REQUIRE_NOTHROW(conn.disconnect());
-
-    if (test_conn.is_open())
-        test_conn.disconnect();
-}
-
-TEST_CASE("Storing event data of all Tango type combinations in the database",
-    "[db-access][hdbpp-db-access][db-connection][psql]")
-{
-    DbConnection conn;
-    REQUIRE_NOTHROW(conn.connect(postgres_db::HdbppConnectionString));
-
-    // used for verification
-    pqxx::connection test_conn(postgres_db::HdbppConnectionString);
-    psql_conn_test::clearTable(test_conn, CONF_TABLE_NAME);
+    vector<AttributeTraits> traits_array {};
 
     vector<Tango::CmdArgType> types {
         Tango::DEV_BOOLEAN,
@@ -767,374 +255,824 @@ TEST_CASE("Storing event data of all Tango type combinations in the database",
         Tango::DEV_USHORT,
         Tango::DEV_UCHAR,
         Tango::DEV_STATE,
-        //Tango::DEV_ENCODED, Tango::DEV_ENUM
-    };
+        Tango::DEV_ENCODED,
+        Tango::DEV_ENUM};
 
     vector<Tango::AttrWriteType> write_types {Tango::READ, Tango::WRITE, Tango::READ_WRITE, Tango::READ_WITH_WRITE};
     vector<Tango::AttrDataFormat> format_types {Tango::SCALAR, Tango::SPECTRUM};
 
     // loop for every combination of type in Tango
     for (auto &type : types)
-    {
         for (auto &format : format_types)
-        {
             for (auto &write : write_types)
-            {
-                AttributeTraits traits {write, format, type};
+                traits_array.emplace_back(AttributeTraits{write, format, type});
 
-                DYNAMIC_SECTION("Storing a traits: " << traits)
-                {
-                    psql_conn_test::storeTestAttribute(conn, traits);
-
-                    switch (traits.type())
-                    {
-                        case Tango::DEV_BOOLEAN:
-                            psql_conn_test::checkStoreTestEventData(test_conn,
-                                traits,
-                                psql_conn_test::storeTestEventData<Tango::DEV_BOOLEAN>(conn, traits));
-
-                            break;
-
-                        case Tango::DEV_SHORT:
-                            psql_conn_test::checkStoreTestEventData(
-                                test_conn, traits, psql_conn_test::storeTestEventData<Tango::DEV_SHORT>(conn, traits));
-
-                            break;
-
-                        case Tango::DEV_LONG:
-                            psql_conn_test::checkStoreTestEventData(
-                                test_conn, traits, psql_conn_test::storeTestEventData<Tango::DEV_LONG>(conn, traits));
-                            break;
-
-                        case Tango::DEV_LONG64:
-                            psql_conn_test::checkStoreTestEventData(
-                                test_conn, traits, psql_conn_test::storeTestEventData<Tango::DEV_LONG64>(conn, traits));
-
-                            break;
-
-                        case Tango::DEV_FLOAT:
-                            psql_conn_test::checkStoreTestEventData(
-                                test_conn, traits, psql_conn_test::storeTestEventData<Tango::DEV_FLOAT>(conn, traits));
-
-                            break;
-
-                        case Tango::DEV_DOUBLE:
-                            psql_conn_test::checkStoreTestEventData(
-                                test_conn, traits, psql_conn_test::storeTestEventData<Tango::DEV_DOUBLE>(conn, traits));
-
-                            break;
-
-                        case Tango::DEV_UCHAR:
-                            psql_conn_test::checkStoreTestEventData(
-                                test_conn, traits, psql_conn_test::storeTestEventData<Tango::DEV_UCHAR>(conn, traits));
-
-                            break;
-
-                        case Tango::DEV_USHORT:
-                            psql_conn_test::checkStoreTestEventData(
-                                test_conn, traits, psql_conn_test::storeTestEventData<Tango::DEV_USHORT>(conn, traits));
-
-                            break;
-
-                        case Tango::DEV_ULONG:
-                            psql_conn_test::checkStoreTestEventData(
-                                test_conn, traits, psql_conn_test::storeTestEventData<Tango::DEV_ULONG>(conn, traits));
-
-                            break;
-
-                        case Tango::DEV_ULONG64:
-                            psql_conn_test::checkStoreTestEventData(test_conn,
-                                traits,
-                                psql_conn_test::storeTestEventData<Tango::DEV_ULONG64>(conn, traits));
-
-                            break;
-
-                        case Tango::DEV_STRING:
-                            psql_conn_test::checkStoreTestEventData(
-                                test_conn, traits, psql_conn_test::storeTestEventData<Tango::DEV_STRING>(conn, traits));
-
-                            break;
-
-                        case Tango::DEV_STATE:
-                            psql_conn_test::checkStoreTestEventData(
-                                test_conn, traits, psql_conn_test::storeTestEventData<Tango::DEV_STATE>(conn, traits));
-
-                            break;
-
-                            //case Tango::DEV_ENUM:
-                            //psql_conn_test::checkStoreTestEventData(
-                            //test_conn, traits, psql_conn_test::storeTestEventData(conn, traits));
-
-                            //break;
-
-                            //case Tango::DEV_ENCODED:
-                            //psql_conn_test::checkStoreTestEventData(
-                            //test_conn, traits, psql_conn_test::storeTestEventData<hdbpp_encoded_t>(conn, traits));
-
-                            //break;
-
-                        default: throw "Should not be here!";
-                    }
-                }
-            }
-        }
-    }
-
-    if (conn.isOpen())
-        REQUIRE_NOTHROW(conn.disconnect());
-
-    if (test_conn.is_open())
-        test_conn.disconnect();
+    return traits_array;
 }
 
-SCENARIO("Storing data events in a disconnected state", "[db-access][hdbpp-db-access][db-connection][psql]")
+//=============================================================================
+//=============================================================================
+vector<AttributeTraits> DbConnectionTestsFixture::getTraitsImplemented() const
 {
-    DbConnection conn;
-    REQUIRE_NOTHROW(conn.connect(postgres_db::HdbppConnectionString));
+    vector<AttributeTraits> traits_array {};
 
+    vector<Tango::CmdArgType> types {
+        Tango::DEV_BOOLEAN,
+        Tango::DEV_DOUBLE,
+        Tango::DEV_FLOAT,
+        Tango::DEV_STRING,
+        Tango::DEV_LONG,
+        Tango::DEV_ULONG,
+        Tango::DEV_LONG64,
+        Tango::DEV_ULONG64,
+        Tango::DEV_SHORT,
+        Tango::DEV_USHORT,
+        Tango::DEV_UCHAR,
+        Tango::DEV_STATE};
+
+    vector<Tango::AttrWriteType> write_types {Tango::READ, Tango::WRITE, Tango::READ_WRITE, Tango::READ_WITH_WRITE};
+    vector<Tango::AttrDataFormat> format_types {Tango::SCALAR, Tango::SPECTRUM};
+
+    // loop for every combination of type in Tango
+    for (auto &type : types)
+        for (auto &format : format_types)
+            for (auto &write : write_types)
+                traits_array.emplace_back(AttributeTraits{write, format, type});
+
+    return traits_array;
+}
+
+//=============================================================================
+//=============================================================================
+template<Tango::CmdArgType Type>
+tuple<vector<typename TangoTypeTraits<Type>::type>, vector<typename TangoTypeTraits<Type>::type>> DbConnectionTestsFixture::storeTestEventData(const string &att_name, const AttributeTraits &traits, int quality)
+{
     struct timeval tv
     {};
     gettimeofday(&tv, nullptr);
     double event_time = tv.tv_sec + tv.tv_usec / 1.0e6;
 
-    // used for verification
-    pqxx::connection test_conn(postgres_db::HdbppConnectionString);
+    auto r = generateData<Type>(traits, !traits.hasReadData());
+    auto w = generateData<Type>(traits, !traits.hasWriteData());
 
-    GIVEN("A valid DbConnection connected to a hdbpp database with an attribute stored in it")
+    // make a copy for the consistency check
+    auto ret = make_tuple((*r), (*w));
+
+    REQUIRE_NOTHROW(testConn().storeDataEvent(att_name, event_time, quality, move(r), move(w), traits));
+
+    return ret;
+}
+
+//=============================================================================
+//=============================================================================
+template<typename T>
+void DbConnectionTestsFixture::checkStoreTestEventData(const string &att_name, const AttributeTraits &traits, const tuple<vector<T>, vector<T>> &data)
+{
+    pqxx::work tx {verifyConn()};
+
+    // get the attribute id
+    auto attr_row(tx.exec1("SELECT * FROM " + CONF_TABLE_NAME + " WHERE " + CONF_COL_NAME + "='" + att_name + "'"));
+
+    // now get the last row stored
+    auto data_row(tx.exec1(
+        "SELECT * FROM " + QueryBuilder::tableName(traits) + 
+        " WHERE " + DAT_COL_ID + "=" + to_string(attr_row.at(CONF_COL_ID).as<int>()) + " " + 
+        " ORDER BY " + DAT_COL_DATA_TIME + " LIMIT 1"));
+
+    tx.commit();
+
+    REQUIRE(data_row.at(DAT_COL_ID).as<int>() == attr_row.at(CONF_COL_ID).as<int>());
+
+    if (traits.isScalar() && traits.hasReadData())
     {
-        psql_conn_test::clearTable(test_conn, CONF_TABLE_NAME);
-        AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE};
-        psql_conn_test::storeTestAttribute(conn, traits);
+        REQUIRE(data_row.at(DAT_COL_VALUE_R).size() > 0);
+        REQUIRE(compareData(data_row.at(DAT_COL_VALUE_R).as<T>(), get<0>(data)[0]) == true);
+    }
+    
+    if (traits.isArray() && traits.hasReadData())
+    {
+        REQUIRE(data_row.at(DAT_COL_VALUE_R).size() > 0);
+        REQUIRE(compareVector(data_row.at(DAT_COL_VALUE_R).as<vector<T>>(), get<0>(data)) == true);
+    }
 
-        WHEN("Disconnecting from the database and trying again")
+    if (traits.isScalar() && traits.hasWriteData())
+    {
+        REQUIRE(data_row.at(DAT_COL_VALUE_W).size() > 0);
+        REQUIRE(compareData(data_row.at(DAT_COL_VALUE_W).as<T>(), get<1>(data)[0]) == true);
+    }
+    
+    if (traits.isArray() && traits.hasWriteData())
+    {
+        REQUIRE(data_row.at(DAT_COL_VALUE_W).size() > 0);
+        REQUIRE(compareVector(data_row.at(DAT_COL_VALUE_W).as<vector<T>>(), get<1>(data)) == true);
+    }
+}
+}; // namespace pqxx_conn_test
+
+TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "The DbConnection class can open a valid connection to a postgresql node",
+    "[db-access][hdbpp-db-access][db-connection]")
+{
+    DbConnection conn(DbConnection::DbStoreMethod::PreparedStatement);
+    REQUIRE_NOTHROW(conn.connect(postgres_db::ConnectionString));
+    REQUIRE(conn.isOpen());
+    REQUIRE_NOTHROW(conn.disconnect());
+    REQUIRE(conn.isClosed());
+    SUCCEED("Passed");
+}
+
+TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "The DbConnection class handles a bad connection attempts with an exception",
+    "[db-access][hdbpp-db-access][db-connection]")
+{
+    DbConnection conn(DbConnection::DbStoreMethod::PreparedStatement);
+    REQUIRE_THROWS_AS(conn.connect("user=postgres password=password host=unknown"), Tango::DevFailed);
+    REQUIRE_THROWS_AS(conn.connect("user=invalid password=password host=hdb1"), Tango::DevFailed);
+    REQUIRE_THROWS_AS(conn.connect("user=postgres password=invalid host=hdb1"), Tango::DevFailed);
+    SUCCEED("Passed");
+}
+
+TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing Attributes in the database succeeds", "[db-access][hdbpp-db-access][db-connection]")
+{
+    AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE};
+
+    REQUIRE_NOTHROW(clearTables());
+    REQUIRE_NOTHROW(storeAttribute(traits));
+
+    {
+        pqxx::work tx {verifyConn()};
+        auto attr_row(tx.exec1("SELECT * FROM " + CONF_TABLE_NAME));
+
+        auto type_row(tx.exec1("SELECT " + CONF_TYPE_COL_TYPE_ID + " FROM " + CONF_TYPE_TABLE_NAME +
+            " WHERE " + CONF_TYPE_COL_TYPE_NUM + " = " + std::to_string(traits.type())));
+
+        auto format_row(tx.exec1("SELECT " + CONF_FORMAT_COL_FORMAT_ID + " FROM " + CONF_FORMAT_TABLE_NAME +
+            " WHERE " + CONF_FORMAT_COL_FORMAT_NUM + " = " + std::to_string(traits.formatType())));
+
+        auto access_row(tx.exec1("SELECT " + CONF_WRITE_COL_WRITE_ID + " FROM " + CONF_WRITE_TABLE_NAME +
+            " WHERE " + CONF_WRITE_COL_WRITE_NUM + " = " + std::to_string(traits.writeType())));
+
+        tx.commit();
+
+        REQUIRE(attr_row.at(CONF_COL_NAME).as<string>() == attr_name::TestAttrFQDName);
+        REQUIRE(attr_row.at(CONF_COL_CS_NAME).as<string>() == attr_name::TestAttrCs);
+        REQUIRE(attr_row.at(CONF_COL_DOMAIN).as<string>() == attr_name::TestAttrDomain);
+        REQUIRE(attr_row.at(CONF_COL_FAMILY).as<string>() == attr_name::TestAttrFamily);
+        REQUIRE(attr_row.at(CONF_COL_MEMBER).as<string>() == attr_name::TestAttrMember);
+        REQUIRE(attr_row.at(CONF_COL_LAST_NAME).as<string>() == attr_name::TestAttrName);
+        REQUIRE(attr_row.at(CONF_COL_TABLE_NAME).as<string>() == QueryBuilder().tableName(traits));
+        REQUIRE(attr_row.at(CONF_COL_TYPE_ID).as<int>() == type_row.at(CONF_TYPE_COL_TYPE_ID).as<int>());
+        REQUIRE(attr_row.at(CONF_COL_FORMAT_TYPE_ID).as<int>() == format_row.at(CONF_FORMAT_COL_FORMAT_ID).as<int>());
+        REQUIRE(attr_row.at(CONF_COL_WRITE_TYPE_ID).as<int>() == access_row.at(CONF_WRITE_COL_WRITE_ID).as<int>());
+    }
+
+    SUCCEED("Passed");
+}
+
+TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing the same attribute in the database twice fails", "[db-access][hdbpp-db-access][db-connection]")
+{
+    AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE};
+    REQUIRE_NOTHROW(clearTables());
+    REQUIRE_NOTHROW(storeAttribute(traits));
+
+    REQUIRE_THROWS_AS(testConn().storeAttribute(
+        attr_name::TestAttrFinalName, 
+        attr_name::TestAttrCs, 
+        attr_name::TestAttrDomain, 
+        attr_name::TestAttrFamily, 
+        attr_name::TestAttrMember, 
+        attr_name::TestAttrName, traits), Tango::DevFailed);
+
+    SUCCEED("Passed");
+}
+
+TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing Attributes in a disconnected state", "[db-access][hdbpp-db-access][db-connection]")
+{
+    DbConnection conn(DbConnection::DbStoreMethod::PreparedStatement);
+    AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE};
+
+    REQUIRE_THROWS_AS(conn.storeAttribute(
+        attr_name::TestAttrFinalName, 
+        attr_name::TestAttrCs, 
+        attr_name::TestAttrDomain, 
+        attr_name::TestAttrFamily, 
+        attr_name::TestAttrMember, 
+        attr_name::TestAttrName, traits), Tango::DevFailed);
+
+    SUCCEED("Passed");
+}
+
+TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing a series of the same History Events in the database successfully", "[db-access][hdbpp-db-access][db-connection]")
+{
+    AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE};
+    REQUIRE_NOTHROW(clearTables());
+    REQUIRE_NOTHROW(storeAttribute(traits));
+
+    REQUIRE_NOTHROW(testConn().storeHistoryEvent(attr_name::TestAttrFQDName, events::PauseEvent));
+
+    {
+        pqxx::work tx {verifyConn()};
+        auto event_row(tx.exec1("SELECT * FROM " + HISTORY_EVENT_TABLE_NAME));
+        auto history_row(tx.exec1("SELECT * FROM " + HISTORY_TABLE_NAME));
+        auto attr_row(tx.exec1("SELECT * FROM " + CONF_TABLE_NAME));
+        tx.commit();
+
+        // check event type
+        REQUIRE(event_row.at(HISTORY_EVENT_COL_EVENT).as<string>() == events::PauseEvent);
+
+        // check event id matches event table id
+        REQUIRE(event_row.at(HISTORY_EVENT_COL_EVENT_ID).as<int>() ==
+            history_row.at(HISTORY_COL_EVENT_ID).as<int>());
+
+        // check attribute id match
+        REQUIRE(attr_row.at(CONF_COL_ID).as<int>() == history_row.at(HISTORY_COL_ID).as<int>());
+    }
+
+    REQUIRE_NOTHROW(testConn().storeHistoryEvent(attr_name::TestAttrFQDName, events::PauseEvent));
+
+    {
+        pqxx::work tx {verifyConn()};
+        auto event_result(tx.exec1("SELECT * FROM " + HISTORY_EVENT_TABLE_NAME));
+        auto history_row(tx.exec_n(2, "SELECT * FROM " + HISTORY_TABLE_NAME));
+        auto attr_row(tx.exec1("SELECT * FROM " + CONF_TABLE_NAME));
+        tx.commit();
+
+        REQUIRE(event_result.at(HISTORY_EVENT_COL_EVENT).as<string>() == events::PauseEvent);
+
+        // check event type
+        for (const auto &row : history_row)
         {
-            REQUIRE_NOTHROW(conn.disconnect());
+            REQUIRE(attr_row.at(CONF_COL_ID).as<int>() == row.at(HISTORY_COL_ID).as<int>());
 
-            THEN("An exception is throw as the database connection is down")
+            // check event id matches event table id
+            REQUIRE(row.at(HISTORY_COL_EVENT_ID).as<int>() ==
+                event_result.at(HISTORY_COL_EVENT_ID).as<int>());
+        }
+    }
+
+    SUCCEED("Passed");
+}
+
+TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing a series of different History Events in the database successfully", "[db-access][hdbpp-db-access][db-connection]")
+{
+    AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE};
+    REQUIRE_NOTHROW(clearTables());
+    REQUIRE_NOTHROW(storeAttribute(traits));
+
+    vector<string> events {events::StartEvent, events::PauseEvent};
+
+    REQUIRE_NOTHROW(testConn().storeHistoryEvent(attr_name::TestAttrFQDName, events[0]));
+    REQUIRE_NOTHROW(testConn().storeHistoryEvent(attr_name::TestAttrFQDName, events[1]));
+
+    {
+        pqxx::work tx {verifyConn()};
+        auto result(tx.exec_n(2, "SELECT * FROM " + HISTORY_EVENT_TABLE_NAME));
+        tx.commit();
+
+        int i = 0;
+
+        // check event type
+        for (auto row : result)
+            REQUIRE(row.at(HISTORY_EVENT_COL_EVENT).as<string>() == events[i++]);
+    }
+
+    SUCCEED("Passed");
+}
+
+
+TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing History Events unrelated to any known Attribute", "[db-access][hdbpp-db-access][db-connection]")
+{
+    REQUIRE_NOTHROW(clearTables());
+    REQUIRE_THROWS_AS(testConn().storeHistoryEvent(attr_name::TestAttrFQDName, events::PauseEvent), Tango::DevFailed);
+    SUCCEED("Passed");
+}
+
+TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing History Events in a disconnected state", "[db-access][hdbpp-db-access][db-connection]")
+{
+    DbConnection conn(DbConnection::DbStoreMethod::PreparedStatement);
+    REQUIRE_THROWS_AS(conn.storeHistoryEvent(attr_name::TestAttrFQDName, events::PauseEvent), Tango::DevFailed);
+    SUCCEED("Passed");
+}
+
+TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing Parameter Events in the database", "[db-access][hdbpp-db-access][db-connection]")
+{
+    struct timeval tv
+    {};
+
+    gettimeofday(&tv, nullptr);
+    double event_time = tv.tv_sec + tv.tv_usec / 1.0e6;
+
+    AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE};
+    REQUIRE_NOTHROW(clearTables());
+    REQUIRE_NOTHROW(storeAttribute(traits));
+
+    REQUIRE_NOTHROW(testConn().storeParameterEvent(attr_name::TestAttrFinalName,
+        event_time,
+        attr_info::AttrInfoLabel,
+        attr_info::AttrInfoUnit,
+        attr_info::AttrInfoStandardUnit,
+        attr_info::AttrInfoDisplayUnit,
+        attr_info::AttrInfoFormat,
+        attr_info::AttrInfoRel,
+        attr_info::AttrInfoAbs,
+        attr_info::AttrInfoPeriod,
+        attr_info::AttrInfoDescription));
+
+    {
+        pqxx::work tx {verifyConn()};
+        auto attr_row(tx.exec1("SELECT * FROM " + CONF_TABLE_NAME));
+        auto param_row(tx.exec1("SELECT * FROM " + PARAM_TABLE_NAME));
+        tx.commit();
+
+        // TODO check event time
+        //REQUIRE(param_row.at(PARAM_COL_EV_TIME).as<double>() == event_time);
+        REQUIRE(param_row.at(PARAM_COL_LABEL).as<string>() == attr_info::AttrInfoLabel);
+        REQUIRE(param_row.at(PARAM_COL_UNIT).as<string>() == attr_info::AttrInfoUnit);
+        REQUIRE(param_row.at(PARAM_COL_STANDARDUNIT).as<string>() == attr_info::AttrInfoStandardUnit);
+        REQUIRE(param_row.at(PARAM_COL_DISPLAYUNIT).as<string>() == attr_info::AttrInfoDisplayUnit);
+        REQUIRE(param_row.at(PARAM_COL_FORMAT).as<string>() == attr_info::AttrInfoFormat);
+        REQUIRE(param_row.at(PARAM_COL_ARCHIVERELCHANGE).as<string>() == attr_info::AttrInfoRel);
+        REQUIRE(param_row.at(PARAM_COL_ARCHIVEABSCHANGE).as<string>() == attr_info::AttrInfoAbs);
+        REQUIRE(param_row.at(PARAM_COL_ARCHIVEPERIOD).as<string>() == attr_info::AttrInfoPeriod);
+        REQUIRE(param_row.at(PARAM_COL_DESCRIPTION).as<string>() == attr_info::AttrInfoDescription);
+
+        // check attribute id match
+        REQUIRE(attr_row.at(CONF_COL_ID).as<int>() == param_row.at(PARAM_COL_ID).as<int>());
+    }
+
+    REQUIRE_NOTHROW(testConn().storeParameterEvent(attr_name::TestAttrFinalName,
+        event_time,
+        attr_info::AttrInfoLabel,
+        attr_info::AttrInfoUnit,
+        attr_info::AttrInfoStandardUnit,
+        attr_info::AttrInfoDisplayUnit,
+        attr_info::AttrInfoFormat,
+        attr_info::AttrInfoRel,
+        attr_info::AttrInfoAbs,
+        attr_info::AttrInfoPeriod,
+        attr_info::AttrInfoDescription));
+
+    {
+        pqxx::work tx {verifyConn()};
+        auto result(tx.exec_n(2, "SELECT * FROM " + PARAM_TABLE_NAME));
+        tx.commit();
+
+        REQUIRE(result.size() == 2);
+    }
+
+    SUCCEED("Passed");
+}
+
+TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing Parameter Events in a disconnected state", "[db-access][hdbpp-db-access][db-connection]")
+{
+    struct timeval tv
+    {};
+
+    gettimeofday(&tv, nullptr);
+    double event_time = tv.tv_sec + tv.tv_usec / 1.0e6;
+
+    DbConnection conn(DbConnection::DbStoreMethod::PreparedStatement);
+
+    REQUIRE_THROWS_AS(conn.storeParameterEvent(attr_name::TestAttrFinalName,
+        event_time,
+        attr_info::AttrInfoLabel,
+        attr_info::AttrInfoUnit,
+        attr_info::AttrInfoStandardUnit,
+        attr_info::AttrInfoDisplayUnit,
+        attr_info::AttrInfoFormat,
+        attr_info::AttrInfoRel,
+        attr_info::AttrInfoAbs,
+        attr_info::AttrInfoPeriod,
+        attr_info::AttrInfoDescription),
+        Tango::DevFailed);
+
+    SUCCEED("Passed");
+}
+
+TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing events which has no data", "[db-access][hdbpp-db-access][db-connection]")
+{
+    struct timeval tv
+    {};
+
+    gettimeofday(&tv, nullptr);
+    double event_time = tv.tv_sec + tv.tv_usec / 1.0e6;
+
+    vector<DbConnection::DbStoreMethod> access_methods {
+        DbConnection::DbStoreMethod::PreparedStatement,
+        DbConnection::DbStoreMethod::InsertString};
+
+    vector<Tango::AttrWriteType> write_types {Tango::READ, Tango::WRITE, Tango::READ_WRITE, Tango::READ_WITH_WRITE};
+
+    for (auto access : access_methods)
+    {
+        resetDbAccess(access);
+        REQUIRE_NOTHROW(clearTables());
+        
+        for (auto write_type : write_types)
+        {
+            AttributeTraits traits {write_type, Tango::SCALAR, Tango::DEV_DOUBLE};
+            auto att_name = storeAttributeByTraits(traits);
+
+            REQUIRE_NOTHROW(testConn().storeDataEvent(att_name,
+                event_time,
+                Tango::ATTR_VALID,
+                move(make_unique<std::vector<double>>()),
+                move(make_unique<std::vector<double>>()),
+                traits));
+
             {
-                REQUIRE_THROWS_AS(conn.storeDataEvent(TestAttrFinalName,
-                                      event_time,
-                                      Tango::ATTR_VALID,
-                                      move(make_unique<std::vector<double>>()),
-                                      move(make_unique<std::vector<double>>()),
-                                      traits),
-                    Tango::DevFailed);
+                pqxx::work tx {verifyConn()};
+
+                string query = "SELECT * FROM ";
+                query += CONF_TABLE_NAME;
+                query += " WHERE ";
+                query += CONF_COL_NAME;
+                query += "='";
+                query += att_name;
+                query += "'";
+
+                // get the attribute id
+                auto attr_row(tx.exec1(query));
+
+                query = "SELECT * FROM ";
+                query += QueryBuilder::tableName(traits);
+                query += " WHERE ";
+                query += DAT_COL_ID;
+                query += "=";
+                query += to_string(attr_row.at(CONF_COL_ID).as<int>());
+                query += " ";
+                query += " ORDER BY ";
+                query += DAT_COL_DATA_TIME;
+                query += " LIMIT 1";
+
+                // now get the last row stored
+                auto data_row(tx.exec1(query));
+
+                tx.commit();
+
+                REQUIRE(data_row.at(DAT_COL_ID).as<int>() == attr_row.at(CONF_COL_ID).as<int>());
+
+                if (traits.hasReadData())
+                    REQUIRE(data_row.at(DAT_COL_VALUE_R).is_null() == true);
+
+                if (traits.hasWriteData())
+                    REQUIRE(data_row.at(DAT_COL_VALUE_W).is_null() == true);
             }
         }
     }
 
-    if (conn.isOpen())
-        REQUIRE_NOTHROW(conn.disconnect());
-
-    if (test_conn.is_open())
-        test_conn.disconnect();
+    SUCCEED("Passed");
 }
 
-SCENARIO("Storing data events as errors", "[db-access][hdbpp-db-access][db-connection][psql]")
+TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing event data for all Tango type combinations in the database (prepared statements)",
+    "[db-access][hdbpp-db-access][db-connection]")
+{
+    auto traits_array = getTraitsImplemented();
+    REQUIRE_NOTHROW(clearTables());
+    resetDbAccess(DbConnection::DbStoreMethod::PreparedStatement);
+
+    for( auto &traits : traits_array)
+    {
+        INFO("Inserting data for traits: " << traits);
+        auto name = storeAttributeByTraits(traits);
+
+        switch (traits.type())
+        {
+            case Tango::DEV_BOOLEAN:
+                checkStoreTestEventData(name, traits, storeTestEventData<Tango::DEV_BOOLEAN>(name, traits));
+                break;
+
+            case Tango::DEV_SHORT:
+                checkStoreTestEventData(name, traits, storeTestEventData<Tango::DEV_SHORT>(name, traits));
+                break;
+
+            case Tango::DEV_LONG:
+                checkStoreTestEventData(name, traits, storeTestEventData<Tango::DEV_LONG>(name, traits));
+                break;
+
+            case Tango::DEV_LONG64:
+                checkStoreTestEventData(name, traits, storeTestEventData<Tango::DEV_LONG64>(name, traits));
+                break;
+
+            case Tango::DEV_FLOAT:
+                checkStoreTestEventData(name, traits, storeTestEventData<Tango::DEV_FLOAT>(name, traits));
+                break;
+
+            case Tango::DEV_DOUBLE:
+                checkStoreTestEventData(name, traits, storeTestEventData<Tango::DEV_DOUBLE>(name, traits));
+                break;
+
+            case Tango::DEV_UCHAR:
+                checkStoreTestEventData(name, traits, storeTestEventData<Tango::DEV_UCHAR>(name, traits));
+                break;
+
+            case Tango::DEV_USHORT:
+                checkStoreTestEventData(name, traits, storeTestEventData<Tango::DEV_USHORT>(name, traits));
+                break;
+
+            case Tango::DEV_ULONG:
+                checkStoreTestEventData(name, traits, storeTestEventData<Tango::DEV_ULONG>(name, traits));
+                break;
+
+            case Tango::DEV_ULONG64:
+                checkStoreTestEventData(name, traits, storeTestEventData<Tango::DEV_ULONG64>(name, traits));
+                break;
+
+            case Tango::DEV_STRING:
+                checkStoreTestEventData(name, traits, storeTestEventData<Tango::DEV_STRING>(name, traits));
+                break;
+
+            case Tango::DEV_STATE:
+                checkStoreTestEventData(name, traits, storeTestEventData<Tango::DEV_STATE>(name, traits));
+                break;
+
+            default: throw "Should not be here!";
+        }
+    }
+
+    SUCCEED("Passed");
+}
+
+TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing event data for all Tango type combinations in the database (insert strings)",
+    "[db-access][hdbpp-db-access][db-connection]")
+{
+    auto traits_array = getTraitsImplemented();
+    REQUIRE_NOTHROW(clearTables());
+    resetDbAccess(DbConnection::DbStoreMethod::InsertString);
+
+    for( auto &traits : traits_array)
+    {
+        INFO("Inserting data for traits: " << traits);
+        auto name = storeAttributeByTraits(traits);
+
+        switch (traits.type())
+        {
+            case Tango::DEV_BOOLEAN:
+                checkStoreTestEventData(name, traits, storeTestEventData<Tango::DEV_BOOLEAN>(name, traits));
+                break;
+
+            case Tango::DEV_SHORT:
+                checkStoreTestEventData(name, traits, storeTestEventData<Tango::DEV_SHORT>(name, traits));
+                break;
+
+            case Tango::DEV_LONG:
+                checkStoreTestEventData(name, traits, storeTestEventData<Tango::DEV_LONG>(name, traits));
+                break;
+
+            case Tango::DEV_LONG64:
+                checkStoreTestEventData(name, traits, storeTestEventData<Tango::DEV_LONG64>(name, traits));
+                break;
+
+            case Tango::DEV_FLOAT:
+                checkStoreTestEventData(name, traits, storeTestEventData<Tango::DEV_FLOAT>(name, traits));
+                break;
+
+            case Tango::DEV_DOUBLE:
+                checkStoreTestEventData(name, traits, storeTestEventData<Tango::DEV_DOUBLE>(name, traits));
+                break;
+
+            case Tango::DEV_UCHAR:
+                checkStoreTestEventData(name, traits, storeTestEventData<Tango::DEV_UCHAR>(name, traits));
+                break;
+
+            case Tango::DEV_USHORT:
+                checkStoreTestEventData(name, traits, storeTestEventData<Tango::DEV_USHORT>(name, traits));
+                break;
+
+            case Tango::DEV_ULONG:
+                checkStoreTestEventData(name, traits, storeTestEventData<Tango::DEV_ULONG>(name, traits));
+                break;
+
+            case Tango::DEV_ULONG64:
+                checkStoreTestEventData(name, traits, storeTestEventData<Tango::DEV_ULONG64>(name, traits));
+                break;
+
+            case Tango::DEV_STRING:
+                checkStoreTestEventData(name, traits, storeTestEventData<Tango::DEV_STRING>(name, traits));
+                break;
+
+            case Tango::DEV_STATE:
+                checkStoreTestEventData(name, traits, storeTestEventData<Tango::DEV_STATE>(name, traits));
+                break;
+
+            default: throw "Should not be here!";
+        }
+    }
+
+    SUCCEED("Passed");
+}
+
+TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing complex arrays of strings containing postgres escape characters",
+    "[db-access][hdbpp-db-access][db-connection]")
+{
+    struct timeval tv
+    {};
+
+    gettimeofday(&tv, nullptr);
+    double event_time = tv.tv_sec + tv.tv_usec / 1.0e6;
+
+    string s1 = "test brackets } {} with comma,";
+    string s2 = "quotes '' and commas, and 'quoted, comma', escaped \"double quote\"";
+    string s3 = R"(test two slash \ test four slash \\)";
+    string s4 = "line feed \n and return \r";
+
+    auto value_r = std::make_unique<std::vector<std::string>>();
+    value_r->push_back(s1);
+    value_r->push_back(s2);
+    value_r->push_back(s3);
+    value_r->push_back(s4);
+
+    auto value_w = std::make_unique<std::vector<std::string>>();
+    value_w->push_back(s1);
+    value_w->push_back(s2);
+    value_w->push_back(s3);
+    value_w->push_back(s4);
+
+    auto original_values = make_tuple((*value_r), (*value_w));
+
+    AttributeTraits traits {Tango::READ_WRITE, Tango::SPECTRUM, Tango::DEV_STRING};
+    REQUIRE_NOTHROW(clearTables());
+    auto name = storeAttributeByTraits(traits);
+
+    REQUIRE_NOTHROW(testConn().storeDataEvent(name, event_time, Tango::ATTR_VALID, move(value_r), move(value_w), traits));
+    checkStoreTestEventData(name, traits, original_values);
+
+    SUCCEED("Passed");
+}
+
+TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing data events in a disconnected state", "[db-access][hdbpp-db-access][db-connection]")
+{
+    struct timeval tv
+    {};
+
+    gettimeofday(&tv, nullptr);
+    double event_time = tv.tv_sec + tv.tv_usec / 1.0e6;
+
+    AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE};
+    REQUIRE_NOTHROW(clearTables());
+    auto name = storeAttributeByTraits(traits);
+
+    testConn().disconnect();
+
+    REQUIRE_THROWS_AS(testConn().storeDataEvent(name,
+        event_time,
+        Tango::ATTR_VALID,
+        move(make_unique<std::vector<double>>()),
+        move(make_unique<std::vector<double>>()),
+        traits), Tango::DevFailed);
+
+    SUCCEED("Passed");
+}
+
+TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing data events as errors", "[db-access][hdbpp-db-access][db-connection]")
 {
     string error_msg = "A Test Error, 'Message'";
 
     struct timeval tv
     {};
+
     gettimeofday(&tv, nullptr);
     double event_time = tv.tv_sec + tv.tv_usec / 1.0e6;
 
-    DbConnection conn;
-    REQUIRE_NOTHROW(conn.connect(postgres_db::HdbppConnectionString));
+    AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE};
+    REQUIRE_NOTHROW(clearTables());
+    auto name = storeAttributeByTraits(traits);
 
-    // used for verification
-    pqxx::connection test_conn(postgres_db::HdbppConnectionString);
+    REQUIRE_NOTHROW(testConn().storeDataEventError(name, event_time, Tango::ATTR_VALID, error_msg, traits));
 
-    GIVEN("A valid DbConnection connected to a hdbpp database with an attribute stored in it")
     {
-        psql_conn_test::clearTable(test_conn, CONF_TABLE_NAME);
-        psql_conn_test::clearTable(test_conn, ERR_TABLE_NAME);
+        pqxx::work tx {verifyConn()};
 
-        AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE};
-        psql_conn_test::storeTestAttribute(conn, traits);
+        string query = "SELECT * FROM ";
+        query += CONF_TABLE_NAME;
+        query += " WHERE ";
+        query += CONF_COL_NAME;
+        query += "='";
+        query += name;
+        query += "'";
 
-        WHEN("Storing a new error message in the database")
-        {
-            REQUIRE_NOTHROW(
-                conn.storeDataEventError(TestAttrFinalName, event_time, Tango::ATTR_VALID, error_msg, traits));
+        // get the attribute id
+        pqxx::row attr_row;
+        REQUIRE_NOTHROW(attr_row = tx.exec1(query));
 
-            THEN("Then both the event and history event exists in the database, and can be read back and verified")
-            {
-                {
-                    pqxx::work tx {test_conn};
+        query = "SELECT * FROM ";
+        query += QueryBuilder::tableName(traits);
+        query += " WHERE ";
+        query += DAT_COL_ID;
+        query += "=";
+        query += to_string(attr_row.at(CONF_COL_ID).as<int>());
+        query += " ";
+        query += " ORDER BY ";
+        query += DAT_COL_DATA_TIME;
+        query += " LIMIT 1";
 
-                    auto data_row(tx.exec1("SELECT * FROM " + psql_conn_test::TestQueryBuilder.tableName(traits) +
-                        " ORDER BY " + DAT_COL_DATA_TIME + " LIMIT 1"));
+        // now get the last row stored
+        pqxx::row data_row;
+        REQUIRE_NOTHROW(data_row = tx.exec1(query));
 
-                    auto attr_row(tx.exec1("SELECT * FROM " + CONF_TABLE_NAME));
-                    auto error_row(tx.exec1("SELECT * FROM " + ERR_TABLE_NAME));
-                    tx.commit();
+        query = "SELECT * FROM ";
+        query += ERR_TABLE_NAME;
+        query += " WHERE ";
+        query += ERR_COL_ID + "=";
+        query += to_string(data_row.at(DAT_COL_ERROR_DESC_ID).as<int>());
 
-                    REQUIRE(data_row.at(DAT_COL_ID).as<int>() == attr_row.at(CONF_COL_ID).as<int>());
-                    REQUIRE(data_row.at(DAT_COL_ERROR_DESC_ID).as<int>() == error_row.at(ERR_COL_ID).as<int>());
+        pqxx::row error_row;
+        REQUIRE_NOTHROW(error_row = tx.exec1(query));
 
-                    REQUIRE(error_row.at(ERR_COL_ERROR_DESC).as<string>() == error_msg);
-                }
-            }
-            AND_WHEN("A second error is stored with the same message")
-            {
-                gettimeofday(&tv, nullptr);
-                event_time = tv.tv_sec + tv.tv_usec / 1.0e6;
+        tx.commit();
 
-                REQUIRE_NOTHROW(
-                    conn.storeDataEventError(TestAttrFinalName, event_time, Tango::ATTR_VALID, error_msg, traits));
-
-                THEN("The same error id is used in the event data")
-                {
-                    {
-                        pqxx::work tx {test_conn};
-
-                        auto data_row(tx.exec1("SELECT * FROM " + psql_conn_test::TestQueryBuilder.tableName(traits) +
-                            " ORDER BY " + DAT_COL_DATA_TIME + " LIMIT 1"));
-
-                        auto attr_row(tx.exec1("SELECT * FROM " + CONF_TABLE_NAME));
-                        auto error_row(tx.exec1("SELECT * FROM " + ERR_TABLE_NAME));
-                        tx.commit();
-
-                        REQUIRE(data_row.at(DAT_COL_ID).as<int>() == attr_row.at(CONF_COL_ID).as<int>());
-                        REQUIRE(data_row.at(DAT_COL_ERROR_DESC_ID).as<int>() == error_row.at(ERR_COL_ID).as<int>());
-
-                        REQUIRE(error_row.at(ERR_COL_ERROR_DESC).as<string>() == error_msg);
-                    }
-                }
-            }
-        }
+        REQUIRE(error_row.at(ERR_COL_ERROR_DESC).as<string>() == error_msg);
     }
 
-    if (conn.isOpen())
-        REQUIRE_NOTHROW(conn.disconnect());
+    gettimeofday(&tv, nullptr);
+    event_time = tv.tv_sec + tv.tv_usec / 1.0e6;
 
-    if (test_conn.is_open())
-        test_conn.disconnect();
+    REQUIRE_NOTHROW(testConn().storeDataEventError(name, event_time, Tango::ATTR_VALID, error_msg, traits));
+    
+    {
+        pqxx::work tx {verifyConn()};
+
+        string query = "SELECT * FROM ";
+        query += CONF_TABLE_NAME;
+        query += " WHERE ";
+        query += CONF_COL_NAME;
+        query += "='";
+        query += name;
+        query += "'";
+
+        // get the attribute id
+        pqxx::row attr_row;
+        REQUIRE_NOTHROW(attr_row = tx.exec1(query));
+
+        query = "SELECT * FROM ";
+        query += QueryBuilder::tableName(traits);
+        query += " WHERE ";
+        query += DAT_COL_ID;
+        query += "=";
+        query += to_string(attr_row.at(CONF_COL_ID).as<int>());
+        query += " ";
+        query += " ORDER BY ";
+        query += DAT_COL_DATA_TIME;
+        query += " LIMIT 2";
+
+        // now get the last row stored
+        pqxx::result data_result;
+        REQUIRE_NOTHROW(data_result = tx.exec(query));
+        tx.commit();
+
+        REQUIRE(data_result[0].at(DAT_COL_ERROR_DESC_ID).as<int>() == data_result[1].at(DAT_COL_ERROR_DESC_ID).as<int>());
+    }
+
+    SUCCEED("Passed");
 }
 
-SCENARIO("Fetching the last event after it has just been stored", "[db-access][hdbpp-db-access][db-connection][psql]")
+TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Fetching the last history event after it has just been stored", "[db-access][hdbpp-db-access][db-connection]")
 {
-    DbConnection conn;
-    REQUIRE_NOTHROW(conn.connect(postgres_db::HdbppConnectionString));
-
-    // used for verification
-    pqxx::connection test_conn(postgres_db::HdbppConnectionString);
-
-    GIVEN("A valid DbConnection connected to a hdbpp database with an attribute and history event stored in it")
-    {
-        psql_conn_test::clearTable(test_conn, CONF_TABLE_NAME);
-        psql_conn_test::clearTable(test_conn, HISTORY_TABLE_NAME);
-        psql_conn_test::clearTable(test_conn, HISTORY_EVENT_TABLE_NAME);
-
-        AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE};
-        psql_conn_test::storeTestAttribute(conn, traits);
-
-        REQUIRE_NOTHROW(conn.storeHistoryEvent(TestAttrFQDName, events::PauseEvent));
-
-        WHEN("Fetching the last history event for the attribute")
-        {
-            string event;
-            REQUIRE_NOTHROW(event = conn.fetchLastHistoryEvent(TestAttrFQDName));
-
-            THEN("It is equal to the event just stored") { REQUIRE(event == events::PauseEvent); }
-            AND_WHEN("Storing a second event and fetching it")
-            {
-                REQUIRE_NOTHROW(conn.storeHistoryEvent(TestAttrFQDName, events::StartEvent));
-
-                string event;
-                REQUIRE_NOTHROW(event = conn.fetchLastHistoryEvent(TestAttrFQDName));
-
-                THEN("It is equal to the event just stored") { REQUIRE(event == events::StartEvent); }
-            }
-        }
-    }
-
-    if (conn.isOpen())
-        REQUIRE_NOTHROW(conn.disconnect());
-
-    if (test_conn.is_open())
-        test_conn.disconnect();
+    AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE};
+    REQUIRE_NOTHROW(clearTables());
+    auto name = storeAttributeByTraits(traits);
+    REQUIRE_NOTHROW(testConn().storeHistoryEvent(name, events::PauseEvent));
+    string event;
+    REQUIRE_NOTHROW(event = testConn().fetchLastHistoryEvent(name));
+    REQUIRE(event == events::PauseEvent);
+    REQUIRE_NOTHROW(testConn().storeHistoryEvent(name, events::StartEvent));
+    REQUIRE_NOTHROW(event = testConn().fetchLastHistoryEvent(name));
+    REQUIRE(event == events::StartEvent);
+    SUCCEED("Passed");
 }
 
-SCENARIO("When no events have been stored, no error is thrown requesting the last event",
-    "[db-access][hdbpp-db-access][db-connection][psql]")
+TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "When no history events have been stored, no error is thrown requesting the last event",
+    "[db-access][hdbpp-db-access][db-connection]")
 {
-    DbConnection conn;
-    REQUIRE_NOTHROW(conn.connect(postgres_db::HdbppConnectionString));
-
-    // used for verification
-    pqxx::connection test_conn(postgres_db::HdbppConnectionString);
-
-    GIVEN("A valid DbConnection connected to a hdbpp database with no attribute nor history event stored in it")
-    {
-        psql_conn_test::clearTable(test_conn, HISTORY_TABLE_NAME);
-        psql_conn_test::clearTable(test_conn, HISTORY_EVENT_TABLE_NAME);
-
-        WHEN("Requesting the last event")
-        {
-            string event;
-
-            THEN("No error occurs, and no event is returned")
-            {
-                REQUIRE_NOTHROW(event = conn.fetchLastHistoryEvent(TestAttrFQDName));
-                REQUIRE(event.empty());
-            }
-        }
-    }
+    AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE};
+    REQUIRE_NOTHROW(clearTables());
+    storeAttribute(traits);
+    string event;
+    REQUIRE_NOTHROW(event = testConn().fetchLastHistoryEvent(attr_name::TestAttrFQDName));
+    REQUIRE(event.empty());
+    SUCCEED("Passed");
 }
 
-SCENARIO("The archive of an attribute can be determined by fetchAttributeArchived()",
-    "[db-access][hdbpp-db-access][db-connection][psql]")
+TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "The archive of an attribute can be determined by fetchAttributeArchived()",
+    "[db-access][hdbpp-db-access][db-connection]")
 {
-    DbConnection conn;
-    REQUIRE_NOTHROW(conn.connect(postgres_db::HdbppConnectionString));
+    AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE};
+    REQUIRE_NOTHROW(clearTables());
 
-    // used for verification
-    pqxx::connection test_conn(postgres_db::HdbppConnectionString);
-    psql_conn_test::clearTable(test_conn, CONF_TABLE_NAME);
+    REQUIRE(!testConn().fetchAttributeArchived(attr_name::TestAttrFQDName));
+    storeAttribute(traits);
+    REQUIRE(testConn().fetchAttributeArchived(attr_name::TestAttrFQDName));
 
-    GIVEN("A valid DbConnection connected to a hdbpp database with no attribute in it")
-    {
-        WHEN("Requesting the archive state of the test attribute")
-        {
-            THEN("The archive state is false") { REQUIRE(!conn.fetchAttributeArchived(TestAttrFQDName)); }
-        }
-        WHEN("Storing the test attribute and checking its archive state")
-        {
-            AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE};
-            psql_conn_test::storeTestAttribute(conn, traits);
-
-            THEN("The archive state is true") { REQUIRE(conn.fetchAttributeArchived(TestAttrFQDName)); }
-        }
-    }
+    SUCCEED("Passed");
 }
 
-SCENARIO("The type traits of an archived attribute can be returned by fetchAttributeTraits()",
-    "[db-access][hdbpp-db-access][db-connection][psql]")
+TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "The type traits of an archived attribute can be returned by fetchAttributeTraits()",
+    "[db-access][hdbpp-db-access][db-connection]")
 {
-    DbConnection conn;
-    REQUIRE_NOTHROW(conn.connect(postgres_db::HdbppConnectionString));
+    AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE};
+    REQUIRE_NOTHROW(clearTables());
 
-    // used for verification
-    pqxx::connection test_conn(postgres_db::HdbppConnectionString);
-    psql_conn_test::clearTable(test_conn, CONF_TABLE_NAME);
+    REQUIRE_THROWS(testConn().fetchAttributeTraits(attr_name::TestAttrFQDName));
+    storeAttribute(traits);
+    REQUIRE(testConn().fetchAttributeTraits(attr_name::TestAttrFQDName) == traits);
 
-    GIVEN("A valid DbConnection connected to a hdbpp database with a attribute in it")
-    {
-        WHEN("Requesting the attribute type traits state of the test attribute")
-        {
-            THEN("An exception is thrown") { REQUIRE_THROWS(conn.fetchAttributeTraits(TestAttrFQDName)); }
-        }
-        WHEN("Storing the test attribute and checking its type traits")
-        {
-            AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE};
-            psql_conn_test::storeTestAttribute(conn, traits);
-
-            THEN("The returned traits match those it was stored with")
-            {
-                REQUIRE(conn.fetchAttributeTraits(TestAttrFQDName) == traits);
-            }
-        }
-    }
+    SUCCEED("Passed");
 }

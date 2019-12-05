@@ -179,7 +179,7 @@ public:
 // This specialisation is for string types. Unlike other types the string type requires
 // the use of the ARRAY notation and dollar quoting to ensure the strings are stored
 // without escape characters. 
-/*template<>
+template<>
 struct string_traits<std::vector<std::string>>
 {
 public:
@@ -198,47 +198,36 @@ public:
 
         value.clear();
 
-        // TODO this extraction is not yet complete. Required to complete unit tests
+        std::pair<array_parser::juncture, std::string> output;
+        array_parser parser(str);
 
-        // not the best solution right now, but we are using this for testing only
-        // currently. Copy the str into a std::string so we can work with it more easily.
-        std::string in(str + 1, str + (strlen(str) - 1));
-        std::string sep {"','"};
-        size_t last_position = 1;
-        size_t position = in.find(sep, 0);
+        output = parser.get_next();
 
-        // as mention above, this could probably be sped up, i.e. preallocate
-        // the vector etc, but for now we just need it for testing, so improvements
-        // are left till later
-        while (position != std::string::npos)
+        if (output.first == array_parser::juncture::row_start)
         {
-            value.push_back(in.substr(last_position, position - last_position));
-            last_position = position + 3;
-            position = in.find(sep, position + 1);
+            output = parser.get_next();
+
+            while (output.first == array_parser::juncture::string_value)
+            {
+                value.push_back(output.second);
+                output = parser.get_next();
+
+                if (output.first == array_parser::juncture::row_end)
+                    break;
+
+                if (output.first == array_parser::juncture::done)
+                    break;
+            }
         }
     }
 
     // unlike other types, when encoed to a string th
     static std::string to_string(const std::vector<std::string> &value)
     {
-        if (value.empty())
-            return {};
-
-        auto iter = value.begin()l
-        auto result = "ARRAY["
-
-        result = "$$" + to_string((*iter)) + "$$";
-
-        for (++iter; iter != value.end(); ++iter)
-        {
-            result += ",";
-            result += "$$" + to_string((*iter)) + "$$";
-        }
-
-        result += "]"
-        return result;
+        // simply use the pqxx utilities for this, rather than reinvent the wheel
+        return "{" + separated_list(",", value.begin(), value.end()) + "}";
     }
-};*/
+};
 
 // This specialisation is for bool, since it is not a normal container class, but
 // rather some kind of alien bitfield. We have to adjust the from_string to take into

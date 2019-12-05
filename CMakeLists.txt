@@ -40,7 +40,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # Build options
 option(BUILD_UNIT_TESTS "Build unit tests" ON)
 option(BUILD_BENCHMARK_TESTS "Build benchmarking tests (Forces RELEASE build)" ON)
-option(ENABLE_CLANG "Enable clang code and layout analysis" OFF)
+option(ENABLE_CLANG "Enable clang code and layout analysis" ON)
 
 if(BUILD_UNIT_TESTS)
     message(STATUS "Unit tests will be built")

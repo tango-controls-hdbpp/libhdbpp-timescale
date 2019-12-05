@@ -35,8 +35,7 @@ namespace pqxx_conn
         template<typename T>
         struct Store
         {
-            static void run(
-                std::unique_ptr<std::vector<T>> &value, pqxx::prepare::invocation &inv, const AttributeTraits &traits)
+            static void run(std::unique_ptr<std::vector<T>> &value, const AttributeTraits &traits, pqxx::prepare::invocation &inv, pqxx::work&)
             {
                 // for a scalar, store the first element of the vector,
                 // we do not expect more than 1 element, for an array, store
@@ -48,14 +47,31 @@ namespace pqxx_conn
             }
         };
 
+        template<>
+        struct Store<std::string>
+        {
+            static void run(std::unique_ptr<std::vector<std::string>> &value, const AttributeTraits &traits, pqxx::prepare::invocation &inv, pqxx::work &tx)
+            {
+                if (traits.isScalar())
+                    inv((*value)[0]);
+                else
+                {
+                    // a string needs quoting to be stored via this method, so it does not cause
+                    // an error in the prepared statement
+                    for (auto &str : *value)
+                        str = tx.esc(str);
+
+                    inv(*value);
+                }
+            }
+        };
+
         //=============================================================================
         //=============================================================================
         template<>
         struct Store<bool>
         {
-            static void run(std::unique_ptr<std::vector<bool>> &value,
-                pqxx::prepare::invocation &inv,
-                const AttributeTraits &traits)
+            static void run(std::unique_ptr<std::vector<bool>> &value, const AttributeTraits &traits, pqxx::prepare::invocation &inv, pqxx::work&)
             {
                 // a vector<bool> is not actually a vector<bool>, rather its some kind of bitfield. When
                 // trying to return an element, we appear to get some kind of bitfield reference (?),
@@ -101,10 +117,10 @@ namespace pqxx_conn
 
                 // there is a single special case here, arrays of strings need a different syntax to store, 
                 // to avoid the quoting. Its likely we will need more for DevEncoded and DevEnum
-                if (traits.isArray() && traits.type() == Tango::DEV_STRING)
+                if (_db_store_method == DbStoreMethod::InsertString || (traits.isArray() && traits.type() == Tango::DEV_STRING))
                 {
                     auto query = _query_builder.storeDataEventString<T>(
-                        pqxx::to_string(full_attr_name),
+                        pqxx::to_string(_conf_id_cache->value(full_attr_name)),
                         pqxx::to_string(event_time),
                         pqxx::to_string(quality),
                         value_r,
@@ -132,10 +148,10 @@ namespace pqxx_conn
                     // we must treat scalar/spectrum in different ways, one is a single
                     // element and the other an array. Further, the unique_ptr may be
                     // empty and signify a null should be stored in the column instead
-                    auto store_value = [&tx, &inv, &traits](auto &value) {
+                    auto store_value = [&tx, &traits,  &inv](auto &value) {
                         if (value && value->size() > 0)
                         {
-                            store_data_utils::Store<T>::run(value, inv, traits);
+                            store_data_utils::Store<T>::run(value, traits, inv, tx);
                         }
                         else
                         {

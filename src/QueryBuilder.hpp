@@ -58,31 +58,35 @@ namespace pqxx_conn
     namespace query_utils
     {
         // This function generates the postgres cast for the event data insert
-        // queries, it is specialized for all possible tango types in the source file
+        // queries, it is specialized for all possible tango types
         template<typename T>
         std::string postgresCast(bool is_array);
 
-        //=============================================================================
-        //=============================================================================
+        // Convert the given data into a string suitable for storing in the database. These calls
+        // are used to build the string version of the insert command, they are required since we
+        // need to specialise for strings (to ensure we do not store escape characters) and bools
+        // (which are in fact a bitfield internally and wont convert in the via the pqxx routines )
         template<typename T>
-        struct ToString
+        struct DataToString
         {
-            static std::string run(std::unique_ptr<std::vector<T>> &value, const AttributeTraits&)
+            static std::string run(std::unique_ptr<std::vector<T>> &value, const AttributeTraits &traits)
             {
-                return pqxx::to_string(value);
+                if (traits.isScalar())
+                    return pqxx::to_string((*value)[0]) ;
+
+                return "'" + pqxx::to_string(value) + "'";
             }
         };
 
-        //=============================================================================
-        //=============================================================================
+        // Convert a vector<bool> to a postgres array
         template<>
-        struct ToString<bool>
+        struct DataToString<bool>
         {
             static std::string run(std::unique_ptr<std::vector<bool>> &value, const AttributeTraits &traits)
             {
                 // a vector<bool> is not actually a vector<bool>, rather its some kind of bitfield. When
-                // trying to return an element, we appear to get some kind of bitfield reference (?),
-                // so we return the value to a local variable to remove the referene to the bitfield and
+                // trying to return an element, we appear to get some kind of bitfield reference,
+                // so we return the value to a local variable to remove the reference to the bitfield and
                 // this ensure its actually a bool passed into the conversion framework
                 if (traits.isScalar())
                 {
@@ -90,15 +94,15 @@ namespace pqxx_conn
                     return pqxx::to_string(v);
                 }
 
-                // handled by our own extensions
-                pqxx::to_string(value);
+                // handled by our own extensions in PqxxExtensions.hpp
+                return "'" + pqxx::to_string(value) + "'";
             }
         };
 
-        //=============================================================================
-        //=============================================================================
+        // This specialisation for strings uses the ARRAY syntax and dollar quoting to
+        // ensure arrays of strings are stored without escape characters
         template<>
-        struct ToString<std::string>
+        struct DataToString<std::string>
         {
             static std::string run(std::unique_ptr<std::vector<std::string>> &value, const AttributeTraits &traits)
             {
@@ -108,13 +112,13 @@ namespace pqxx_conn
                 if (traits.isScalar())
                 {
                     // no special case needed for a scalar string
-                    return pqxx::to_string((*value)[0]);
+                    return "'" + pqxx::to_string((*value)[0]) + "'";
                 }
 
                 auto iter = value->begin();
                 std::string result = "ARRAY[";
 
-                result = "$$" + pqxx::to_string((*iter)) + "$$";
+                result = result + "$$" + pqxx::to_string((*iter)) + "$$";
 
                 for (++iter; iter != value->end(); ++iter)
                 {
@@ -175,12 +179,15 @@ namespace pqxx_conn
         const std::string &storeDataEventName(const AttributeTraits &traits);
         const std::string &storeDataEventErrorName(const AttributeTraits &traits);
 
-        // builds a prepared statement for the given traits
+        // Builds a prepared statement for the given traits, the statement is cached 
+        // internally to improve execution time
         template<typename T>
         const std::string &storeDataEventStatement(const AttributeTraits &traits);
 
-        // A varient of storeDataEventStatement that builds a string based on the
-        // parameters, this is then executed. Does not benfit from caching
+        // A variant of storeDataEventStatement that builds a string based on the
+        // parameters, this is then passed back to the caller to be executed. No
+        // internal caching, so its less efficient, but can be chained in a pipe
+        // to batch data to the database.
         template<typename T>
         const std::string storeDataEventString(
             const std::string &full_attr_name, 
@@ -279,18 +286,36 @@ namespace pqxx_conn
             query = query + "," + DAT_COL_VALUE_W;
 
         // split to ensure increments are in the correct order
-        query = query + "," + DAT_COL_QUALITY + ") VALUES (" + full_attr_name;
+        query = query + "," + DAT_COL_QUALITY + ") VALUES ('" + full_attr_name + "'";
         query = query + ",TO_TIMESTAMP(" + event_time + ")";
 
         // add the read parameter with cast
         if (traits.hasReadData())
-            query = query + "," + query_utils::ToString<T>::run(value_r, traits) + 
-                "::" + query_utils::postgresCast<T>(traits.isArray());
+        {
+            if (value_r->empty())
+            {
+                query = query + ",NULL";
+            }
+            else
+            {
+                query = query + "," + query_utils::DataToString<T>::run(value_r, traits) +
+                    "::" + query_utils::postgresCast<T>(traits.isArray());
+            }
+        }
 
         // add the write parameter with cast
         if (traits.hasWriteData())
-            query = query + "," + query_utils::ToString<T>::run(value_w, traits) + 
-                "::" + query_utils::postgresCast<T>(traits.isArray());
+        {
+            if (value_w->empty())
+            {
+                query = query + ",NULL";
+            }
+            else
+            {
+                query = query + "," + query_utils::DataToString<T>::run(value_w, traits) +
+                    "::" + query_utils::postgresCast<T>(traits.isArray());
+            }
+        }
 
         query = query + "," + quality + ")";
 
