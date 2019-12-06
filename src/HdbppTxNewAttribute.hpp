@@ -36,7 +36,6 @@ class HdbppTxNewAttribute : public HdbppTxBase<Conn>
 {
 public:
     HdbppTxNewAttribute(Conn &conn) : HdbppTxBase<Conn>(conn) {}
-    virtual ~HdbppTxNewAttribute() {}
 
     HdbppTxNewAttribute<Conn> &withName(const std::string &fqdn_attr_name)
     {

@@ -41,7 +41,6 @@ public:
     // TODO auto add new attribute feature
 
     HdbppTxDataEventBase(Conn &conn) : HdbppTxBase<Conn>(conn) {}
-    virtual ~HdbppTxDataEventBase() {}
 
     Derived<Conn> &withName(const std::string &fqdn_attr_name)
     {
@@ -75,7 +74,7 @@ public:
     }
 
     /// @brief Print the HdbppTxDataEventBase object to the stream
-    virtual void print(std::ostream &os) const noexcept override;
+    void print(std::ostream &os) const noexcept override;
 
 protected:
     // release the private data safely for the derived classes

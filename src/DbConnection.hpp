@@ -57,7 +57,6 @@ namespace pqxx_conn
         };
 
         DbConnection(DbStoreMethod db_store_method);
-        virtual ~DbConnection() {}
 
         // connection API
         void connect(const string &connect_string) override;

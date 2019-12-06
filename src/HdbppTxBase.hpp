@@ -43,7 +43,6 @@ class HdbppTxBase
 {
 public:
     HdbppTxBase(Conn &conn) : _conn(conn) {}
-    virtual ~HdbppTxBase() {}
 
     // simple feedback that the transaction was successfull. Most
     // errors are handled with exceptions which are thrown to the

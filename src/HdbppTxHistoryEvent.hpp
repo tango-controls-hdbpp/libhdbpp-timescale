@@ -38,7 +38,6 @@ public:
     // TODO make crash event configurable
 
     HdbppTxHistoryEvent(Conn &conn) : HdbppTxBase<Conn>(conn) {}
-    virtual ~HdbppTxHistoryEvent() {}
 
     HdbppTxHistoryEvent<Conn> &withName(const std::string &fqdn_attr_name)
     {

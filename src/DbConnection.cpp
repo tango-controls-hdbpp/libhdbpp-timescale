@@ -69,13 +69,13 @@ namespace pqxx_conn
 
         // now create and connect the cache objects to the database connection, this
         // will destroy any existing cache objects managed by the unique pointers
-        _conf_id_cache = make_unique<ColumnCache<int, std::string>>(_conn, CONF_TABLE_NAME, CONF_COL_ID, CONF_COL_NAME);
+        _conf_id_cache = make_unique<ColumnCache<int, std::string>>(_conn, schema::ConfTableName, schema::ConfColId, schema::ConfColName);
 
         _error_desc_id_cache = make_unique<ColumnCache<int, std::string>>(
-            _conn, ERR_TABLE_NAME, ERR_COL_ID, ERR_COL_ERROR_DESC);
+            _conn, schema::ErrTableName, schema::ErrColId, schema::ErrColErrorDesc);
 
         _event_id_cache = make_unique<ColumnCache<int, std::string>>(
-            _conn, HISTORY_EVENT_TABLE_NAME, HISTORY_EVENT_COL_EVENT_ID, HISTORY_EVENT_COL_EVENT);
+            _conn, schema::HistoryEventTableName, schema::HistoryEventColEventId, schema::HistoryEventColEvent);
     }
 
     //=============================================================================

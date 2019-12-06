@@ -37,7 +37,6 @@ private:
 
 public:
     HdbppTxDataEvent(Conn &conn) : HdbppTxDataEventBase<Conn, HdbppTxDataEvent>(conn) {}
-    virtual ~HdbppTxDataEvent() {}
 
     HdbppTxDataEvent<Conn> &withAttribute(Tango::DeviceAttribute *dev_attr)
     {
@@ -82,7 +81,7 @@ HdbppTxDataEvent<Conn> &HdbppTxDataEvent<Conn>::store()
         spdlog::error("Error: {}", msg);
         Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
-    else if (!_dev_attr)
+    else if (_dev_attr == nullptr)
     {
         std::string msg {"Device Attribute is not set. Unable to complete the transaction."};
         msg += ". For attribute" + Base::attributeName().fqdnAttributeName();

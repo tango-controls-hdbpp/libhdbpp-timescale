@@ -50,10 +50,10 @@ SCENARIO("storeDataEventString() returns the correct Value fields for the given 
                 value_w_empty,
                 traits);
 
-            THEN("The result must include the DAT_COL_VALUE_R field only")
+            THEN("The result must include the schema::DatColValueR field only")
             {
-                REQUIRE_THAT(result, Contains(DAT_COL_VALUE_R));
-                REQUIRE_THAT(result, !Contains(DAT_COL_VALUE_W));
+                REQUIRE_THAT(result, Contains(schema::DatColValueR));
+                REQUIRE_THAT(result, !Contains(schema::DatColValueW));
                 REQUIRE_THAT(result, Contains(query_utils::DataToString<double>::run(value_r, traits)));
             }
         }
@@ -69,10 +69,10 @@ SCENARIO("storeDataEventString() returns the correct Value fields for the given 
                 value_w,
                 traits);
 
-            THEN("The result must include the DAT_COL_VALUE_W field only")
+            THEN("The result must include the schema::DatColValueW field only")
             {
-                REQUIRE_THAT(result, !Contains(DAT_COL_VALUE_R));
-                REQUIRE_THAT(result, Contains(DAT_COL_VALUE_W));
+                REQUIRE_THAT(result, !Contains(schema::DatColValueR));
+                REQUIRE_THAT(result, Contains(schema::DatColValueW));
                 REQUIRE_THAT(result, Contains(query_utils::DataToString<double>::run(value_w, traits)));
             }
         }
@@ -88,10 +88,10 @@ SCENARIO("storeDataEventString() returns the correct Value fields for the given 
                 value_w,
                 traits);
 
-            THEN("The result must include both the DAT_COL_VALUE_R and DAT_COL_VALUE_W field")
+            THEN("The result must include both the schema::DatColValueR and schema::DatColValueW field")
             {
-                REQUIRE_THAT(result, Contains(DAT_COL_VALUE_R));
-                REQUIRE_THAT(result, Contains(DAT_COL_VALUE_W));
+                REQUIRE_THAT(result, Contains(schema::DatColValueR));
+                REQUIRE_THAT(result, Contains(schema::DatColValueW));
                 REQUIRE_THAT(result, Contains(query_utils::DataToString<double>::run(value_r, traits)));
                 REQUIRE_THAT(result, Contains(query_utils::DataToString<double>::run(value_w, traits)));
             }
@@ -108,10 +108,10 @@ SCENARIO("storeDataEventString() returns the correct Value fields for the given 
                 value_w,
                 traits);
 
-            THEN("The result must include both the DAT_COL_VALUE_R and DAT_COL_VALUE_W field")
+            THEN("The result must include both the schema::DatColValueR and schema::DatColValueW field")
             {
-                REQUIRE_THAT(result, Contains(DAT_COL_VALUE_R));
-                REQUIRE_THAT(result, Contains(DAT_COL_VALUE_W));
+                REQUIRE_THAT(result, Contains(schema::DatColValueR));
+                REQUIRE_THAT(result, Contains(schema::DatColValueW));
                 REQUIRE_THAT(result, Contains(query_utils::DataToString<double>::run(value_r, traits)));
                 REQUIRE_THAT(result, Contains(query_utils::DataToString<double>::run(value_w, traits)));
             }
@@ -141,10 +141,10 @@ SCENARIO("storeDataEventString() adds a null when value is size zero", "[query-s
                 value_w_empty,
                 traits);
 
-            THEN("The result must include both the DAT_COL_VALUE_R and DAT_COL_VALUE_W field")
+            THEN("The result must include both the schema::DatColValueR and schema::DatColValueW field")
             {
-                REQUIRE_THAT(result, Contains(DAT_COL_VALUE_R));
-                REQUIRE_THAT(result, Contains(DAT_COL_VALUE_W));
+                REQUIRE_THAT(result, Contains(schema::DatColValueR));
+                REQUIRE_THAT(result, Contains(schema::DatColValueW));
                 REQUIRE_THAT(result, Contains(query_utils::DataToString<double>::run(value_r, traits)));
                 REQUIRE_THAT(result, Contains("NULL"));
             }
@@ -161,10 +161,10 @@ SCENARIO("storeDataEventString() adds a null when value is size zero", "[query-s
                 value_w,
                 traits);
 
-            THEN("The result must include both the DAT_COL_VALUE_R and DAT_COL_VALUE_W field")
+            THEN("The result must include both the schema::DatColValueR and schema::DatColValueW field")
             {
-                REQUIRE_THAT(result, Contains(DAT_COL_VALUE_R));
-                REQUIRE_THAT(result, Contains(DAT_COL_VALUE_W));
+                REQUIRE_THAT(result, Contains(schema::DatColValueR));
+                REQUIRE_THAT(result, Contains(schema::DatColValueW));
                 REQUIRE_THAT(result, Contains(query_utils::DataToString<double>::run(value_w, traits)));
                 REQUIRE_THAT(result, Contains("NULL"));
             }
@@ -183,10 +183,10 @@ SCENARIO("storeDataEventStatement() returns the correct Value fields for the giv
             AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE};
             auto result = query_builder.storeDataEventStatement<double>(traits);
 
-            THEN("The result must include the DAT_COL_VALUE_R field only")
+            THEN("The result must include the schema::DatColValueR field only")
             {
-                REQUIRE_THAT(result, Contains(DAT_COL_VALUE_R));
-                REQUIRE_THAT(result, !Contains(DAT_COL_VALUE_W));
+                REQUIRE_THAT(result, Contains(schema::DatColValueR));
+                REQUIRE_THAT(result, !Contains(schema::DatColValueW));
                 REQUIRE_THAT(result, Contains("$4"));
                 REQUIRE_THAT(result, !Contains("$5"));
             }
@@ -196,10 +196,10 @@ SCENARIO("storeDataEventStatement() returns the correct Value fields for the giv
             AttributeTraits traits {Tango::WRITE, Tango::SCALAR, Tango::DEV_DOUBLE};
             auto result = query_builder.storeDataEventStatement<double>(traits);
 
-            THEN("The result must include the DAT_COL_VALUE_W field only")
+            THEN("The result must include the schema::DatColValueW field only")
             {
-                REQUIRE_THAT(result, !Contains(DAT_COL_VALUE_R));
-                REQUIRE_THAT(result, Contains(DAT_COL_VALUE_W));
+                REQUIRE_THAT(result, !Contains(schema::DatColValueR));
+                REQUIRE_THAT(result, Contains(schema::DatColValueW));
                 REQUIRE_THAT(result, Contains("$4"));
                 REQUIRE_THAT(result, !Contains("$5"));
             }
@@ -209,10 +209,10 @@ SCENARIO("storeDataEventStatement() returns the correct Value fields for the giv
             AttributeTraits traits {Tango::READ_WRITE, Tango::SCALAR, Tango::DEV_DOUBLE};
             auto result = query_builder.storeDataEventStatement<double>(traits);
 
-            THEN("The result must include both the DAT_COL_VALUE_R and DAT_COL_VALUE_W field")
+            THEN("The result must include both the schema::DatColValueR and schema::DatColValueW field")
             {
-                REQUIRE_THAT(result, Contains(DAT_COL_VALUE_R));
-                REQUIRE_THAT(result, Contains(DAT_COL_VALUE_W));
+                REQUIRE_THAT(result, Contains(schema::DatColValueR));
+                REQUIRE_THAT(result, Contains(schema::DatColValueW));
                 REQUIRE_THAT(result, Contains("$4"));
                 REQUIRE_THAT(result, Contains("$5"));
             }
@@ -222,10 +222,10 @@ SCENARIO("storeDataEventStatement() returns the correct Value fields for the giv
             AttributeTraits traits {Tango::READ_WITH_WRITE, Tango::SCALAR, Tango::DEV_DOUBLE};
             auto result = query_builder.storeDataEventStatement<double>(traits);
 
-            THEN("The result must include both the DAT_COL_VALUE_R and DAT_COL_VALUE_W field")
+            THEN("The result must include both the schema::DatColValueR and schema::DatColValueW field")
             {
-                REQUIRE_THAT(result, Contains(DAT_COL_VALUE_R));
-                REQUIRE_THAT(result, Contains(DAT_COL_VALUE_W));
+                REQUIRE_THAT(result, Contains(schema::DatColValueR));
+                REQUIRE_THAT(result, Contains(schema::DatColValueW));
                 REQUIRE_THAT(result, Contains("$4"));
                 REQUIRE_THAT(result, Contains("$5"));
             }
@@ -245,9 +245,9 @@ SCENARIO("Creating valid insert queries with storeDataEventErrorQuery()", "[quer
         {
             auto result = QueryBuilder::tableName(traits);
 
-            THEN("The result must include the TYPE_SCALAR from the schema")
+            THEN("The result must include the schema::TypeScalar from the schema")
             {
-                REQUIRE_THAT(result, Contains(TYPE_SCALAR));
+                REQUIRE_THAT(result, Contains(schema::TypeScalar));
             }
         }
     }
@@ -273,22 +273,22 @@ TEST_CASE("Creating valid database table names for types", "[query-string]")
     vector<Tango::AttrWriteType> write_types {Tango::READ, Tango::WRITE, Tango::READ_WRITE, Tango::READ_WITH_WRITE};
     vector<Tango::AttrDataFormat> format_types {Tango::SCALAR, Tango::SPECTRUM, Tango::IMAGE};
 
-    vector<string> types_str {TYPE_DEV_DOUBLE,
-        TYPE_DEV_FLOAT,
-        TYPE_DEV_STRING,
-        TYPE_DEV_LONG,
-        TYPE_DEV_ULONG,
-        TYPE_DEV_LONG64,
-        TYPE_DEV_ULONG64,
-        TYPE_DEV_SHORT,
-        TYPE_DEV_USHORT,
-        TYPE_DEV_BOOLEAN,
-        TYPE_DEV_UCHAR,
-        TYPE_DEV_STATE,
-        TYPE_DEV_ENCODED,
-        TYPE_DEV_ENUM};
+    vector<string> types_str {schema::TypeDevDouble,
+        schema::TypeDevFloat,
+        schema::TypeDevString,
+        schema::TypeDevLong,
+        schema::TypeDevUlong,
+        schema::TypeDevLong64,
+        schema::TypeDevUlong64,
+        schema::TypeDevShort,
+        schema::TypeDevUshort,
+        schema::TypeDevBoolean,
+        schema::TypeDevUchar,
+        schema::TypeDevState,
+        schema::TypeDevEncoded,
+        schema::TypeDevEnum};
 
-    vector<string> format_types_str {TYPE_SCALAR, TYPE_ARRAY, TYPE_IMAGE};
+    vector<string> format_types_str {schema::TypeScalar, schema::TypeArray, schema::TypeImage};
 
     // loop for every combination of type in Tango
     for (unsigned int t = 0; t < types.size(); ++t)

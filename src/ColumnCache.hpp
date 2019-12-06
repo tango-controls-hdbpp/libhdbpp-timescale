@@ -38,9 +38,9 @@ namespace pqxx_conn
     {
     public:
         ColumnCache(std::shared_ptr<pqxx::connection> conn,
-            const std::string &table_name,
-            const std::string &column_name,
-            const std::string &reference);
+            std::string table_name,
+            std::string column_name,
+            std::string reference);
 
         // query if the reference has a value, if its not cached it will be
         // loaded from the database
@@ -86,13 +86,13 @@ namespace pqxx_conn
     //=============================================================================
     template<typename TValue, typename TRef>
     ColumnCache<TValue, TRef>::ColumnCache(std::shared_ptr<pqxx::connection> conn,
-        const std::string &table_name,
-        const std::string &column_name,
-        const std::string &reference) :
-        _conn(conn),
-        _table_name(table_name),
-        _column_name(column_name),
-        _reference(reference)
+        std::string table_name,
+        std::string column_name,
+        std::string reference) :
+        _conn(std::move(conn)),
+        _table_name(std::move(table_name)),
+        _column_name(std::move(column_name)),
+        _reference(std::move(reference))
     {
         assert(_conn != nullptr);
         assert(!_table_name.empty());
@@ -165,12 +165,8 @@ namespace pqxx_conn
         // need to go to the database
         auto value_iter = _values.find(reference);
 
-        if (value_iter != _values.end())
-        {
-            // found a cached value, return asap
-            return true;
-        }
-        else
+        // not found, search the database
+        if (value_iter == _values.end())
         {
             try
             {
@@ -190,6 +186,8 @@ namespace pqxx_conn
                     auto result = tx.exec_prepared(_fetch_id_query_name, reference);
                     tx.commit();
 
+                    auto value_exists = false;
+
                     // no result is not an error, the value simply does not exist and its
                     // up to the caller to deal with the situation
                     if (!result.empty())
@@ -201,8 +199,8 @@ namespace pqxx_conn
                             auto value = result.at(0).at(0).template as<TValue>();
                             _values.insert({reference, value});
 
-                            spdlog::debug("Cached value: \'{} \' with reference: \'{}\'", value, reference);
-                            return true;
+                            spdlog::debug(R"(Cached value: '{} ' with reference: '{}')", value, reference);
+                            value_exists = true;
                         }
                         else
                         {
@@ -211,7 +209,7 @@ namespace pqxx_conn
                         }
                     }
 
-                    return false;
+                    return value_exists;
                 });
             }
             catch (const pqxx::pqxx_exception &ex)
@@ -227,7 +225,7 @@ namespace pqxx_conn
             }
         }
 
-        return false;
+        return true;
     }
 
     //=============================================================================

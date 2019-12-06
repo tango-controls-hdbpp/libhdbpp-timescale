@@ -27,9 +27,6 @@
 
 namespace hdbpp_internal
 {
-/// @class AttributeName
-/// @brief Represents a fully qualified domain name (FQDN) for a device server attribute.
-/// @details
 /// Represents a FQDN for a device server attribute. The AttributeName
 /// class must be primed with a valid fully qualified domain attribute name. From
 /// this name the class can extract various fields for the user. Each field is cached,
@@ -42,80 +39,35 @@ class AttributeName
 public:
     // TODO Test all exceptions
 
-    /// @brief Default constructor
     AttributeName() = default;
-
-    /// @brief Default move constructor
     AttributeName(AttributeName &&) = default;
-
-    /// @brief Copy constructor
-    /// @param attr_name AttributeName to construct from
+    ~AttributeName() = default;
     AttributeName(const AttributeName &attr_name) { *this = attr_name; }
-
-    /// @brief Construct an AttributeName object
-    /// @param fqdn_attr_name FQDN attribute name
     AttributeName(const std::string &fqdn_attr_name);
 
-    /// @brief Return the fully qualified attribute name the object was created with.
-    /// @return FQDN attribute name
     const std::string &fqdnAttributeName() const noexcept { return _fqdn_attr_name; }
-
-    /// @brief Return the full attribute name extracted from the fully qualified attribute name.
-    /// @return Full attribute name
-    /// @throw std::invalid_argument
     const std::string &fullAttributeName();
 
-    /// @brief Return the tango host extracted from the fully qualified attribute name.
-    /// @return Tango Host name
-    /// @throw std::invalid_argument
+    // tango host info
     const std::string &tangoHost();
-
-    /// @brief Return the tango host with the domain, i.e. "esrf.fr", appended
-    /// @return Tango Host with domain name appended
-    /// @throw std::invalid_argument
     const std::string &tangoHostWithDomain();
 
-    /// @brief Return the domain element of the full attribute name
-    /// @throw std::invalid_argument
+    // attribute name elements
     const std::string &domain();
-
-    /// @brief Return the family element of the full attribute name
-    /// @throw std::invalid_argument
     const std::string &family();
-
-    /// @brief Return the member element of the full attribute name
-    /// @throw std::invalid_argument
     const std::string &member();
-
-    /// @brief Return the name element of the full attribute name
-    /// @throw std::invalid_argument
     const std::string &name();
 
-    /// @brief Set the contained attribute name
-    /// @param fqdn_attr_name FQDN attribute name
+    // utility functions
     void set(const std::string &fqdn_attr_name);
-
-    /// @brief Clear attribute name and any internal cached items
     void clear() noexcept;
-
-    /// @brief Return the status of the AttributeName setting.
-    /// @return True if empty, False otherwise
     bool empty() const noexcept { return _fqdn_attr_name.empty(); }
-
-    /// @brief Print the AttributeName object to the stream
     void print(std::ostream &os) const;
 
-    /// @brief Equality operator
-    /// @return True if same, False otherwise
     bool operator==(const AttributeName &other) const { return _fqdn_attr_name == other._fqdn_attr_name; }
-
-    /// @brief Inequality operator
-    /// @return True if different, False otherwise
     bool operator!=(const AttributeName &other) const { return !(_fqdn_attr_name == other._fqdn_attr_name); }
-
-    /// @brief Copy operator
-    /// @return Reference to the current AttributeName
     AttributeName &operator=(const AttributeName &other);
+    AttributeName &operator=(AttributeName&& other) noexcept;
 
 private:
     // extract the full attribute name, i.e. domain/family/member/name

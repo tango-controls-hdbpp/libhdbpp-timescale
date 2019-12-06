@@ -193,11 +193,11 @@ void DbConnectionTestsFixture::clearTables()
             query += ",";
         }
 
-        query += ERR_TABLE_NAME + ",";
-        query += PARAM_TABLE_NAME + ",";
-        query += HISTORY_EVENT_TABLE_NAME + ",";
-        query += HISTORY_TABLE_NAME + ",";
-        query += CONF_TABLE_NAME + " RESTART IDENTITY";
+        query += schema::ErrTableName + ",";
+        query += schema::ParamTableName + ",";
+        query += schema::HistoryEventTableName + ",";
+        query += schema::HistoryTableName + ",";
+        query += schema::ConfTableName + " RESTART IDENTITY";
 
         REQUIRE_NOTHROW(tx.exec(query));
         tx.commit();
@@ -331,40 +331,40 @@ void DbConnectionTestsFixture::checkStoreTestEventData(const string &att_name, c
     pqxx::work tx {verifyConn()};
 
     // get the attribute id
-    auto attr_row(tx.exec1("SELECT * FROM " + CONF_TABLE_NAME + " WHERE " + CONF_COL_NAME + "='" + att_name + "'"));
+    auto attr_row(tx.exec1("SELECT * FROM " + schema::ConfTableName + " WHERE " + schema::ConfColName + "='" + att_name + "'"));
 
     // now get the last row stored
     auto data_row(tx.exec1(
         "SELECT * FROM " + QueryBuilder::tableName(traits) + 
-        " WHERE " + DAT_COL_ID + "=" + to_string(attr_row.at(CONF_COL_ID).as<int>()) + " " + 
-        " ORDER BY " + DAT_COL_DATA_TIME + " LIMIT 1"));
+        " WHERE " + schema::DatColId + "=" + to_string(attr_row.at(schema::ConfColId).as<int>()) + " " + 
+        " ORDER BY " + schema::DatColDataTime + " LIMIT 1"));
 
     tx.commit();
 
-    REQUIRE(data_row.at(DAT_COL_ID).as<int>() == attr_row.at(CONF_COL_ID).as<int>());
+    REQUIRE(data_row.at(schema::DatColId).as<int>() == attr_row.at(schema::ConfColId).as<int>());
 
     if (traits.isScalar() && traits.hasReadData())
     {
-        REQUIRE(data_row.at(DAT_COL_VALUE_R).size() > 0);
-        REQUIRE(compareData(data_row.at(DAT_COL_VALUE_R).as<T>(), get<0>(data)[0]) == true);
+        REQUIRE(data_row.at(schema::DatColValueR).size() > 0);
+        REQUIRE(compareData(data_row.at(schema::DatColValueR).as<T>(), get<0>(data)[0]) == true);
     }
     
     if (traits.isArray() && traits.hasReadData())
     {
-        REQUIRE(data_row.at(DAT_COL_VALUE_R).size() > 0);
-        REQUIRE(compareVector(data_row.at(DAT_COL_VALUE_R).as<vector<T>>(), get<0>(data)) == true);
+        REQUIRE(data_row.at(schema::DatColValueR).size() > 0);
+        REQUIRE(compareVector(data_row.at(schema::DatColValueR).as<vector<T>>(), get<0>(data)) == true);
     }
 
     if (traits.isScalar() && traits.hasWriteData())
     {
-        REQUIRE(data_row.at(DAT_COL_VALUE_W).size() > 0);
-        REQUIRE(compareData(data_row.at(DAT_COL_VALUE_W).as<T>(), get<1>(data)[0]) == true);
+        REQUIRE(data_row.at(schema::DatColValueW).size() > 0);
+        REQUIRE(compareData(data_row.at(schema::DatColValueW).as<T>(), get<1>(data)[0]) == true);
     }
     
     if (traits.isArray() && traits.hasWriteData())
     {
-        REQUIRE(data_row.at(DAT_COL_VALUE_W).size() > 0);
-        REQUIRE(compareVector(data_row.at(DAT_COL_VALUE_W).as<vector<T>>(), get<1>(data)) == true);
+        REQUIRE(data_row.at(schema::DatColValueW).size() > 0);
+        REQUIRE(compareVector(data_row.at(schema::DatColValueW).as<vector<T>>(), get<1>(data)) == true);
     }
 }
 }; // namespace pqxx_conn_test
@@ -399,29 +399,29 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing Attributes i
 
     {
         pqxx::work tx {verifyConn()};
-        auto attr_row(tx.exec1("SELECT * FROM " + CONF_TABLE_NAME));
+        auto attr_row(tx.exec1("SELECT * FROM " + schema::ConfTableName));
 
-        auto type_row(tx.exec1("SELECT " + CONF_TYPE_COL_TYPE_ID + " FROM " + CONF_TYPE_TABLE_NAME +
-            " WHERE " + CONF_TYPE_COL_TYPE_NUM + " = " + std::to_string(traits.type())));
+        auto type_row(tx.exec1("SELECT " + schema::ConfTypeColTypeId + " FROM " + schema::ConfTypeTableName +
+            " WHERE " + schema::ConfTypeColTypeNum + " = " + std::to_string(traits.type())));
 
-        auto format_row(tx.exec1("SELECT " + CONF_FORMAT_COL_FORMAT_ID + " FROM " + CONF_FORMAT_TABLE_NAME +
-            " WHERE " + CONF_FORMAT_COL_FORMAT_NUM + " = " + std::to_string(traits.formatType())));
+        auto format_row(tx.exec1("SELECT " + schema::ConfFormatColFormatId + " FROM " + schema::ConfFormatTableName +
+            " WHERE " + schema::ConfFormatColFormatNum + " = " + std::to_string(traits.formatType())));
 
-        auto access_row(tx.exec1("SELECT " + CONF_WRITE_COL_WRITE_ID + " FROM " + CONF_WRITE_TABLE_NAME +
-            " WHERE " + CONF_WRITE_COL_WRITE_NUM + " = " + std::to_string(traits.writeType())));
+        auto access_row(tx.exec1("SELECT " + schema::ConfWriteColWriteId + " FROM " + schema::ConfWriteTableName +
+            " WHERE " + schema::ConfWriteColWriteNum + " = " + std::to_string(traits.writeType())));
 
         tx.commit();
 
-        REQUIRE(attr_row.at(CONF_COL_NAME).as<string>() == attr_name::TestAttrFQDName);
-        REQUIRE(attr_row.at(CONF_COL_CS_NAME).as<string>() == attr_name::TestAttrCs);
-        REQUIRE(attr_row.at(CONF_COL_DOMAIN).as<string>() == attr_name::TestAttrDomain);
-        REQUIRE(attr_row.at(CONF_COL_FAMILY).as<string>() == attr_name::TestAttrFamily);
-        REQUIRE(attr_row.at(CONF_COL_MEMBER).as<string>() == attr_name::TestAttrMember);
-        REQUIRE(attr_row.at(CONF_COL_LAST_NAME).as<string>() == attr_name::TestAttrName);
-        REQUIRE(attr_row.at(CONF_COL_TABLE_NAME).as<string>() == QueryBuilder().tableName(traits));
-        REQUIRE(attr_row.at(CONF_COL_TYPE_ID).as<int>() == type_row.at(CONF_TYPE_COL_TYPE_ID).as<int>());
-        REQUIRE(attr_row.at(CONF_COL_FORMAT_TYPE_ID).as<int>() == format_row.at(CONF_FORMAT_COL_FORMAT_ID).as<int>());
-        REQUIRE(attr_row.at(CONF_COL_WRITE_TYPE_ID).as<int>() == access_row.at(CONF_WRITE_COL_WRITE_ID).as<int>());
+        REQUIRE(attr_row.at(schema::ConfColName).as<string>() == attr_name::TestAttrFQDName);
+        REQUIRE(attr_row.at(schema::ConfColCsName).as<string>() == attr_name::TestAttrCs);
+        REQUIRE(attr_row.at(schema::ConfColDomain).as<string>() == attr_name::TestAttrDomain);
+        REQUIRE(attr_row.at(schema::ConfColFamily).as<string>() == attr_name::TestAttrFamily);
+        REQUIRE(attr_row.at(schema::ConfColMember).as<string>() == attr_name::TestAttrMember);
+        REQUIRE(attr_row.at(schema::ConfColLastName).as<string>() == attr_name::TestAttrName);
+        REQUIRE(attr_row.at(schema::ConfColTableName).as<string>() == QueryBuilder().tableName(traits));
+        REQUIRE(attr_row.at(schema::ConfColTypeId).as<int>() == type_row.at(schema::ConfTypeColTypeId).as<int>());
+        REQUIRE(attr_row.at(schema::ConfColFormatTypeId).as<int>() == format_row.at(schema::ConfFormatColFormatId).as<int>());
+        REQUIRE(attr_row.at(schema::ConfColWriteTypeId).as<int>() == access_row.at(schema::ConfWriteColWriteId).as<int>());
     }
 
     SUCCEED("Passed");
@@ -470,41 +470,41 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing a series of 
 
     {
         pqxx::work tx {verifyConn()};
-        auto event_row(tx.exec1("SELECT * FROM " + HISTORY_EVENT_TABLE_NAME));
-        auto history_row(tx.exec1("SELECT * FROM " + HISTORY_TABLE_NAME));
-        auto attr_row(tx.exec1("SELECT * FROM " + CONF_TABLE_NAME));
+        auto event_row(tx.exec1("SELECT * FROM " + schema::HistoryEventTableName));
+        auto history_row(tx.exec1("SELECT * FROM " + schema::HistoryTableName));
+        auto attr_row(tx.exec1("SELECT * FROM " + schema::ConfTableName));
         tx.commit();
 
         // check event type
-        REQUIRE(event_row.at(HISTORY_EVENT_COL_EVENT).as<string>() == events::PauseEvent);
+        REQUIRE(event_row.at(schema::HistoryEventColEvent).as<string>() == events::PauseEvent);
 
         // check event id matches event table id
-        REQUIRE(event_row.at(HISTORY_EVENT_COL_EVENT_ID).as<int>() ==
-            history_row.at(HISTORY_COL_EVENT_ID).as<int>());
+        REQUIRE(event_row.at(schema::HistoryEventColEventId).as<int>() ==
+            history_row.at(schema::HistoryColEventId).as<int>());
 
         // check attribute id match
-        REQUIRE(attr_row.at(CONF_COL_ID).as<int>() == history_row.at(HISTORY_COL_ID).as<int>());
+        REQUIRE(attr_row.at(schema::ConfColId).as<int>() == history_row.at(schema::HistoryColId).as<int>());
     }
 
     REQUIRE_NOTHROW(testConn().storeHistoryEvent(attr_name::TestAttrFQDName, events::PauseEvent));
 
     {
         pqxx::work tx {verifyConn()};
-        auto event_result(tx.exec1("SELECT * FROM " + HISTORY_EVENT_TABLE_NAME));
-        auto history_row(tx.exec_n(2, "SELECT * FROM " + HISTORY_TABLE_NAME));
-        auto attr_row(tx.exec1("SELECT * FROM " + CONF_TABLE_NAME));
+        auto event_result(tx.exec1("SELECT * FROM " + schema::HistoryEventTableName));
+        auto history_row(tx.exec_n(2, "SELECT * FROM " + schema::HistoryTableName));
+        auto attr_row(tx.exec1("SELECT * FROM " + schema::ConfTableName));
         tx.commit();
 
-        REQUIRE(event_result.at(HISTORY_EVENT_COL_EVENT).as<string>() == events::PauseEvent);
+        REQUIRE(event_result.at(schema::HistoryEventColEvent).as<string>() == events::PauseEvent);
 
         // check event type
         for (const auto &row : history_row)
         {
-            REQUIRE(attr_row.at(CONF_COL_ID).as<int>() == row.at(HISTORY_COL_ID).as<int>());
+            REQUIRE(attr_row.at(schema::ConfColId).as<int>() == row.at(schema::HistoryColId).as<int>());
 
             // check event id matches event table id
-            REQUIRE(row.at(HISTORY_COL_EVENT_ID).as<int>() ==
-                event_result.at(HISTORY_COL_EVENT_ID).as<int>());
+            REQUIRE(row.at(schema::HistoryColEventId).as<int>() ==
+                event_result.at(schema::HistoryColEventId).as<int>());
         }
     }
 
@@ -524,14 +524,14 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing a series of 
 
     {
         pqxx::work tx {verifyConn()};
-        auto result(tx.exec_n(2, "SELECT * FROM " + HISTORY_EVENT_TABLE_NAME));
+        auto result(tx.exec_n(2, "SELECT * FROM " + schema::HistoryEventTableName));
         tx.commit();
 
         int i = 0;
 
         // check event type
         for (auto row : result)
-            REQUIRE(row.at(HISTORY_EVENT_COL_EVENT).as<string>() == events[i++]);
+            REQUIRE(row.at(schema::HistoryEventColEvent).as<string>() == events[i++]);
     }
 
     SUCCEED("Passed");
@@ -578,24 +578,24 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing Parameter Ev
 
     {
         pqxx::work tx {verifyConn()};
-        auto attr_row(tx.exec1("SELECT * FROM " + CONF_TABLE_NAME));
-        auto param_row(tx.exec1("SELECT * FROM " + PARAM_TABLE_NAME));
+        auto attr_row(tx.exec1("SELECT * FROM " + schema::ConfTableName));
+        auto param_row(tx.exec1("SELECT * FROM " + schema::ParamTableName));
         tx.commit();
 
         // TODO check event time
-        //REQUIRE(param_row.at(PARAM_COL_EV_TIME).as<double>() == event_time);
-        REQUIRE(param_row.at(PARAM_COL_LABEL).as<string>() == attr_info::AttrInfoLabel);
-        REQUIRE(param_row.at(PARAM_COL_UNIT).as<string>() == attr_info::AttrInfoUnit);
-        REQUIRE(param_row.at(PARAM_COL_STANDARDUNIT).as<string>() == attr_info::AttrInfoStandardUnit);
-        REQUIRE(param_row.at(PARAM_COL_DISPLAYUNIT).as<string>() == attr_info::AttrInfoDisplayUnit);
-        REQUIRE(param_row.at(PARAM_COL_FORMAT).as<string>() == attr_info::AttrInfoFormat);
-        REQUIRE(param_row.at(PARAM_COL_ARCHIVERELCHANGE).as<string>() == attr_info::AttrInfoRel);
-        REQUIRE(param_row.at(PARAM_COL_ARCHIVEABSCHANGE).as<string>() == attr_info::AttrInfoAbs);
-        REQUIRE(param_row.at(PARAM_COL_ARCHIVEPERIOD).as<string>() == attr_info::AttrInfoPeriod);
-        REQUIRE(param_row.at(PARAM_COL_DESCRIPTION).as<string>() == attr_info::AttrInfoDescription);
+        //REQUIRE(param_row.at(schema::ParamColEvTime).as<double>() == event_time);
+        REQUIRE(param_row.at(schema::ParamColLabel).as<string>() == attr_info::AttrInfoLabel);
+        REQUIRE(param_row.at(schema::ParamColUnit).as<string>() == attr_info::AttrInfoUnit);
+        REQUIRE(param_row.at(schema::ParamColStandardUnit).as<string>() == attr_info::AttrInfoStandardUnit);
+        REQUIRE(param_row.at(schema::ParamColDisplayUnit).as<string>() == attr_info::AttrInfoDisplayUnit);
+        REQUIRE(param_row.at(schema::ParamColFormat).as<string>() == attr_info::AttrInfoFormat);
+        REQUIRE(param_row.at(schema::ParamColArchiveRelChange).as<string>() == attr_info::AttrInfoRel);
+        REQUIRE(param_row.at(schema::ParamColArchiveAbsChange).as<string>() == attr_info::AttrInfoAbs);
+        REQUIRE(param_row.at(schema::ParamColArchivePeriod).as<string>() == attr_info::AttrInfoPeriod);
+        REQUIRE(param_row.at(schema::ParamColDescription).as<string>() == attr_info::AttrInfoDescription);
 
         // check attribute id match
-        REQUIRE(attr_row.at(CONF_COL_ID).as<int>() == param_row.at(PARAM_COL_ID).as<int>());
+        REQUIRE(attr_row.at(schema::ConfColId).as<int>() == param_row.at(schema::ParamColId).as<int>());
     }
 
     REQUIRE_NOTHROW(testConn().storeParameterEvent(attr_name::TestAttrFinalName,
@@ -612,7 +612,7 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing Parameter Ev
 
     {
         pqxx::work tx {verifyConn()};
-        auto result(tx.exec_n(2, "SELECT * FROM " + PARAM_TABLE_NAME));
+        auto result(tx.exec_n(2, "SELECT * FROM " + schema::ParamTableName));
         tx.commit();
 
         REQUIRE(result.size() == 2);
@@ -682,9 +682,9 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing events which
                 pqxx::work tx {verifyConn()};
 
                 string query = "SELECT * FROM ";
-                query += CONF_TABLE_NAME;
+                query += schema::ConfTableName;
                 query += " WHERE ";
-                query += CONF_COL_NAME;
+                query += schema::ConfColName;
                 query += "='";
                 query += att_name;
                 query += "'";
@@ -695,12 +695,12 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing events which
                 query = "SELECT * FROM ";
                 query += QueryBuilder::tableName(traits);
                 query += " WHERE ";
-                query += DAT_COL_ID;
+                query += schema::DatColId;
                 query += "=";
-                query += to_string(attr_row.at(CONF_COL_ID).as<int>());
+                query += to_string(attr_row.at(schema::ConfColId).as<int>());
                 query += " ";
                 query += " ORDER BY ";
-                query += DAT_COL_DATA_TIME;
+                query += schema::DatColDataTime;
                 query += " LIMIT 1";
 
                 // now get the last row stored
@@ -708,13 +708,13 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing events which
 
                 tx.commit();
 
-                REQUIRE(data_row.at(DAT_COL_ID).as<int>() == attr_row.at(CONF_COL_ID).as<int>());
+                REQUIRE(data_row.at(schema::DatColId).as<int>() == attr_row.at(schema::ConfColId).as<int>());
 
                 if (traits.hasReadData())
-                    REQUIRE(data_row.at(DAT_COL_VALUE_R).is_null() == true);
+                    REQUIRE(data_row.at(schema::DatColValueR).is_null() == true);
 
                 if (traits.hasWriteData())
-                    REQUIRE(data_row.at(DAT_COL_VALUE_W).is_null() == true);
+                    REQUIRE(data_row.at(schema::DatColValueW).is_null() == true);
             }
         }
     }
@@ -898,6 +898,42 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing complex arra
     SUCCEED("Passed");
 }
 
+TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing complex strings containing postgres escape characters",
+    "[db-access][hdbpp-db-access][db-connection]")
+{
+    struct timeval tv
+    {};
+
+    gettimeofday(&tv, nullptr);
+    double event_time = tv.tv_sec + tv.tv_usec / 1.0e6;
+
+    string s1 = "test brackets } {} with comma,";
+    string s2 = "quotes '' and commas, and 'quoted, comma', escaped \"double quote\"";
+    string s3 = R"(test two slash \ test four slash \\)";
+    string s4 = "line feed \n and return \r";
+
+    auto value = std::make_unique<std::vector<std::string>>();
+    value->push_back(s1);
+    value->push_back(s2);
+    value->push_back(s3);
+    value->push_back(s4);
+
+    REQUIRE_NOTHROW(clearTables());
+    auto name = storeAttributeByTraits(traits);
+
+    for (auto )
+    {
+        auto value = std::make_unique<std::vector<std::string>>();
+        auto original_values = make_tuple((*value), (*value));
+        AttributeTraits traits {Tango::READ_WRITE, Tango::SCALAR, Tango::DEV_STRING};
+
+        REQUIRE_NOTHROW(testConn().storeDataEvent(name, event_time, Tango::ATTR_VALID, move(value), move(value), traits));
+        checkStoreTestEventData(name, traits, original_values);
+    }
+
+    SUCCEED("Passed");
+}
+
 TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing data events in a disconnected state", "[db-access][hdbpp-db-access][db-connection]")
 {
     struct timeval tv
@@ -942,9 +978,9 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing data events 
         pqxx::work tx {verifyConn()};
 
         string query = "SELECT * FROM ";
-        query += CONF_TABLE_NAME;
+        query += schema::ConfTableName;
         query += " WHERE ";
-        query += CONF_COL_NAME;
+        query += schema::ConfColName;
         query += "='";
         query += name;
         query += "'";
@@ -956,12 +992,12 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing data events 
         query = "SELECT * FROM ";
         query += QueryBuilder::tableName(traits);
         query += " WHERE ";
-        query += DAT_COL_ID;
+        query += schema::DatColId;
         query += "=";
-        query += to_string(attr_row.at(CONF_COL_ID).as<int>());
+        query += to_string(attr_row.at(schema::ConfColId).as<int>());
         query += " ";
         query += " ORDER BY ";
-        query += DAT_COL_DATA_TIME;
+        query += schema::DatColDataTime;
         query += " LIMIT 1";
 
         // now get the last row stored
@@ -969,17 +1005,17 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing data events 
         REQUIRE_NOTHROW(data_row = tx.exec1(query));
 
         query = "SELECT * FROM ";
-        query += ERR_TABLE_NAME;
+        query += schema::ErrTableName;
         query += " WHERE ";
-        query += ERR_COL_ID + "=";
-        query += to_string(data_row.at(DAT_COL_ERROR_DESC_ID).as<int>());
+        query += schema::ErrColId + "=";
+        query += to_string(data_row.at(schema::DatColErrorDescId).as<int>());
 
         pqxx::row error_row;
         REQUIRE_NOTHROW(error_row = tx.exec1(query));
 
         tx.commit();
 
-        REQUIRE(error_row.at(ERR_COL_ERROR_DESC).as<string>() == error_msg);
+        REQUIRE(error_row.at(schema::ErrColErrorDesc).as<string>() == error_msg);
     }
 
     gettimeofday(&tv, nullptr);
@@ -991,9 +1027,9 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing data events 
         pqxx::work tx {verifyConn()};
 
         string query = "SELECT * FROM ";
-        query += CONF_TABLE_NAME;
+        query += schema::ConfTableName;
         query += " WHERE ";
-        query += CONF_COL_NAME;
+        query += schema::ConfColName;
         query += "='";
         query += name;
         query += "'";
@@ -1005,12 +1041,12 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing data events 
         query = "SELECT * FROM ";
         query += QueryBuilder::tableName(traits);
         query += " WHERE ";
-        query += DAT_COL_ID;
+        query += schema::DatColId;
         query += "=";
-        query += to_string(attr_row.at(CONF_COL_ID).as<int>());
+        query += to_string(attr_row.at(schema::ConfColId).as<int>());
         query += " ";
         query += " ORDER BY ";
-        query += DAT_COL_DATA_TIME;
+        query += schema::DatColDataTime;
         query += " LIMIT 2";
 
         // now get the last row stored
@@ -1018,7 +1054,7 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing data events 
         REQUIRE_NOTHROW(data_result = tx.exec(query));
         tx.commit();
 
-        REQUIRE(data_result[0].at(DAT_COL_ERROR_DESC_ID).as<int>() == data_result[1].at(DAT_COL_ERROR_DESC_ID).as<int>());
+        REQUIRE(data_result[0].at(schema::DatColErrorDescId).as<int>() == data_result[1].at(schema::DatColErrorDescId).as<int>());
     }
 
     SUCCEED("Passed");
@@ -1051,16 +1087,23 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "When no history even
     SUCCEED("Passed");
 }
 
-TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "The archive of an attribute can be determined by fetchAttributeArchived()",
+TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "The archive state of an attribute can be determined by fetchAttributeArchived()",
     "[db-access][hdbpp-db-access][db-connection]")
 {
     AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE};
     REQUIRE_NOTHROW(clearTables());
-
     REQUIRE(!testConn().fetchAttributeArchived(attr_name::TestAttrFQDName));
     storeAttribute(traits);
     REQUIRE(testConn().fetchAttributeArchived(attr_name::TestAttrFQDName));
+    SUCCEED("Passed");
+}
 
+TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "fetchAttributeTraits() throws an exception when the attribute is not archived",
+    "[db-access][hdbpp-db-access][db-connection]")
+{
+    AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE};
+    REQUIRE_NOTHROW(clearTables());
+    REQUIRE_THROWS(testConn().fetchAttributeTraits(attr_name::TestAttrFQDName));
     SUCCEED("Passed");
 }
 
@@ -1069,10 +1112,7 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "The type traits of a
 {
     AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE};
     REQUIRE_NOTHROW(clearTables());
-
-    REQUIRE_THROWS(testConn().fetchAttributeTraits(attr_name::TestAttrFQDName));
     storeAttribute(traits);
     REQUIRE(testConn().fetchAttributeTraits(attr_name::TestAttrFQDName) == traits);
-
     SUCCEED("Passed");
 }

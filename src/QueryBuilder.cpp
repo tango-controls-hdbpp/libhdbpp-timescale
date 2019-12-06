@@ -134,32 +134,32 @@ namespace pqxx_conn
     {
         // clang-format off
         static string query =
-            "INSERT INTO " + CONF_TABLE_NAME + " (" +
-                CONF_COL_NAME + "," +
-                CONF_COL_TYPE_ID + "," +
-                CONF_COL_FORMAT_TYPE_ID + "," +
-                CONF_COL_WRITE_TYPE_ID + "," +
-                CONF_COL_TABLE_NAME + "," +
-                CONF_COL_CS_NAME + "," + 
-                CONF_COL_DOMAIN + "," +
-                CONF_COL_FAMILY + "," +
-                CONF_COL_MEMBER + "," +
-                CONF_COL_LAST_NAME + "," + 
-                CONF_COL_HIDE + ") (" +
+            "INSERT INTO " + schema::ConfTableName + " (" +
+                schema::ConfColName + "," +
+                schema::ConfColTypeId + "," +
+                schema::ConfColFormatTypeId + "," +
+                schema::ConfColWriteTypeId + "," +
+                schema::ConfColTableName + "," +
+                schema::ConfColCsName + "," + 
+                schema::ConfColDomain + "," +
+                schema::ConfColFamily + "," +
+                schema::ConfColMember + "," +
+                schema::ConfColLastName + "," + 
+                schema::ConfColHide + ") (" +
                 "SELECT " + 
                     "$1," + 
-                    CONF_TYPE_COL_TYPE_ID + "," + 
-                    CONF_FORMAT_COL_FORMAT_ID + "," + 
-                    CONF_WRITE_COL_WRITE_ID + 
+                    schema::ConfTypeColTypeId + "," + 
+                    schema::ConfFormatColFormatId + "," + 
+                    schema::ConfWriteColWriteId + 
                     ",$2,$3,$4,$5,$6,$7,$8 " +
                 "FROM " + 
-                    CONF_TYPE_TABLE_NAME + ", " +
-                    CONF_FORMAT_TABLE_NAME + ", " +
-                    CONF_WRITE_TABLE_NAME + " " +
-                "WHERE " + CONF_TYPE_TABLE_NAME + "." + CONF_TYPE_COL_TYPE_NUM + " = $9 " + 
-                "AND " + CONF_FORMAT_TABLE_NAME + "." + CONF_FORMAT_COL_FORMAT_NUM + " = $10 " + 
-                "AND " + CONF_WRITE_TABLE_NAME + "." + CONF_WRITE_COL_WRITE_NUM + " = $11) " +
-                "RETURNING " + CONF_COL_ID;
+                    schema::ConfTypeTableName + ", " +
+                    schema::ConfFormatTableName + ", " +
+                    schema::ConfWriteTableName + " " +
+                "WHERE " + schema::ConfTypeTableName + "." + schema::ConfTypeColTypeNum + " = $9 " + 
+                "AND " + schema::ConfFormatTableName + "." + schema::ConfFormatColFormatNum + " = $10 " + 
+                "AND " + schema::ConfWriteTableName + "." + schema::ConfWriteColWriteNum + " = $11) " +
+                "RETURNING " + schema::ConfColId;
         // clang-format on
 
         return query;
@@ -171,9 +171,9 @@ namespace pqxx_conn
     {
         // clang-format off
         static string query = 
-            "INSERT INTO " + HISTORY_EVENT_TABLE_NAME + " (" +
-                HISTORY_EVENT_COL_EVENT + 
-                ") VALUES ($1) RETURNING " + HISTORY_EVENT_COL_EVENT_ID;
+            "INSERT INTO " + schema::HistoryEventTableName + " (" +
+                schema::HistoryEventColEvent + 
+                ") VALUES ($1) RETURNING " + schema::HistoryEventColEventId;
         // clang-format on
 
         return query;
@@ -185,14 +185,14 @@ namespace pqxx_conn
     {
         // clang-format off
         static string query =
-            "INSERT INTO " + HISTORY_TABLE_NAME + " (" + 
-                HISTORY_COL_ID + "," +
-                HISTORY_COL_EVENT_ID + "," +
-                HISTORY_COL_TIME + ") " +
+            "INSERT INTO " + schema::HistoryTableName + " (" + 
+                schema::HistoryColId + "," +
+                schema::HistoryColEventId + "," +
+                schema::HistoryColTime + ") " +
                 "SELECT " +
-                    "$1," + HISTORY_EVENT_COL_EVENT_ID + ",CURRENT_TIMESTAMP(6)" +
-                " FROM " + HISTORY_EVENT_TABLE_NAME +
-                " WHERE " + HISTORY_EVENT_COL_EVENT + " = $2";
+                    "$1," + schema::HistoryEventColEventId + ",CURRENT_TIMESTAMP(6)" +
+                " FROM " + schema::HistoryEventTableName +
+                " WHERE " + schema::HistoryEventColEvent + " = $2";
         // clang-format on
 
         return query;
@@ -205,18 +205,18 @@ namespace pqxx_conn
         // clang-format off
         static string query =
             "INSERT INTO " +
-            PARAM_TABLE_NAME + " (" +
-            PARAM_COL_ID + "," +
-            PARAM_COL_EV_TIME + "," +
-            PARAM_COL_LABEL + "," +
-            PARAM_COL_UNIT + "," +
-            PARAM_COL_STANDARDUNIT + "," +
-            PARAM_COL_DISPLAYUNIT + "," +
-            PARAM_COL_FORMAT + "," +
-            PARAM_COL_ARCHIVERELCHANGE + "," +
-            PARAM_COL_ARCHIVEABSCHANGE + "," +
-            PARAM_COL_ARCHIVEPERIOD + "," +
-            PARAM_COL_DESCRIPTION + ") " +
+            schema::ParamTableName + " (" +
+            schema::ParamColId + "," +
+            schema::ParamColEvTime + "," +
+            schema::ParamColLabel + "," +
+            schema::ParamColUnit + "," +
+            schema::ParamColStandardUnit + "," +
+            schema::ParamColDisplayUnit + "," +
+            schema::ParamColFormat + "," +
+            schema::ParamColArchiveRelChange + "," +
+            schema::ParamColArchiveAbsChange + "," +
+            schema::ParamColArchivePeriod + "," +
+            schema::ParamColDescription + ") " +
             "VALUES ($1, TO_TIMESTAMP($2), $3, $4, $5, $6, $7, $8, $9, $10, $11)";
         // clang-format on
 
@@ -233,10 +233,10 @@ namespace pqxx_conn
         if (result == _data_event_error_queries.end())
         {
             auto param_number = 0;
-            auto query = "INSERT INTO " + QueryBuilder::tableName(traits) + " (" + DAT_COL_ID + "," + DAT_COL_DATA_TIME;
+            auto query = "INSERT INTO " + QueryBuilder::tableName(traits) + " (" + schema::DatColId + "," + schema::DatColDataTime;
 
             // split to ensure increments are in the correct order
-            query = query + "," + DAT_COL_QUALITY + "," + DAT_COL_ERROR_DESC_ID + ") VALUES ($" +
+            query = query + "," + schema::DatColQuality + "," + schema::DatColErrorDescId + ") VALUES ($" +
                 to_string(++param_number);
 
             query = query + ",TO_TIMESTAMP($" + to_string(++param_number) + ")";
@@ -264,8 +264,8 @@ namespace pqxx_conn
     {
         // clang-format off
         static string query = 
-            "INSERT INTO " + ERR_TABLE_NAME + " (" +
-                ERR_COL_ERROR_DESC + ") VALUES ($1) RETURNING " + ERR_COL_ID;
+            "INSERT INTO " + schema::ErrTableName + " (" +
+                schema::ErrColErrorDesc + ") VALUES ($1) RETURNING " + schema::ErrColId;
         // clang-format on
 
         return query;
@@ -293,13 +293,13 @@ namespace pqxx_conn
     {
         // clang-format off
         static string query = 
-            "SELECT " + HISTORY_EVENT_COL_EVENT +
-                " FROM " + HISTORY_TABLE_NAME +
-                " JOIN " + HISTORY_EVENT_TABLE_NAME +
-                " ON " + HISTORY_EVENT_TABLE_NAME + "." + 
-                    HISTORY_EVENT_COL_EVENT_ID + "=" + HISTORY_TABLE_NAME + "." + HISTORY_COL_EVENT_ID +
-                " WHERE " + HISTORY_COL_ID + " =$1" +
-                " ORDER BY " + HISTORY_COL_TIME + " DESC LIMIT 1";
+            "SELECT " + schema::HistoryEventColEvent +
+                " FROM " + schema::HistoryTableName +
+                " JOIN " + schema::HistoryEventTableName +
+                " ON " + schema::HistoryEventTableName + "." + 
+                    schema::HistoryEventColEventId + "=" + schema::HistoryTableName + "." + schema::HistoryColEventId +
+                " WHERE " + schema::HistoryColId + " =$1" +
+                " ORDER BY " + schema::HistoryColTime + " DESC LIMIT 1";
         // clang-format on
 
         return query;
@@ -312,24 +312,24 @@ namespace pqxx_conn
         // clang-format off
         static string query = 
             "SELECT " + 
-                CONF_TYPE_COL_TYPE_NUM + "," +
-                CONF_FORMAT_COL_FORMAT_NUM + "," +
-                CONF_WRITE_COL_WRITE_NUM + " " +
+                schema::ConfTypeColTypeNum + "," +
+                schema::ConfFormatColFormatNum + "," +
+                schema::ConfWriteColWriteNum + " " +
             "FROM " +
-	            CONF_TYPE_TABLE_NAME + " t," +
-                CONF_FORMAT_TABLE_NAME + " f," + 
-                CONF_WRITE_TABLE_NAME + " w, " + 
+	            schema::ConfTypeTableName + " t," +
+                schema::ConfFormatTableName + " f," + 
+                schema::ConfWriteTableName + " w, " + 
                 "(SELECT " + 
-                    CONF_COL_TYPE_ID + "," + 
-                    CONF_COL_FORMAT_TYPE_ID + "," + 
-                    CONF_COL_WRITE_TYPE_ID + " " + 
-                "FROM " + CONF_TABLE_NAME + " WHERE " + CONF_COL_NAME + "=$1) AS tmp " + 
+                    schema::ConfColTypeId + "," + 
+                    schema::ConfColFormatTypeId + "," + 
+                    schema::ConfColWriteTypeId + " " + 
+                "FROM " + schema::ConfTableName + " WHERE " + schema::ConfColName + "=$1) AS tmp " + 
             "WHERE " +
-	            "t." + CONF_COL_TYPE_ID + "=tmp." + CONF_COL_TYPE_ID + " " +
+	            "t." + schema::ConfColTypeId + "=tmp." + schema::ConfColTypeId + " " +
             "AND " +  
-            	"f." + CONF_COL_FORMAT_TYPE_ID + "=tmp." + CONF_COL_FORMAT_TYPE_ID + " " +
+            	"f." + schema::ConfColFormatTypeId + "=tmp." + schema::ConfColFormatTypeId + " " +
             "AND " + 
-	            "w." + CONF_COL_WRITE_TYPE_ID  + "=tmp." + CONF_COL_WRITE_TYPE_ID;
+	            "w." + schema::ConfColWriteTypeId  + "=tmp." + schema::ConfColWriteTypeId;
         // clang-format on
 
         return query;
@@ -339,13 +339,13 @@ namespace pqxx_conn
     //=============================================================================
     string QueryBuilder::tableName(const AttributeTraits &traits)
     {
-        return SCHEMA_TABLE_PREFIX +
+        return schema::SchemaTablePrefix +
             [&traits]() {
                 switch (traits.formatType())
                 {
-                    case Tango::SCALAR: return TYPE_SCALAR;
-                    case Tango::SPECTRUM: return TYPE_ARRAY;
-                    case Tango::IMAGE: return TYPE_IMAGE;
+                    case Tango::SCALAR: return schema::TypeScalar;
+                    case Tango::SPECTRUM: return schema::TypeArray;
+                    case Tango::IMAGE: return schema::TypeImage;
                 }
 
                 return string("Unknown");
@@ -353,20 +353,20 @@ namespace pqxx_conn
             "_" + [&traits]() {
                 switch (traits.type())
                 {
-                    case Tango::DEV_DOUBLE: return TYPE_DEV_DOUBLE;
-                    case Tango::DEV_FLOAT: return TYPE_DEV_FLOAT;
-                    case Tango::DEV_STRING: return TYPE_DEV_STRING;
-                    case Tango::DEV_LONG: return TYPE_DEV_LONG;
-                    case Tango::DEV_ULONG: return TYPE_DEV_ULONG;
-                    case Tango::DEV_LONG64: return TYPE_DEV_LONG64;
-                    case Tango::DEV_ULONG64: return TYPE_DEV_ULONG64;
-                    case Tango::DEV_SHORT: return TYPE_DEV_SHORT;
-                    case Tango::DEV_USHORT: return TYPE_DEV_USHORT;
-                    case Tango::DEV_BOOLEAN: return TYPE_DEV_BOOLEAN;
-                    case Tango::DEV_UCHAR: return TYPE_DEV_UCHAR;
-                    case Tango::DEV_STATE: return TYPE_DEV_STATE;
-                    case Tango::DEV_ENCODED: return TYPE_DEV_ENCODED;
-                    case Tango::DEV_ENUM: return TYPE_DEV_ENUM;
+                    case Tango::DEV_DOUBLE: return schema::TypeDevDouble;
+                    case Tango::DEV_FLOAT: return schema::TypeDevFloat;
+                    case Tango::DEV_STRING: return schema::TypeDevString;
+                    case Tango::DEV_LONG: return schema::TypeDevLong;
+                    case Tango::DEV_ULONG: return schema::TypeDevUlong;
+                    case Tango::DEV_LONG64: return schema::TypeDevLong64;
+                    case Tango::DEV_ULONG64: return schema::TypeDevUlong64;
+                    case Tango::DEV_SHORT: return schema::TypeDevShort;
+                    case Tango::DEV_USHORT: return schema::TypeDevUshort;
+                    case Tango::DEV_BOOLEAN: return schema::TypeDevBoolean;
+                    case Tango::DEV_UCHAR: return schema::TypeDevUchar;
+                    case Tango::DEV_STATE: return schema::TypeDevState;
+                    case Tango::DEV_ENCODED: return schema::TypeDevEncoded;
+                    case Tango::DEV_ENUM: return schema::TypeDevEnum;
                 }
 
                 return string("Unknown");

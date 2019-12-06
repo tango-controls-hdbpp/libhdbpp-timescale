@@ -231,16 +231,16 @@ namespace pqxx_conn
             // attribute traits and then cached.
             auto param_number = 0;
 
-            auto query = "INSERT INTO " + QueryBuilder::tableName(traits) + " (" + DAT_COL_ID + "," + DAT_COL_DATA_TIME;
+            auto query = "INSERT INTO " + QueryBuilder::tableName(traits) + " (" + schema::DatColId + "," + schema::DatColDataTime;
 
             if (traits.hasReadData())
-                query = query + "," + DAT_COL_VALUE_R;
+                query = query + "," + schema::DatColValueR;
 
             if (traits.hasWriteData())
-                query = query + "," + DAT_COL_VALUE_W;
+                query = query + "," + schema::DatColValueW;
 
             // split to ensure increments are in the correct order
-            query = query + "," + DAT_COL_QUALITY + ") VALUES ($" + to_string(++param_number);
+            query = query + "," + schema::DatColQuality + ") VALUES ($" + to_string(++param_number);
             query = query + ",TO_TIMESTAMP($" + to_string(++param_number) + ")";
 
             // add the read parameter with cast
@@ -277,16 +277,16 @@ namespace pqxx_conn
         std::unique_ptr<vector<T>> &value_w,
         const AttributeTraits &traits)
     {
-        auto query = "INSERT INTO " + QueryBuilder::tableName(traits) + " (" + DAT_COL_ID + "," + DAT_COL_DATA_TIME;
+        auto query = "INSERT INTO " + QueryBuilder::tableName(traits) + " (" + schema::DatColId + "," + schema::DatColDataTime;
 
         if (traits.hasReadData())
-            query = query + "," + DAT_COL_VALUE_R;
+            query = query + "," + schema::DatColValueR;
 
         if (traits.hasWriteData())
-            query = query + "," + DAT_COL_VALUE_W;
+            query = query + "," + schema::DatColValueW;
 
         // split to ensure increments are in the correct order
-        query = query + "," + DAT_COL_QUALITY + ") VALUES ('" + full_attr_name + "'";
+        query = query + "," + schema::DatColQuality + ") VALUES ('" + full_attr_name + "'";
         query = query + ",TO_TIMESTAMP(" + event_time + ")";
 
         // add the read parameter with cast

@@ -35,7 +35,7 @@ namespace pqxx_conn
         template<typename T>
         struct Store
         {
-            static void run(std::unique_ptr<std::vector<T>> &value, const AttributeTraits &traits, pqxx::prepare::invocation &inv, pqxx::work&)
+            static void run(std::unique_ptr<std::vector<T>> &value, const AttributeTraits &traits, pqxx::prepare::invocation &inv, pqxx::work& /*unused*/)
             {
                 // for a scalar, store the first element of the vector,
                 // we do not expect more than 1 element, for an array, store
@@ -71,7 +71,7 @@ namespace pqxx_conn
         template<>
         struct Store<bool>
         {
-            static void run(std::unique_ptr<std::vector<bool>> &value, const AttributeTraits &traits, pqxx::prepare::invocation &inv, pqxx::work&)
+            static void run(std::unique_ptr<std::vector<bool>> &value, const AttributeTraits &traits, pqxx::prepare::invocation &inv, pqxx::work& /*unused*/)
             {
                 // a vector<bool> is not actually a vector<bool>, rather its some kind of bitfield. When
                 // trying to return an element, we appear to get some kind of bitfield reference (?),
@@ -104,8 +104,8 @@ namespace pqxx_conn
         spdlog::trace("Storing data event for attribute {} with traits {}, value_r valid: {}, value_w valid: {}",
             full_attr_name,
             traits,
-            value_r->size() > 0,
-            value_w->size() > 0);
+            !value_r->empty(),
+            !value_w->empty());
 
         checkConnection(LOCATION_INFO);
         checkAttributeExists(full_attr_name, LOCATION_INFO);

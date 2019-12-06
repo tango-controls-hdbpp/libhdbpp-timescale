@@ -26,115 +26,116 @@ namespace hdbpp_internal
 {
 namespace pqxx_conn
 {
-    // general schema related strings
-    const std::string SCHEMA_TABLE_PREFIX = "att_";
+    namespace schema
+    {
+        // general schema related strings
+        const std::string SchemaTablePrefix = "att_";
 
-    // attribute type information
-    const std::string TYPE_SCALAR = "scalar";
-    const std::string TYPE_ARRAY = "array";
-    const std::string TYPE_IMAGE = "image";
-    const std::string TYPE_DEV_BOOLEAN = "devboolean";
-    const std::string TYPE_DEV_UCHAR = "devuchar";
-    const std::string TYPE_DEV_SHORT = "devshort";
-    const std::string TYPE_DEV_USHORT = "devushort";
-    const std::string TYPE_DEV_LONG = "devlong";
-    const std::string TYPE_DEV_ULONG = "devulong";
-    const std::string TYPE_DEV_LONG64 = "devlong64";
-    const std::string TYPE_DEV_ULONG64 = "devulong64";
-    const std::string TYPE_DEV_FLOAT = "devfloat";
-    const std::string TYPE_DEV_DOUBLE = "devdouble";
-    const std::string TYPE_DEV_STRING = "devstring";
-    const std::string TYPE_DEV_STATE = "devstate";
-    const std::string TYPE_DEV_ENCODED = "devencoded";
-    const std::string TYPE_DEV_ENUM = "devenum";
+        // attribute type information
+        const std::string TypeScalar = "scalar";
+        const std::string TypeArray = "array";
+        const std::string TypeImage = "image";
+        const std::string TypeDevBoolean = "devboolean";
+        const std::string TypeDevUchar = "devuchar";
+        const std::string TypeDevShort = "devshort";
+        const std::string TypeDevUshort = "devushort";
+        const std::string TypeDevLong = "devlong";
+        const std::string TypeDevUlong = "devulong";
+        const std::string TypeDevLong64 = "devlong64";
+        const std::string TypeDevUlong64 = "devulong64";
+        const std::string TypeDevFloat = "devfloat";
+        const std::string TypeDevDouble = "devdouble";
+        const std::string TypeDevString = "devstring";
+        const std::string TypeDevState = "devstate";
+        const std::string TypeDevEncoded = "devencoded";
+        const std::string TypeDevEnum = "devenum";
 
-    // att_conf table
-    const std::string CONF_TABLE_NAME = "att_conf";
-    const std::string CONF_COL_ID = "att_conf_id";
-    const std::string CONF_COL_NAME = "att_name";
-    const std::string CONF_COL_TYPE_ID = "att_conf_type_id";
-    const std::string CONF_COL_FORMAT_TYPE_ID = "att_conf_format_id";
-    const std::string CONF_COL_WRITE_TYPE_ID = "att_conf_write_id";
-    const std::string CONF_COL_TABLE_NAME = "table_name";
-    const std::string CONF_COL_CS_NAME = "cs_name";
-    const std::string CONF_COL_DOMAIN = "domain";
-    const std::string CONF_COL_FAMILY = "family";
-    const std::string CONF_COL_MEMBER = "member";
-    const std::string CONF_COL_LAST_NAME = "name";
-    const std::string CONF_COL_TTL = "ttl";
-    const std::string CONF_COL_HIDE = "hide";
+        // att_conf table
+        const std::string ConfTableName = "att_conf";
+        const std::string ConfColId = "att_conf_id";
+        const std::string ConfColName = "att_name";
+        const std::string ConfColTypeId = "att_conf_type_id";
+        const std::string ConfColFormatTypeId = "att_conf_format_id";
+        const std::string ConfColWriteTypeId = "att_conf_write_id";
+        const std::string ConfColTableName = "table_name";
+        const std::string ConfColCsName = "cs_name";
+        const std::string ConfColDomain = "domain";
+        const std::string ConfColFamily = "family";
+        const std::string ConfColMember = "member";
+        const std::string ConfColLastName = "name";
+        const std::string ConfColTtl = "ttl";
+        const std::string ConfColHide = "hide";
 
-    // att_conf_type table
-    const std::string CONF_TYPE_TABLE_NAME = "att_conf_type";
-    const std::string CONF_TYPE_COL_TYPE_ID = "att_conf_type_id";
-    const std::string CONF_TYPE_COL_TYPE = "type";
-    const std::string CONF_TYPE_COL_TYPE_NUM = "type_num";
+        // att_conf_type table
+        const std::string ConfTypeTableName = "att_conf_type";
+        const std::string ConfTypeColTypeId = "att_conf_type_id";
+        const std::string ConfTypeColType = "type";
+        const std::string ConfTypeColTypeNum = "type_num";
 
-    // att_conf_format table
-    const std::string CONF_FORMAT_TABLE_NAME = "att_conf_format";
-    const std::string CONF_FORMAT_COL_FORMAT_ID = "att_conf_format_id";
-    const std::string CONF_FORMAT_COL_FORMAT = "format";
-    const std::string CONF_FORMAT_COL_FORMAT_NUM = "format_num";
+        // att_conf_format table
+        const std::string ConfFormatTableName = "att_conf_format";
+        const std::string ConfFormatColFormatId = "att_conf_format_id";
+        const std::string ConfFormatColFormat = "format";
+        const std::string ConfFormatColFormatNum = "format_num";
 
-    // att_conf_write table
-    const std::string CONF_WRITE_TABLE_NAME = "att_conf_write";
-    const std::string CONF_WRITE_COL_WRITE_ID = "att_conf_write_id";
-    const std::string CONF_WRITE_COL_WRITE = "write";
-    const std::string CONF_WRITE_COL_WRITE_NUM = "write_num";
+        // att_conf_write table
+        const std::string ConfWriteTableName = "att_conf_write";
+        const std::string ConfWriteColWriteId = "att_conf_write_id";
+        const std::string ConfWriteColWrite = "write";
+        const std::string ConfWriteColWriteNum = "write_num";
 
-    // att_history table
-    const std::string HISTORY_TABLE_NAME = "att_history";
-    const std::string HISTORY_COL_ID = "att_conf_id";
-    const std::string HISTORY_COL_EVENT_ID = "att_history_event_id";
-    const std::string HISTORY_COL_TIME = "event_time";
-    const std::string HISTORY_COL_DETAILS = "details";
+        // att_history table
+        const std::string HistoryTableName = "att_history";
+        const std::string HistoryColId = "att_conf_id";
+        const std::string HistoryColEventId = "att_history_event_id";
+        const std::string HistoryColTime = "event_time";
+        const std::string HistoryColDetails = "details";
 
-    // att_history_event table
-    const std::string HISTORY_EVENT_TABLE_NAME = "att_history_event";
-    const std::string HISTORY_EVENT_COL_EVENT_ID = "att_history_event_id";
-    const std::string HISTORY_EVENT_COL_EVENT = "event";
+        // att_history_event table
+        const std::string HistoryEventTableName = "att_history_event";
+        const std::string HistoryEventColEventId = "att_history_event_id";
+        const std::string HistoryEventColEvent = "event";
 
-    // att_parameter table
-    const std::string PARAM_TABLE_NAME = "att_parameter";
-    const std::string PARAM_COL_ID = "att_conf_id";
-    const std::string PARAM_COL_INS_TIME = "insert_time";
-    const std::string PARAM_COL_EV_TIME = "recv_time";
-    const std::string PARAM_COL_LABEL = "label";
-    const std::string PARAM_COL_UNIT = "unit";
-    const std::string PARAM_COL_STANDARDUNIT = "standard_unit";
-    const std::string PARAM_COL_DISPLAYUNIT = "display_unit";
-    const std::string PARAM_COL_FORMAT = "format";
-    const std::string PARAM_COL_ARCHIVERELCHANGE = "archive_rel_change";
-    const std::string PARAM_COL_ARCHIVEABSCHANGE = "archive_abs_change";
-    const std::string PARAM_COL_ARCHIVEPERIOD = "archive_period";
-    const std::string PARAM_COL_DESCRIPTION = "description";
-    const std::string PARAM_COL_DETAILS = "details";
+        // att_parameter table
+        const std::string ParamTableName = "att_parameter";
+        const std::string ParamColId = "att_conf_id";
+        const std::string ParamColInsTime = "insert_time";
+        const std::string ParamColEvTime = "recv_time";
+        const std::string ParamColLabel = "label";
+        const std::string ParamColUnit = "unit";
+        const std::string ParamColStandardUnit = "standard_unit";
+        const std::string ParamColDisplayUnit = "display_unit";
+        const std::string ParamColFormat = "format";
+        const std::string ParamColArchiveRelChange = "archive_rel_change";
+        const std::string ParamColArchiveAbsChange = "archive_abs_change";
+        const std::string ParamColArchivePeriod = "archive_period";
+        const std::string ParamColDescription = "description";
+        const std::string ParamColDetails = "details";
 
-    // att_error_desc table
-    const std::string ERR_TABLE_NAME = "att_error_desc";
-    const std::string ERR_COL_ID = "att_error_desc_id";
-    const std::string ERR_COL_ERROR_DESC = "error_desc";
+        // att_error_desc table
+        const std::string ErrTableName = "att_error_desc";
+        const std::string ErrColId = "att_error_desc_id";
+        const std::string ErrColErrorDesc = "error_desc";
 
-    // data tables
-    const std::string DAT_COL_ID = "att_conf_id";
-    const std::string DAT_COL_INS_TIME = "insert_time";
-    const std::string DAT_COL_RCV_TIME = "recv_time";
-    const std::string DAT_COL_DATA_TIME = "data_time";
-    const std::string DAT_COL_VALUE_R = "value_r";
-    const std::string DAT_COL_VALUE_W = "value_w";
-    const std::string DAT_COL_QUALITY = "quality";
-    const std::string DAT_COL_ERROR_DESC_ID = "att_error_desc_id";
-    const std::string DAT_COL_DETAILS = "details";
+        // data tables
+        const std::string DatColId = "att_conf_id";
+        const std::string DatColDataTime = "data_time";
+        const std::string DatColValueR = "value_r";
+        const std::string DatColValueW = "value_w";
+        const std::string DatColQuality = "quality";
+        const std::string DatColErrorDescId = "att_error_desc_id";
+        const std::string DatColDetails = "details";
 
-    // special fields for enums
-    const std::string DAT_COL_DAT_COL_VALUE_R_LABEL = "value_r_label";
-    const std::string DAT_COL_DAT_COL_VALUE_W_LABEL = "value_w_label";
+        // special fields for enums
+        const std::string DatColDatColValueRLabel = "value_r_label";
+        const std::string DatColDatColValueWLabel = "value_w_label";
 
-    // special fields for image tables
-    const std::string DAT_IMG_COL_DIMX_R = "dim_x_r";
-    const std::string DAT_IMG_COL_DIMY_R = "dim_y_r";
-    const std::string DAT_IMG_COL_DIMX_W = "dim_x_w";
-    const std::string DAT_IMG_COL_DIMY_W = "dim_y_w";
+        // special fields for image tables
+        const std::string DatImgColDimxR = "dim_x_r";
+        const std::string DatImgColDimyR = "dim_y_r";
+        const std::string DatImgColDimxW = "dim_x_w";
+        const std::string DatImgColDimyW = "dim_y_w";
+    } // namespace schema
 } // namespace pqxx_conn
 } // namespace hdbpp_internal
 #endif // _TIMESCALE_SCHEMA_HPP

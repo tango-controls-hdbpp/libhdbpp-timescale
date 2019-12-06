@@ -276,7 +276,7 @@ void AttributeName::validate()
 
 //=============================================================================
 //=============================================================================
-void AttributeName::print(std::ostream &os) const
+void AttributeName::print(ostream &os) const
 {
     os << "AttributeName(_fqdn_attr_name: " << _fqdn_attr_name << ")";
 }
@@ -290,6 +290,20 @@ AttributeName &AttributeName::operator=(const AttributeName &other)
 
     // now copy the fqdn, we do not copy the cache
     _fqdn_attr_name = other._fqdn_attr_name;
+    return *this;
+}
+
+//=============================================================================
+//=============================================================================
+AttributeName &AttributeName::operator=(AttributeName&& other) noexcept
+{
+    // clear the cache
+    clear();
+
+    // now copy the fqdn, we do not copy the cache
+    _fqdn_attr_name = move(other._fqdn_attr_name);
+    return *this;
+
 }
 
 } // namespace hdbpp_internal

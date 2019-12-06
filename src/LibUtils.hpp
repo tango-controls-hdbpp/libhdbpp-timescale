@@ -78,13 +78,19 @@ namespace logging_utils
     // get the file name from the __FILE__ variable for error messages
     constexpr auto* getFileName(const char* const path)
     {
+        // We silence clang warnings for this funciton, this is a quick and simple
+        // way to produce the file name, and yes we use pointer arithmetic, but 
+        // the alternatives can be messy or overworked.
         const auto* start_position = path;
 
+        // NOLINTNEXTLINE
         for (const auto* current_character = path; *current_character != '\0'; ++current_character)
+            // NOLINTNEXTLINE
             if (*current_character == '\\' || *current_character == '/')
                 start_position = current_character;
 
         if (start_position != path)
+            // NOLINTNEXTLINE
             ++start_position;
 
         return start_position;
