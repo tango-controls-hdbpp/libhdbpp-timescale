@@ -111,8 +111,8 @@ namespace pqxx_conn
                 // escaped characters. This is a mess when extracting the array of strings.
                 if (traits.isScalar())
                 {
-                    // no special case needed for a scalar string
-                    return "'" + pqxx::to_string((*value)[0]) + "'";
+                    // use dollars to ensure it saves
+                    return "$$" + pqxx::to_string((*value)[0]) + "$$";
                 }
 
                 auto iter = value->begin();

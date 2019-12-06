@@ -337,7 +337,7 @@ void DbConnectionTestsFixture::checkStoreTestEventData(const string &att_name, c
     auto data_row(tx.exec1(
         "SELECT * FROM " + QueryBuilder::tableName(traits) + 
         " WHERE " + schema::DatColId + "=" + to_string(attr_row.at(schema::ConfColId).as<int>()) + " " + 
-        " ORDER BY " + schema::DatColDataTime + " LIMIT 1"));
+        " ORDER BY " + schema::DatColDataTime + " DESC LIMIT 1"));
 
     tx.commit();
 
@@ -701,7 +701,7 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing events which
                 query += " ";
                 query += " ORDER BY ";
                 query += schema::DatColDataTime;
-                query += " LIMIT 1";
+                query += " DESC LIMIT 1";
 
                 // now get the last row stored
                 auto data_row(tx.exec1(query));
@@ -892,6 +892,7 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing complex arra
     REQUIRE_NOTHROW(clearTables());
     auto name = storeAttributeByTraits(traits);
 
+    // this only ever stores by insert string, so no need to test prepared statements.
     REQUIRE_NOTHROW(testConn().storeDataEvent(name, event_time, Tango::ATTR_VALID, move(value_r), move(value_w), traits));
     checkStoreTestEventData(name, traits, original_values);
 
@@ -904,31 +905,41 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing complex stri
     struct timeval tv
     {};
 
-    gettimeofday(&tv, nullptr);
-    double event_time = tv.tv_sec + tv.tv_usec / 1.0e6;
+    vector<string> values = {
+        "test brackets } {} with comma,", 
+        "quotes '' and commas, and 'quoted, comma', escaped \"double quote\"",
+        R"(test two slash \ test four slash \\)",
+        "line feed \n and return \r" };
 
-    string s1 = "test brackets } {} with comma,";
-    string s2 = "quotes '' and commas, and 'quoted, comma', escaped \"double quote\"";
-    string s3 = R"(test two slash \ test four slash \\)";
-    string s4 = "line feed \n and return \r";
+    AttributeTraits traits {Tango::READ_WRITE, Tango::SCALAR, Tango::DEV_STRING};
 
-    auto value = std::make_unique<std::vector<std::string>>();
-    value->push_back(s1);
-    value->push_back(s2);
-    value->push_back(s3);
-    value->push_back(s4);
+    vector<DbConnection::DbStoreMethod> access_methods {
+        DbConnection::DbStoreMethod::PreparedStatement,
+        DbConnection::DbStoreMethod::InsertString};
 
     REQUIRE_NOTHROW(clearTables());
     auto name = storeAttributeByTraits(traits);
 
-    for (auto )
+    for (auto access : access_methods)
     {
-        auto value = std::make_unique<std::vector<std::string>>();
-        auto original_values = make_tuple((*value), (*value));
-        AttributeTraits traits {Tango::READ_WRITE, Tango::SCALAR, Tango::DEV_STRING};
+        resetDbAccess(access);
 
-        REQUIRE_NOTHROW(testConn().storeDataEvent(name, event_time, Tango::ATTR_VALID, move(value), move(value), traits));
-        checkStoreTestEventData(name, traits, original_values);
+        for (auto &str : values)
+        {
+            gettimeofday(&tv, nullptr);
+            double event_time = tv.tv_sec + tv.tv_usec / 1.0e6;
+
+            auto value_r = std::make_unique<std::vector<std::string>>();
+            value_r->push_back(str);
+
+            auto value_w = std::make_unique<std::vector<std::string>>();
+            value_w->push_back(str);
+
+            auto original_values = make_tuple((*value_r), (*value_w));
+
+            REQUIRE_NOTHROW(testConn().storeDataEvent(name, event_time, Tango::ATTR_VALID, move(value_r), move(value_w), traits));
+            checkStoreTestEventData(name, traits, original_values);
+        }
     }
 
     SUCCEED("Passed");
@@ -998,7 +1009,7 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing data events 
         query += " ";
         query += " ORDER BY ";
         query += schema::DatColDataTime;
-        query += " LIMIT 1";
+        query += " DESC LIMIT 1";
 
         // now get the last row stored
         pqxx::row data_row;
@@ -1047,7 +1058,7 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing data events 
         query += " ";
         query += " ORDER BY ";
         query += schema::DatColDataTime;
-        query += " LIMIT 2";
+        query += " DESC LIMIT 2";
 
         // now get the last row stored
         pqxx::result data_result;

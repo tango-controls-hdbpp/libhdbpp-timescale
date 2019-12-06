@@ -26,7 +26,7 @@
 int main(int argc, char *argv[])
 {
     hdbpp_internal::LogConfigurator::initLogging();
-    hdbpp_internal::LogConfigurator::initConsoleLogging();
+    //hdbpp_internal::LogConfigurator::initConsoleLogging();
     hdbpp_internal::LogConfigurator::setLoggingLevel(spdlog::level::err);
 
     int result = Catch::Session().run(argc, argv);
