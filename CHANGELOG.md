@@ -7,25 +7,33 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.10.0] - 2019-12-06
+
 ### Added
 
+- Configuration documentation 
 - Added support for syslog logging.
+- Added support for storing data via insert strings rather than prepared statements:
+  - Tango string spectrum types are always stored via insert strings to remove escape characters
+  - This work provides the basis for future batch saving of data events.
 
 ### Fixed
 
 - Close logging down in destructor so linked device server can be restarted.
+- All unit tests now pass!
 
 ### Changed
 
+- Completely redone DbConnectionTest unit tests
+  - Speeds up execution of tests
+  - Prevents database deadlock due to repeated rapid truncation of tables.
 - Build system correctly produces a major version shared object
 - Removed Clang path from build (CMake checks PATH)
 - Corrected static library build
 - Install now places header in include/hdb++/
 - Entire library now uses the global default logger from spdlog.
-
-#### Submodules
-
 - Updated spdlog submodule to release v1.4.2
+- Modern code via clang tidy
 
 ## [0.9.1] - 2019-07-18
 

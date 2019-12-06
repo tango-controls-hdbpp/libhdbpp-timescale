@@ -6,6 +6,7 @@ The documentation is purely about getting the shared library running on a correc
   - [About](#About)
   - [Building and Installation](#Building-and-Installation)
   - [DB Schema](#DB-Schema)
+  - [Configuration](#Configuration)
 
 ## About
 
@@ -19,3 +20,7 @@ The overview is in the main project [README](../README.md).
 ## DB Schema
 
 * [Schema](db-schema-config) guidelines and setup.
+
+## Configuration
+
+* [Configuration](configuration) parameter details.

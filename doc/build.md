@@ -88,7 +88,15 @@ cmake -DBUILD_UNIT_TESTS=ON ..
 make
 ```
 
-To run all unit tests, a postgresql database node is required with the project schema loaded up. Also note the connection string to this database node needs setting in TestHelpers.hpp. To run all tests:
+To run all unit tests, a postgresql database node is required with the project schema loaded up. There is a default connection string inside test/TestHelpers.hpp:
+
+```
+user=postgres host=localhost port=5432 dbname=hdb password=password
+```
+
+If you run the hdb timescale docker image associated with this project locally then this will connect automatically. If you wish to use a different database, edit the string in test/TestHelpers.hpp.
+
+To run all tests:
 
 ```bash
 ./test/unit-tests

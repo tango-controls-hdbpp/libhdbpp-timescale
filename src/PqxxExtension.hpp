@@ -199,14 +199,16 @@ public:
         value.clear();
 
         std::pair<array_parser::juncture, std::string> output;
-        array_parser parser(str);
 
+        // use pqxx array parser features to get each element from the array
+        array_parser parser(str);
         output = parser.get_next();
 
         if (output.first == array_parser::juncture::row_start)
         {
             output = parser.get_next();
 
+            // loop and extract each string in turn
             while (output.first == array_parser::juncture::string_value)
             {
                 value.push_back(output.second);
@@ -221,10 +223,10 @@ public:
         }
     }
 
-    // unlike other types, when encoed to a string th
     static std::string to_string(const std::vector<std::string> &value)
     {
-        // simply use the pqxx utilities for this, rather than reinvent the wheel
+        // This function should not be used, so we do a simple basic conversion
+        // for testing only
         return "{" + separated_list(",", value.begin(), value.end()) + "}";
     }
 };

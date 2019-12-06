@@ -19,8 +19,8 @@ set(LIBHDBPP_TIMESCALE_NAME "libhdb++timescale")
 
 # Versioning
 set(VERSION_MAJOR "0")
-set(VERSION_MINOR "9")
-set(VERSION_PATCH "2")
+set(VERSION_MINOR "10")
+set(VERSION_PATCH "0")
 set(VERSION_METADATA "")
 set(VERSION_STRING ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
 
@@ -38,9 +38,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Build options
-option(BUILD_UNIT_TESTS "Build unit tests" ON)
-option(BUILD_BENCHMARK_TESTS "Build benchmarking tests (Forces RELEASE build)" ON)
-option(ENABLE_CLANG "Enable clang code and layout analysis" ON)
+option(BUILD_UNIT_TESTS "Build unit tests" OFF)
+option(BUILD_BENCHMARK_TESTS "Build benchmarking tests (Forces RELEASE build)" OFF)
+option(ENABLE_CLANG "Enable clang code and layout analysis" OFF)
 
 if(BUILD_UNIT_TESTS)
     message(STATUS "Unit tests will be built")
