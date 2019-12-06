@@ -12,7 +12,7 @@ Configuration parameters are as follows:
 | log_file | false | false | Enable logging to file |
 | log_console | false | false | Enable logging to the console |
 | log_syslog | false | false | Enable logging to syslog |
-| log_file_name | false | None | When logging to file, this is the path and name of file to use |
+| log_file_name | false | None | When logging to file, this is the path and name of file to use. Ensure the path exists otherwise this is an error conditions. |
 
 The logging_level parameter is case insensitive. Logging levels are as follows:
 

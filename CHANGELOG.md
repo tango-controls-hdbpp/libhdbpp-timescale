@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Entire library now uses the global default logger from spdlog.
 - Updated spdlog submodule to release v1.4.2
 - Modern code via clang tidy
+- DbConnection::storeParameterEvent() no longer asserts on empty parameters, it now warns in the log.
 
 ## [0.9.1] - 2019-07-18
 
