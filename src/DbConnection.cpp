@@ -261,21 +261,26 @@ namespace pqxx_conn
         const string &description)
     {
         assert(!full_attr_name.empty());
-        assert(!label.empty());
-        assert(!unit.empty());
-        assert(!standard_unit.empty());
-        assert(!display_unit.empty());
-        assert(!format.empty());
-        assert(!archive_rel_change.empty());
-        assert(!archive_abs_change.empty());
-        assert(!archive_period.empty());
-        assert(!description.empty());
         assert(_conn != nullptr);
         assert(_conf_id_cache != nullptr);
         assert(_error_desc_id_cache != nullptr);
         assert(_event_id_cache != nullptr);
 
         spdlog::trace("Storing parameter event for attribute {}", full_attr_name);
+
+        auto check_parameter = [](auto &name, auto &value) {
+            if (value.empty())
+                spdlog::warn("Parameter {} is empty. Please set in the device server", name);
+        };
+
+        check_parameter("label", label);
+        check_parameter("unit", unit);
+        check_parameter("standard_unit", standard_unit);
+        check_parameter("display_unit", display_unit);
+        check_parameter("archive_rel_change", archive_rel_change);
+        check_parameter("archive_abs_change", archive_abs_change);
+        check_parameter("archive_period", archive_period);
+        check_parameter("description", description);
 
         spdlog::trace("Parmater event data: event_time {}, label {}, unit {}, standard_unit {}, display_unit {}, "
                       "format {}, archive_rel_change {}, archive_abs_change {}, archive_period {}, description {}",
