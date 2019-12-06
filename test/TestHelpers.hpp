@@ -36,11 +36,8 @@ namespace psql_connection
     namespace postgres_db
     {
         // connection strings
-        const std::string ConnectionString =
-            "user=postgres host=localhost port=5432 dbname=hdb password=password";
-
-        const std::string HdbppConnectionString =
-            "user=postgres host=localhost port=5432 dbname=hdb password=password";
+        const std::string ConnectionString = "user=postgres host=localhost port=5432 dbname=hdb password=password";
+        const std::string HdbppConnectionString = "user=postgres host=localhost port=5432 dbname=hdb password=password";
     } // namespace postgres_db
 } // namespace psql_connection
 
@@ -73,7 +70,7 @@ namespace attr_info
 {
     const std::string AttrInfoDescription =
         "Description about attribute, its \"quoted\",  and 'quoted', yet does it work?";
-        
+
     const std::string AttrInfoLabel = "Label";
     const std::string AttrInfoUnit = "Unit %";
     const std::string AttrInfoStandardUnit = "Standard Unit";

@@ -18,8 +18,8 @@
    along with libhdb++timescale.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include "QueryBuilder.hpp"
-#include "TimescaleSchema.hpp"
 #include "TestHelpers.hpp"
+#include "TimescaleSchema.hpp"
 #include "catch2/catch.hpp"
 
 using namespace std;
@@ -40,15 +40,10 @@ SCENARIO("storeDataEventString() returns the correct Value fields for the given 
 
         WHEN("Requesting a query string for traits configured for Tango::READ")
         {
-           AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE};
+            AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE};
 
             auto result = query_builder.storeDataEventString<double>(
-                TestAttrFQDName,
-                string("0"),
-                string("1"),
-                value_r,
-                value_w_empty,
-                traits);
+                TestAttrFQDName, string("0"), string("1"), value_r, value_w_empty, traits);
 
             THEN("The result must include the schema::DatColValueR field only")
             {
@@ -62,12 +57,7 @@ SCENARIO("storeDataEventString() returns the correct Value fields for the given 
             AttributeTraits traits {Tango::WRITE, Tango::SCALAR, Tango::DEV_DOUBLE};
 
             auto result = query_builder.storeDataEventString<double>(
-                TestAttrFQDName,
-                string("0"),
-                string("1"),
-                value_r_empty,
-                value_w,
-                traits);
+                TestAttrFQDName, string("0"), string("1"), value_r_empty, value_w, traits);
 
             THEN("The result must include the schema::DatColValueW field only")
             {
@@ -81,12 +71,7 @@ SCENARIO("storeDataEventString() returns the correct Value fields for the given 
             AttributeTraits traits {Tango::READ_WRITE, Tango::SCALAR, Tango::DEV_DOUBLE};
 
             auto result = query_builder.storeDataEventString<double>(
-                TestAttrFQDName,
-                string("0"),
-                string("1"),
-                value_r,
-                value_w,
-                traits);
+                TestAttrFQDName, string("0"), string("1"), value_r, value_w, traits);
 
             THEN("The result must include both the schema::DatColValueR and schema::DatColValueW field")
             {
@@ -101,12 +86,7 @@ SCENARIO("storeDataEventString() returns the correct Value fields for the given 
             AttributeTraits traits {Tango::READ_WITH_WRITE, Tango::SCALAR, Tango::DEV_DOUBLE};
 
             auto result = query_builder.storeDataEventString<double>(
-                TestAttrFQDName,
-                string("0"),
-                string("1"),
-                value_r,
-                value_w,
-                traits);
+                TestAttrFQDName, string("0"), string("1"), value_r, value_w, traits);
 
             THEN("The result must include both the schema::DatColValueR and schema::DatColValueW field")
             {
@@ -134,12 +114,7 @@ SCENARIO("storeDataEventString() adds a null when value is size zero", "[query-s
             AttributeTraits traits {Tango::READ_WRITE, Tango::SCALAR, Tango::DEV_DOUBLE};
 
             auto result = query_builder.storeDataEventString<double>(
-                TestAttrFQDName,
-                string("0"),
-                string("1"),
-                value_r,
-                value_w_empty,
-                traits);
+                TestAttrFQDName, string("0"), string("1"), value_r, value_w_empty, traits);
 
             THEN("The result must include both the schema::DatColValueR and schema::DatColValueW field")
             {
@@ -154,12 +129,7 @@ SCENARIO("storeDataEventString() adds a null when value is size zero", "[query-s
             AttributeTraits traits {Tango::READ_WRITE, Tango::SCALAR, Tango::DEV_DOUBLE};
 
             auto result = query_builder.storeDataEventString<double>(
-                TestAttrFQDName,
-                string("0"),
-                string("1"),
-                value_r_empty,
-                value_w,
-                traits);
+                TestAttrFQDName, string("0"), string("1"), value_r_empty, value_w, traits);
 
             THEN("The result must include both the schema::DatColValueR and schema::DatColValueW field")
             {

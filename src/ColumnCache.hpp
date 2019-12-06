@@ -177,8 +177,8 @@ namespace pqxx_conn
 
                     if (!tx.prepared(_fetch_id_query_name).exists())
                     {
-                        tx.conn().prepare(
-                            _fetch_id_query_name, QueryBuilder::fetchValueStatement(_column_name, _table_name, _reference));
+                        tx.conn().prepare(_fetch_id_query_name,
+                            QueryBuilder::fetchValueStatement(_column_name, _table_name, _reference));
 
                         spdlog::trace("Created prepared statement for: {}", _fetch_id_query_name);
                     }

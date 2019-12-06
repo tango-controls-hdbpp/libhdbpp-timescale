@@ -67,7 +67,7 @@ public:
     bool operator==(const AttributeName &other) const { return _fqdn_attr_name == other._fqdn_attr_name; }
     bool operator!=(const AttributeName &other) const { return !(_fqdn_attr_name == other._fqdn_attr_name); }
     AttributeName &operator=(const AttributeName &other);
-    AttributeName &operator=(AttributeName&& other) noexcept;
+    AttributeName &operator=(AttributeName &&other) noexcept;
 
 private:
     // extract the full attribute name, i.e. domain/family/member/name

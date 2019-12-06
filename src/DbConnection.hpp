@@ -49,9 +49,9 @@ namespace pqxx_conn
         enum DbStoreMethod
         {
             // Compose insert strings and execute each in turn
-            InsertString, 
+            InsertString,
 
-            // Where possible, use prepared statements, this is quicker than 
+            // Where possible, use prepared statements, this is quicker than
             // using strings
             PreparedStatement
         };

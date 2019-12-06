@@ -76,15 +76,15 @@ namespace logging_utils
     const std::string SyslogIdent = "hdbpp-timescale";
 
     // get the file name from the __FILE__ variable for error messages
-    constexpr auto* getFileName(const char* const path)
+    constexpr auto *getFileName(const char *const path)
     {
         // We silence clang warnings for this funciton, this is a quick and simple
-        // way to produce the file name, and yes we use pointer arithmetic, but 
+        // way to produce the file name, and yes we use pointer arithmetic, but
         // the alternatives can be messy or overworked.
-        const auto* start_position = path;
+        const auto *start_position = path;
 
         // NOLINTNEXTLINE
-        for (const auto* current_character = path; *current_character != '\0'; ++current_character)
+        for (const auto *current_character = path; *current_character != '\0'; ++current_character)
             // NOLINTNEXTLINE
             if (*current_character == '\\' || *current_character == '/')
                 start_position = current_character;

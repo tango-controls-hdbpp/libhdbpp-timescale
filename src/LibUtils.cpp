@@ -20,10 +20,10 @@
 #include "LibUtils.hpp"
 
 #include "spdlog/async.h"
+#include "spdlog/sinks/dist_sink.h"
 #include "spdlog/sinks/null_sink.h"
 #include "spdlog/sinks/rotating_file_sink.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
-#include "spdlog/sinks/dist_sink.h"
 #include "spdlog/sinks/syslog_sink.h"
 
 namespace hdbpp_internal
@@ -146,7 +146,7 @@ void LogConfigurator::initLogging()
             spdlog::init_thread_pool(8192, 1);
 
             auto dist_sink = make_shared<spdlog::sinks::dist_sink_mt>();
-            
+
             auto logger = make_shared<spdlog::async_logger>(logging_utils::LibLoggerName,
                 dist_sink,
                 spdlog::thread_pool(),

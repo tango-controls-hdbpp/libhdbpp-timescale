@@ -69,7 +69,8 @@ namespace pqxx_conn
 
         // now create and connect the cache objects to the database connection, this
         // will destroy any existing cache objects managed by the unique pointers
-        _conf_id_cache = make_unique<ColumnCache<int, std::string>>(_conn, schema::ConfTableName, schema::ConfColId, schema::ConfColName);
+        _conf_id_cache = make_unique<ColumnCache<int, std::string>>(
+            _conn, schema::ConfTableName, schema::ConfColId, schema::ConfColName);
 
         _error_desc_id_cache = make_unique<ColumnCache<int, std::string>>(
             _conn, schema::ErrTableName, schema::ErrColId, schema::ErrColErrorDesc);
@@ -277,7 +278,7 @@ namespace pqxx_conn
         spdlog::trace("Storing parameter event for attribute {}", full_attr_name);
 
         spdlog::trace("Parmater event data: event_time {}, label {}, unit {}, standard_unit {}, display_unit {}, "
-                       "format {}, archive_rel_change {}, archive_abs_change {}, archive_period {}, description {}",
+                      "format {}, archive_rel_change {}, archive_abs_change {}, archive_period {}, description {}",
             event_time,
             label,
             unit,
@@ -385,8 +386,7 @@ namespace pqxx_conn
                 {
                     tx.conn().prepare(_query_builder.storeDataEventErrorName(traits),
                         _query_builder.storeDataEventErrorStatement(traits));
-                    spdlog::trace(
-                        "Created prepared statement for: {}", _query_builder.storeDataEventErrorName(traits));
+                    spdlog::trace("Created prepared statement for: {}", _query_builder.storeDataEventErrorName(traits));
                 }
 
                 // no result expected

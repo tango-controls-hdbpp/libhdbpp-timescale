@@ -173,7 +173,7 @@ SCENARIO("Construct a valid HdbppTxDataEvent data event for storage", "[hdbpp-tx
     // ugly, how is this dealt with in Tango!?!
     struct timeval tv
     {};
-    
+
     struct Tango::TimeVal tango_tv
     {};
 

@@ -114,7 +114,6 @@ bool compareVector<double>(const vector<double> &lhs, const vector<double> &rhs)
 class DbConnectionTestsFixture
 {
 private:
-
     DbConnection::DbStoreMethod _db_access = DbConnection::DbStoreMethod::PreparedStatement;
     std::unique_ptr<DbConnection> _test_conn;
 
@@ -122,41 +121,41 @@ private:
     static QueryBuilder _query_builder;
 
 protected:
-
-    void resetDbAccess(DbConnection::DbStoreMethod db_access) 
-    { 
+    void resetDbAccess(DbConnection::DbStoreMethod db_access)
+    {
         _db_access = db_access;
         _test_conn.reset(nullptr);
     }
 
-    DbConnection& testConn();
-    pqxx::connection& verifyConn();
+    DbConnection &testConn();
+    pqxx::connection &verifyConn();
 
     void clearTables();
     void storeAttribute(const AttributeTraits &traits);
     string storeAttributeByTraits(const AttributeTraits &traits);
 
     template<Tango::CmdArgType Type>
-    tuple<vector<typename TangoTypeTraits<Type>::type>, vector<typename TangoTypeTraits<Type>::type>> storeTestEventData(const string &att_name, const AttributeTraits &traits, int quality = Tango::ATTR_VALID);
+    tuple<vector<typename TangoTypeTraits<Type>::type>, vector<typename TangoTypeTraits<Type>::type>>
+        storeTestEventData(const string &att_name, const AttributeTraits &traits, int quality = Tango::ATTR_VALID);
 
     template<typename T>
-    void checkStoreTestEventData(const string &att_name, const AttributeTraits &traits, const tuple<vector<T>, vector<T>> &data);
+    void checkStoreTestEventData(
+        const string &att_name, const AttributeTraits &traits, const tuple<vector<T>, vector<T>> &data);
 
-    QueryBuilder& queryBuilder() { return _query_builder; }
+    QueryBuilder &queryBuilder() { return _query_builder; }
     vector<AttributeTraits> getTraits() const;
     vector<AttributeTraits> getTraitsImplemented() const;
 
 public:
-
     DbConnectionTestsFixture() = default;
 };
 
-std::unique_ptr<pqxx::connection> DbConnectionTestsFixture::_verify_conn = std::unique_ptr<pqxx::connection>{};
+std::unique_ptr<pqxx::connection> DbConnectionTestsFixture::_verify_conn = std::unique_ptr<pqxx::connection> {};
 
 //=============================================================================
 //=============================================================================
-DbConnection& DbConnectionTestsFixture::testConn() 
-{ 
+DbConnection &DbConnectionTestsFixture::testConn()
+{
     if (_test_conn == nullptr)
     {
         _test_conn = make_unique<DbConnection>(_db_access);
@@ -168,12 +167,12 @@ DbConnection& DbConnectionTestsFixture::testConn()
 
 //=============================================================================
 //=============================================================================
-pqxx::connection& DbConnectionTestsFixture::verifyConn() 
-{ 
+pqxx::connection &DbConnectionTestsFixture::verifyConn()
+{
     if (_verify_conn == nullptr)
         _verify_conn = make_unique<pqxx::connection>(postgres_db::HdbppConnectionString);
 
-    return *_verify_conn; 
+    return *_verify_conn;
 }
 
 //=============================================================================
@@ -208,30 +207,29 @@ void DbConnectionTestsFixture::clearTables()
 //=============================================================================
 void DbConnectionTestsFixture::storeAttribute(const AttributeTraits &traits)
 {
-    REQUIRE_NOTHROW(testConn().storeAttribute(
-        attr_name::TestAttrFinalName, 
-        attr_name::TestAttrCs, 
-        attr_name::TestAttrDomain, 
-        attr_name::TestAttrFamily, 
-        attr_name::TestAttrMember, 
-        attr_name::TestAttrName, traits));
+    REQUIRE_NOTHROW(testConn().storeAttribute(attr_name::TestAttrFinalName,
+        attr_name::TestAttrCs,
+        attr_name::TestAttrDomain,
+        attr_name::TestAttrFamily,
+        attr_name::TestAttrMember,
+        attr_name::TestAttrName,
+        traits));
 }
 
 //=============================================================================
 //=============================================================================
 string DbConnectionTestsFixture::storeAttributeByTraits(const AttributeTraits &traits)
 {
-    auto name = attr_name::TestAttrFinalName + 
-        "_" + tangoEnumToString(traits.type()) +
-        "_" + tangoEnumToString(traits.writeType()) +
-        "_" + tangoEnumToString(traits.formatType());
+    auto name = attr_name::TestAttrFinalName + "_" + tangoEnumToString(traits.type()) + "_" +
+        tangoEnumToString(traits.writeType()) + "_" + tangoEnumToString(traits.formatType());
 
-    REQUIRE_NOTHROW(testConn().storeAttribute(name, 
-        attr_name::TestAttrCs, 
-        attr_name::TestAttrDomain, 
-        attr_name::TestAttrFamily, 
-        attr_name::TestAttrMember, 
-        attr_name::TestAttrName, traits));
+    REQUIRE_NOTHROW(testConn().storeAttribute(name,
+        attr_name::TestAttrCs,
+        attr_name::TestAttrDomain,
+        attr_name::TestAttrFamily,
+        attr_name::TestAttrMember,
+        attr_name::TestAttrName,
+        traits));
 
     return name;
 }
@@ -242,8 +240,7 @@ vector<AttributeTraits> DbConnectionTestsFixture::getTraits() const
 {
     vector<AttributeTraits> traits_array {};
 
-    vector<Tango::CmdArgType> types {
-        Tango::DEV_BOOLEAN,
+    vector<Tango::CmdArgType> types {Tango::DEV_BOOLEAN,
         Tango::DEV_DOUBLE,
         Tango::DEV_FLOAT,
         Tango::DEV_STRING,
@@ -265,7 +262,7 @@ vector<AttributeTraits> DbConnectionTestsFixture::getTraits() const
     for (auto &type : types)
         for (auto &format : format_types)
             for (auto &write : write_types)
-                traits_array.emplace_back(AttributeTraits{write, format, type});
+                traits_array.emplace_back(AttributeTraits {write, format, type});
 
     return traits_array;
 }
@@ -276,8 +273,7 @@ vector<AttributeTraits> DbConnectionTestsFixture::getTraitsImplemented() const
 {
     vector<AttributeTraits> traits_array {};
 
-    vector<Tango::CmdArgType> types {
-        Tango::DEV_BOOLEAN,
+    vector<Tango::CmdArgType> types {Tango::DEV_BOOLEAN,
         Tango::DEV_DOUBLE,
         Tango::DEV_FLOAT,
         Tango::DEV_STRING,
@@ -297,7 +293,7 @@ vector<AttributeTraits> DbConnectionTestsFixture::getTraitsImplemented() const
     for (auto &type : types)
         for (auto &format : format_types)
             for (auto &write : write_types)
-                traits_array.emplace_back(AttributeTraits{write, format, type});
+                traits_array.emplace_back(AttributeTraits {write, format, type});
 
     return traits_array;
 }
@@ -305,7 +301,8 @@ vector<AttributeTraits> DbConnectionTestsFixture::getTraitsImplemented() const
 //=============================================================================
 //=============================================================================
 template<Tango::CmdArgType Type>
-tuple<vector<typename TangoTypeTraits<Type>::type>, vector<typename TangoTypeTraits<Type>::type>> DbConnectionTestsFixture::storeTestEventData(const string &att_name, const AttributeTraits &traits, int quality)
+tuple<vector<typename TangoTypeTraits<Type>::type>, vector<typename TangoTypeTraits<Type>::type>>
+    DbConnectionTestsFixture::storeTestEventData(const string &att_name, const AttributeTraits &traits, int quality)
 {
     struct timeval tv
     {};
@@ -326,18 +323,19 @@ tuple<vector<typename TangoTypeTraits<Type>::type>, vector<typename TangoTypeTra
 //=============================================================================
 //=============================================================================
 template<typename T>
-void DbConnectionTestsFixture::checkStoreTestEventData(const string &att_name, const AttributeTraits &traits, const tuple<vector<T>, vector<T>> &data)
+void DbConnectionTestsFixture::checkStoreTestEventData(
+    const string &att_name, const AttributeTraits &traits, const tuple<vector<T>, vector<T>> &data)
 {
     pqxx::work tx {verifyConn()};
 
     // get the attribute id
-    auto attr_row(tx.exec1("SELECT * FROM " + schema::ConfTableName + " WHERE " + schema::ConfColName + "='" + att_name + "'"));
+    auto attr_row(
+        tx.exec1("SELECT * FROM " + schema::ConfTableName + " WHERE " + schema::ConfColName + "='" + att_name + "'"));
 
     // now get the last row stored
-    auto data_row(tx.exec1(
-        "SELECT * FROM " + QueryBuilder::tableName(traits) + 
-        " WHERE " + schema::DatColId + "=" + to_string(attr_row.at(schema::ConfColId).as<int>()) + " " + 
-        " ORDER BY " + schema::DatColDataTime + " DESC LIMIT 1"));
+    auto data_row(tx.exec1("SELECT * FROM " + QueryBuilder::tableName(traits) + " WHERE " + schema::DatColId + "=" +
+        to_string(attr_row.at(schema::ConfColId).as<int>()) + " " + " ORDER BY " + schema::DatColDataTime +
+        " DESC LIMIT 1"));
 
     tx.commit();
 
@@ -348,7 +346,7 @@ void DbConnectionTestsFixture::checkStoreTestEventData(const string &att_name, c
         REQUIRE(data_row.at(schema::DatColValueR).size() > 0);
         REQUIRE(compareData(data_row.at(schema::DatColValueR).as<T>(), get<0>(data)[0]) == true);
     }
-    
+
     if (traits.isArray() && traits.hasReadData())
     {
         REQUIRE(data_row.at(schema::DatColValueR).size() > 0);
@@ -360,7 +358,7 @@ void DbConnectionTestsFixture::checkStoreTestEventData(const string &att_name, c
         REQUIRE(data_row.at(schema::DatColValueW).size() > 0);
         REQUIRE(compareData(data_row.at(schema::DatColValueW).as<T>(), get<1>(data)[0]) == true);
     }
-    
+
     if (traits.isArray() && traits.hasWriteData())
     {
         REQUIRE(data_row.at(schema::DatColValueW).size() > 0);
@@ -369,7 +367,8 @@ void DbConnectionTestsFixture::checkStoreTestEventData(const string &att_name, c
 }
 }; // namespace pqxx_conn_test
 
-TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "The DbConnection class can open a valid connection to a postgresql node",
+TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
+    "The DbConnection class can open a valid connection to a postgresql node",
     "[db-access][hdbpp-db-access][db-connection]")
 {
     DbConnection conn(DbConnection::DbStoreMethod::PreparedStatement);
@@ -380,7 +379,8 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "The DbConnection cla
     SUCCEED("Passed");
 }
 
-TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "The DbConnection class handles a bad connection attempts with an exception",
+TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
+    "The DbConnection class handles a bad connection attempts with an exception",
     "[db-access][hdbpp-db-access][db-connection]")
 {
     DbConnection conn(DbConnection::DbStoreMethod::PreparedStatement);
@@ -390,7 +390,9 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "The DbConnection cla
     SUCCEED("Passed");
 }
 
-TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing Attributes in the database succeeds", "[db-access][hdbpp-db-access][db-connection]")
+TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
+    "Storing Attributes in the database succeeds",
+    "[db-access][hdbpp-db-access][db-connection]")
 {
     AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE};
 
@@ -420,47 +422,59 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing Attributes i
         REQUIRE(attr_row.at(schema::ConfColLastName).as<string>() == attr_name::TestAttrName);
         REQUIRE(attr_row.at(schema::ConfColTableName).as<string>() == QueryBuilder().tableName(traits));
         REQUIRE(attr_row.at(schema::ConfColTypeId).as<int>() == type_row.at(schema::ConfTypeColTypeId).as<int>());
-        REQUIRE(attr_row.at(schema::ConfColFormatTypeId).as<int>() == format_row.at(schema::ConfFormatColFormatId).as<int>());
-        REQUIRE(attr_row.at(schema::ConfColWriteTypeId).as<int>() == access_row.at(schema::ConfWriteColWriteId).as<int>());
+
+        REQUIRE(attr_row.at(schema::ConfColFormatTypeId).as<int>() ==
+            format_row.at(schema::ConfFormatColFormatId).as<int>());
+
+        REQUIRE(
+            attr_row.at(schema::ConfColWriteTypeId).as<int>() == access_row.at(schema::ConfWriteColWriteId).as<int>());
     }
 
     SUCCEED("Passed");
 }
 
-TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing the same attribute in the database twice fails", "[db-access][hdbpp-db-access][db-connection]")
+TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
+    "Storing the same attribute in the database twice fails",
+    "[db-access][hdbpp-db-access][db-connection]")
 {
     AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE};
     REQUIRE_NOTHROW(clearTables());
     REQUIRE_NOTHROW(storeAttribute(traits));
 
-    REQUIRE_THROWS_AS(testConn().storeAttribute(
-        attr_name::TestAttrFinalName, 
-        attr_name::TestAttrCs, 
-        attr_name::TestAttrDomain, 
-        attr_name::TestAttrFamily, 
-        attr_name::TestAttrMember, 
-        attr_name::TestAttrName, traits), Tango::DevFailed);
+    REQUIRE_THROWS_AS(testConn().storeAttribute(attr_name::TestAttrFinalName,
+                          attr_name::TestAttrCs,
+                          attr_name::TestAttrDomain,
+                          attr_name::TestAttrFamily,
+                          attr_name::TestAttrMember,
+                          attr_name::TestAttrName,
+                          traits),
+        Tango::DevFailed);
 
     SUCCEED("Passed");
 }
 
-TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing Attributes in a disconnected state", "[db-access][hdbpp-db-access][db-connection]")
+TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
+    "Storing Attributes in a disconnected state",
+    "[db-access][hdbpp-db-access][db-connection]")
 {
     DbConnection conn(DbConnection::DbStoreMethod::PreparedStatement);
     AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE};
 
-    REQUIRE_THROWS_AS(conn.storeAttribute(
-        attr_name::TestAttrFinalName, 
-        attr_name::TestAttrCs, 
-        attr_name::TestAttrDomain, 
-        attr_name::TestAttrFamily, 
-        attr_name::TestAttrMember, 
-        attr_name::TestAttrName, traits), Tango::DevFailed);
+    REQUIRE_THROWS_AS(conn.storeAttribute(attr_name::TestAttrFinalName,
+                          attr_name::TestAttrCs,
+                          attr_name::TestAttrDomain,
+                          attr_name::TestAttrFamily,
+                          attr_name::TestAttrMember,
+                          attr_name::TestAttrName,
+                          traits),
+        Tango::DevFailed);
 
     SUCCEED("Passed");
 }
 
-TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing a series of the same History Events in the database successfully", "[db-access][hdbpp-db-access][db-connection]")
+TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
+    "Storing a series of the same History Events in the database successfully",
+    "[db-access][hdbpp-db-access][db-connection]")
 {
     AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE};
     REQUIRE_NOTHROW(clearTables());
@@ -503,15 +517,17 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing a series of 
             REQUIRE(attr_row.at(schema::ConfColId).as<int>() == row.at(schema::HistoryColId).as<int>());
 
             // check event id matches event table id
-            REQUIRE(row.at(schema::HistoryColEventId).as<int>() ==
-                event_result.at(schema::HistoryColEventId).as<int>());
+            REQUIRE(
+                row.at(schema::HistoryColEventId).as<int>() == event_result.at(schema::HistoryColEventId).as<int>());
         }
     }
 
     SUCCEED("Passed");
 }
 
-TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing a series of different History Events in the database successfully", "[db-access][hdbpp-db-access][db-connection]")
+TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
+    "Storing a series of different History Events in the database successfully",
+    "[db-access][hdbpp-db-access][db-connection]")
 {
     AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE};
     REQUIRE_NOTHROW(clearTables());
@@ -537,22 +553,27 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing a series of 
     SUCCEED("Passed");
 }
 
-
-TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing History Events unrelated to any known Attribute", "[db-access][hdbpp-db-access][db-connection]")
+TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
+    "Storing History Events unrelated to any known Attribute",
+    "[db-access][hdbpp-db-access][db-connection]")
 {
     REQUIRE_NOTHROW(clearTables());
     REQUIRE_THROWS_AS(testConn().storeHistoryEvent(attr_name::TestAttrFQDName, events::PauseEvent), Tango::DevFailed);
     SUCCEED("Passed");
 }
 
-TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing History Events in a disconnected state", "[db-access][hdbpp-db-access][db-connection]")
+TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
+    "Storing History Events in a disconnected state",
+    "[db-access][hdbpp-db-access][db-connection]")
 {
     DbConnection conn(DbConnection::DbStoreMethod::PreparedStatement);
     REQUIRE_THROWS_AS(conn.storeHistoryEvent(attr_name::TestAttrFQDName, events::PauseEvent), Tango::DevFailed);
     SUCCEED("Passed");
 }
 
-TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing Parameter Events in the database", "[db-access][hdbpp-db-access][db-connection]")
+TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
+    "Storing Parameter Events in the database",
+    "[db-access][hdbpp-db-access][db-connection]")
 {
     struct timeval tv
     {};
@@ -621,7 +642,9 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing Parameter Ev
     SUCCEED("Passed");
 }
 
-TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing Parameter Events in a disconnected state", "[db-access][hdbpp-db-access][db-connection]")
+TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
+    "Storing Parameter Events in a disconnected state",
+    "[db-access][hdbpp-db-access][db-connection]")
 {
     struct timeval tv
     {};
@@ -632,22 +655,24 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing Parameter Ev
     DbConnection conn(DbConnection::DbStoreMethod::PreparedStatement);
 
     REQUIRE_THROWS_AS(conn.storeParameterEvent(attr_name::TestAttrFinalName,
-        event_time,
-        attr_info::AttrInfoLabel,
-        attr_info::AttrInfoUnit,
-        attr_info::AttrInfoStandardUnit,
-        attr_info::AttrInfoDisplayUnit,
-        attr_info::AttrInfoFormat,
-        attr_info::AttrInfoRel,
-        attr_info::AttrInfoAbs,
-        attr_info::AttrInfoPeriod,
-        attr_info::AttrInfoDescription),
+                          event_time,
+                          attr_info::AttrInfoLabel,
+                          attr_info::AttrInfoUnit,
+                          attr_info::AttrInfoStandardUnit,
+                          attr_info::AttrInfoDisplayUnit,
+                          attr_info::AttrInfoFormat,
+                          attr_info::AttrInfoRel,
+                          attr_info::AttrInfoAbs,
+                          attr_info::AttrInfoPeriod,
+                          attr_info::AttrInfoDescription),
         Tango::DevFailed);
 
     SUCCEED("Passed");
 }
 
-TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing events which has no data", "[db-access][hdbpp-db-access][db-connection]")
+TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
+    "Storing events which has no data",
+    "[db-access][hdbpp-db-access][db-connection]")
 {
     struct timeval tv
     {};
@@ -656,8 +681,7 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing events which
     double event_time = tv.tv_sec + tv.tv_usec / 1.0e6;
 
     vector<DbConnection::DbStoreMethod> access_methods {
-        DbConnection::DbStoreMethod::PreparedStatement,
-        DbConnection::DbStoreMethod::InsertString};
+        DbConnection::DbStoreMethod::PreparedStatement, DbConnection::DbStoreMethod::InsertString};
 
     vector<Tango::AttrWriteType> write_types {Tango::READ, Tango::WRITE, Tango::READ_WRITE, Tango::READ_WITH_WRITE};
 
@@ -665,7 +689,7 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing events which
     {
         resetDbAccess(access);
         REQUIRE_NOTHROW(clearTables());
-        
+
         for (auto write_type : write_types)
         {
             AttributeTraits traits {write_type, Tango::SCALAR, Tango::DEV_DOUBLE};
@@ -722,14 +746,15 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing events which
     SUCCEED("Passed");
 }
 
-TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing event data for all Tango type combinations in the database (prepared statements)",
+TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
+    "Storing event data for all Tango type combinations in the database (prepared statements)",
     "[db-access][hdbpp-db-access][db-connection]")
 {
     auto traits_array = getTraitsImplemented();
     REQUIRE_NOTHROW(clearTables());
     resetDbAccess(DbConnection::DbStoreMethod::PreparedStatement);
 
-    for( auto &traits : traits_array)
+    for (auto &traits : traits_array)
     {
         INFO("Inserting data for traits: " << traits);
         auto name = storeAttributeByTraits(traits);
@@ -791,14 +816,15 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing event data f
     SUCCEED("Passed");
 }
 
-TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing event data for all Tango type combinations in the database (insert strings)",
+TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
+    "Storing event data for all Tango type combinations in the database (insert strings)",
     "[db-access][hdbpp-db-access][db-connection]")
 {
     auto traits_array = getTraitsImplemented();
     REQUIRE_NOTHROW(clearTables());
     resetDbAccess(DbConnection::DbStoreMethod::InsertString);
 
-    for( auto &traits : traits_array)
+    for (auto &traits : traits_array)
     {
         INFO("Inserting data for traits: " << traits);
         auto name = storeAttributeByTraits(traits);
@@ -860,7 +886,8 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing event data f
     SUCCEED("Passed");
 }
 
-TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing complex arrays of strings containing postgres escape characters",
+TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
+    "Storing complex arrays of strings containing postgres escape characters",
     "[db-access][hdbpp-db-access][db-connection]")
 {
     struct timeval tv
@@ -893,29 +920,30 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing complex arra
     auto name = storeAttributeByTraits(traits);
 
     // this only ever stores by insert string, so no need to test prepared statements.
-    REQUIRE_NOTHROW(testConn().storeDataEvent(name, event_time, Tango::ATTR_VALID, move(value_r), move(value_w), traits));
+    REQUIRE_NOTHROW(
+        testConn().storeDataEvent(name, event_time, Tango::ATTR_VALID, move(value_r), move(value_w), traits));
+
     checkStoreTestEventData(name, traits, original_values);
 
     SUCCEED("Passed");
 }
 
-TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing complex strings containing postgres escape characters",
+TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
+    "Storing complex strings containing postgres escape characters",
     "[db-access][hdbpp-db-access][db-connection]")
 {
     struct timeval tv
     {};
 
-    vector<string> values = {
-        "test brackets } {} with comma,", 
+    vector<string> values = {"test brackets } {} with comma,",
         "quotes '' and commas, and 'quoted, comma', escaped \"double quote\"",
         R"(test two slash \ test four slash \\)",
-        "line feed \n and return \r" };
+        "line feed \n and return \r"};
 
     AttributeTraits traits {Tango::READ_WRITE, Tango::SCALAR, Tango::DEV_STRING};
 
     vector<DbConnection::DbStoreMethod> access_methods {
-        DbConnection::DbStoreMethod::PreparedStatement,
-        DbConnection::DbStoreMethod::InsertString};
+        DbConnection::DbStoreMethod::PreparedStatement, DbConnection::DbStoreMethod::InsertString};
 
     REQUIRE_NOTHROW(clearTables());
     auto name = storeAttributeByTraits(traits);
@@ -937,7 +965,9 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing complex stri
 
             auto original_values = make_tuple((*value_r), (*value_w));
 
-            REQUIRE_NOTHROW(testConn().storeDataEvent(name, event_time, Tango::ATTR_VALID, move(value_r), move(value_w), traits));
+            REQUIRE_NOTHROW(
+                testConn().storeDataEvent(name, event_time, Tango::ATTR_VALID, move(value_r), move(value_w), traits));
+
             checkStoreTestEventData(name, traits, original_values);
         }
     }
@@ -945,7 +975,9 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing complex stri
     SUCCEED("Passed");
 }
 
-TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing data events in a disconnected state", "[db-access][hdbpp-db-access][db-connection]")
+TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
+    "Storing data events in a disconnected state",
+    "[db-access][hdbpp-db-access][db-connection]")
 {
     struct timeval tv
     {};
@@ -960,16 +992,19 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing data events 
     testConn().disconnect();
 
     REQUIRE_THROWS_AS(testConn().storeDataEvent(name,
-        event_time,
-        Tango::ATTR_VALID,
-        move(make_unique<std::vector<double>>()),
-        move(make_unique<std::vector<double>>()),
-        traits), Tango::DevFailed);
+                          event_time,
+                          Tango::ATTR_VALID,
+                          move(make_unique<std::vector<double>>()),
+                          move(make_unique<std::vector<double>>()),
+                          traits),
+        Tango::DevFailed);
 
     SUCCEED("Passed");
 }
 
-TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing data events as errors", "[db-access][hdbpp-db-access][db-connection]")
+TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
+    "Storing data events as errors",
+    "[db-access][hdbpp-db-access][db-connection]")
 {
     string error_msg = "A Test Error, 'Message'";
 
@@ -1033,7 +1068,7 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing data events 
     event_time = tv.tv_sec + tv.tv_usec / 1.0e6;
 
     REQUIRE_NOTHROW(testConn().storeDataEventError(name, event_time, Tango::ATTR_VALID, error_msg, traits));
-    
+
     {
         pqxx::work tx {verifyConn()};
 
@@ -1065,13 +1100,16 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Storing data events 
         REQUIRE_NOTHROW(data_result = tx.exec(query));
         tx.commit();
 
-        REQUIRE(data_result[0].at(schema::DatColErrorDescId).as<int>() == data_result[1].at(schema::DatColErrorDescId).as<int>());
+        REQUIRE(data_result[0].at(schema::DatColErrorDescId).as<int>() ==
+            data_result[1].at(schema::DatColErrorDescId).as<int>());
     }
 
     SUCCEED("Passed");
 }
 
-TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Fetching the last history event after it has just been stored", "[db-access][hdbpp-db-access][db-connection]")
+TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
+    "Fetching the last history event after it has just been stored",
+    "[db-access][hdbpp-db-access][db-connection]")
 {
     AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE};
     REQUIRE_NOTHROW(clearTables());
@@ -1086,7 +1124,8 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "Fetching the last hi
     SUCCEED("Passed");
 }
 
-TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "When no history events have been stored, no error is thrown requesting the last event",
+TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
+    "When no history events have been stored, no error is thrown requesting the last event",
     "[db-access][hdbpp-db-access][db-connection]")
 {
     AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE};
@@ -1098,7 +1137,8 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "When no history even
     SUCCEED("Passed");
 }
 
-TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "The archive state of an attribute can be determined by fetchAttributeArchived()",
+TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
+    "The archive state of an attribute can be determined by fetchAttributeArchived()",
     "[db-access][hdbpp-db-access][db-connection]")
 {
     AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE};
@@ -1109,7 +1149,8 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "The archive state of
     SUCCEED("Passed");
 }
 
-TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "fetchAttributeTraits() throws an exception when the attribute is not archived",
+TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
+    "fetchAttributeTraits() throws an exception when the attribute is not archived",
     "[db-access][hdbpp-db-access][db-connection]")
 {
     AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE};
@@ -1118,7 +1159,8 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "fetchAttributeTraits
     SUCCEED("Passed");
 }
 
-TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture, "The type traits of an archived attribute can be returned by fetchAttributeTraits()",
+TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
+    "The type traits of an archived attribute can be returned by fetchAttributeTraits()",
     "[db-access][hdbpp-db-access][db-connection]")
 {
     AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE};

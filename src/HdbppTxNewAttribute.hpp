@@ -102,8 +102,8 @@ HdbppTxNewAttribute<Conn> &HdbppTxNewAttribute<Conn>::store()
     // unsupported types
     if (_traits.type() == Tango::DEV_ENUM || _traits.type() == Tango::DEV_ENCODED)
     {
-        std::string msg {"Unsupported attribute type: " + tangoEnumToString(_traits.type()) + ". For attribute: " +
-            _attr_name.fqdnAttributeName()};
+        std::string msg {"Unsupported attribute type: " + tangoEnumToString(_traits.type()) +
+            ". For attribute: " + _attr_name.fqdnAttributeName()};
 
         spdlog::error("Error: {}", msg);
         Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);

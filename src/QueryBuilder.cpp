@@ -233,7 +233,9 @@ namespace pqxx_conn
         if (result == _data_event_error_queries.end())
         {
             auto param_number = 0;
-            auto query = "INSERT INTO " + QueryBuilder::tableName(traits) + " (" + schema::DatColId + "," + schema::DatColDataTime;
+
+            auto query = "INSERT INTO " + QueryBuilder::tableName(traits) + " (" + schema::DatColId + "," +
+                schema::DatColDataTime;
 
             // split to ensure increments are in the correct order
             query = query + "," + schema::DatColQuality + "," + schema::DatColErrorDescId + ") VALUES ($" +

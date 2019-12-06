@@ -22,9 +22,8 @@
 
 #include "AttributeTraits.hpp"
 #include "HdbppDefines.hpp"
-#include "TimescaleSchema.hpp"
 #include "PqxxExtension.hpp"
-
+#include "TimescaleSchema.hpp"
 #include "spdlog/spdlog.h"
 
 #include <iostream>
@@ -72,7 +71,7 @@ namespace pqxx_conn
             static std::string run(std::unique_ptr<std::vector<T>> &value, const AttributeTraits &traits)
             {
                 if (traits.isScalar())
-                    return pqxx::to_string((*value)[0]) ;
+                    return pqxx::to_string((*value)[0]);
 
                 return "'" + pqxx::to_string(value) + "'";
             }
@@ -107,7 +106,7 @@ namespace pqxx_conn
             static std::string run(std::unique_ptr<std::vector<std::string>> &value, const AttributeTraits &traits)
             {
                 // arrays of strings need both the ARRAY keywords and dollar escaping, this is so we
-                // do not have to rely on the postgres escape functions that double and then store 
+                // do not have to rely on the postgres escape functions that double and then store
                 // escaped characters. This is a mess when extracting the array of strings.
                 if (traits.isScalar())
                 {
@@ -152,7 +151,6 @@ namespace pqxx_conn
     class QueryBuilder
     {
     public:
-
         // Static Prepared statement strings
         // these builder functions require no caching, so can be simple static
         // functions
@@ -179,7 +177,7 @@ namespace pqxx_conn
         const std::string &storeDataEventName(const AttributeTraits &traits);
         const std::string &storeDataEventErrorName(const AttributeTraits &traits);
 
-        // Builds a prepared statement for the given traits, the statement is cached 
+        // Builds a prepared statement for the given traits, the statement is cached
         // internally to improve execution time
         template<typename T>
         const std::string &storeDataEventStatement(const AttributeTraits &traits);
@@ -189,15 +187,14 @@ namespace pqxx_conn
         // internal caching, so its less efficient, but can be chained in a pipe
         // to batch data to the database.
         template<typename T>
-        const std::string storeDataEventString(
-            const std::string &full_attr_name, 
-            const std::string &event_time, 
-            const std::string &quality, 
+        const std::string storeDataEventString(const std::string &full_attr_name,
+            const std::string &event_time,
+            const std::string &quality,
             std::unique_ptr<vector<T>> &value_r,
             std::unique_ptr<vector<T>> &value_w,
             const AttributeTraits &traits);
 
-        // Builds a prepared statement for data event errors 
+        // Builds a prepared statement for data event errors
         const std::string &storeDataEventErrorStatement(const AttributeTraits &traits);
 
         // Utility
@@ -231,7 +228,8 @@ namespace pqxx_conn
             // attribute traits and then cached.
             auto param_number = 0;
 
-            auto query = "INSERT INTO " + QueryBuilder::tableName(traits) + " (" + schema::DatColId + "," + schema::DatColDataTime;
+            auto query = "INSERT INTO " + QueryBuilder::tableName(traits) + " (" + schema::DatColId + "," +
+                schema::DatColDataTime;
 
             if (traits.hasReadData())
                 query = query + "," + schema::DatColValueR;
@@ -270,14 +268,15 @@ namespace pqxx_conn
     }
 
     template<typename T>
-    const std::string QueryBuilder::storeDataEventString(const std::string &full_attr_name, 
-        const std::string &event_time, 
-        const std::string &quality, 
+    const std::string QueryBuilder::storeDataEventString(const std::string &full_attr_name,
+        const std::string &event_time,
+        const std::string &quality,
         std::unique_ptr<vector<T>> &value_r,
         std::unique_ptr<vector<T>> &value_w,
         const AttributeTraits &traits)
     {
-        auto query = "INSERT INTO " + QueryBuilder::tableName(traits) + " (" + schema::DatColId + "," + schema::DatColDataTime;
+        auto query = "INSERT INTO " + QueryBuilder::tableName(traits) + " (" + schema::DatColId + "," +
+            schema::DatColDataTime;
 
         if (traits.hasReadData())
             query = query + "," + schema::DatColValueR;

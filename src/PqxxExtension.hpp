@@ -178,7 +178,7 @@ public:
 
 // This specialisation is for string types. Unlike other types the string type requires
 // the use of the ARRAY notation and dollar quoting to ensure the strings are stored
-// without escape characters. 
+// without escape characters.
 template<>
 struct string_traits<std::vector<std::string>>
 {

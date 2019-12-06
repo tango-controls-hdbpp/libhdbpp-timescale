@@ -295,7 +295,7 @@ AttributeName &AttributeName::operator=(const AttributeName &other)
 
 //=============================================================================
 //=============================================================================
-AttributeName &AttributeName::operator=(AttributeName&& other) noexcept
+AttributeName &AttributeName::operator=(AttributeName &&other) noexcept
 {
     // clear the cache
     clear();
@@ -303,7 +303,6 @@ AttributeName &AttributeName::operator=(AttributeName&& other) noexcept
     // now copy the fqdn, we do not copy the cache
     _fqdn_attr_name = move(other._fqdn_attr_name);
     return *this;
-
 }
 
 } // namespace hdbpp_internal
