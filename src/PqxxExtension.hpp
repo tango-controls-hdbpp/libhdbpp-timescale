@@ -176,8 +176,9 @@ public:
     }
 };
 
-// This specialisation is for string types to ensure the string is quoted
-// for storage
+// This specialisation is for string types. Unlike other types the string type requires
+// the use of the ARRAY notation and dollar quoting to ensure the strings are stored
+// without escape characters.
 template<>
 struct string_traits<std::vector<std::string>>
 {
@@ -197,29 +198,35 @@ public:
 
         value.clear();
 
-        // TODO this extraction is not yet complete. Required to complete unit tests
+        std::pair<array_parser::juncture, std::string> output;
 
-        // not the best solution right now, but we are using this for testing only
-        // currently. Copy the str into a std::string so we can work with it more easily.
-        std::string in(str + 1, str + (strlen(str) - 1));
-        std::string sep {"','"};
-        size_t last_position = 1;
-        size_t position = in.find(sep, 0);
+        // use pqxx array parser features to get each element from the array
+        array_parser parser(str);
+        output = parser.get_next();
 
-        // as mention above, this could probably be sped up, i.e. preallocate
-        // the vector etc, but for now we just need it for testing, so improvements
-        // are left till later
-        while (position != std::string::npos)
+        if (output.first == array_parser::juncture::row_start)
         {
-            value.push_back(in.substr(last_position, position - last_position));
-            last_position = position + 3;
-            position = in.find(sep, position + 1);
+            output = parser.get_next();
+
+            // loop and extract each string in turn
+            while (output.first == array_parser::juncture::string_value)
+            {
+                value.push_back(output.second);
+                output = parser.get_next();
+
+                if (output.first == array_parser::juncture::row_end)
+                    break;
+
+                if (output.first == array_parser::juncture::done)
+                    break;
+            }
         }
     }
 
     static std::string to_string(const std::vector<std::string> &value)
     {
-        // simply use the pqxx utilities for this, rather than reinvent the wheel
+        // This function should not be used, so we do a simple basic conversion
+        // for testing only
         return "{" + separated_list(",", value.begin(), value.end()) + "}";
     }
 };

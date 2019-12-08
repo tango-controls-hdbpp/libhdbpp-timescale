@@ -18,17 +18,14 @@
    along with libhdb++timescale.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include "AttributeTraits.hpp"
-#include "catch2/catch.hpp"
-
 #include "LibUtils.hpp"
+#include "catch2/catch.hpp"
 
 using namespace std;
 using namespace hdbpp_internal;
 
 SCENARIO("Attribute format returns expected results", "[attribute-traits]")
 {
-    cout << LOCATION_INFO << endl;
-
     GIVEN("Constructed AttributeTraits as an Array")
     {
         AttributeTraits traits {Tango::READ, Tango::SPECTRUM, Tango::DEV_BOOLEAN};
@@ -244,10 +241,10 @@ SCENARIO("Attribute traits are invalid if not set with valid traits", "[attribut
 
         WHEN("Checking if traits type is valid")
         {
-            THEN("Result is false") 
-            { 
-                REQUIRE(!traits.isValid()); 
-                REQUIRE(traits.isInvalid()); 
+            THEN("Result is false")
+            {
+                REQUIRE(!traits.isValid());
+                REQUIRE(traits.isInvalid());
             }
         }
     }
@@ -257,10 +254,10 @@ SCENARIO("Attribute traits are invalid if not set with valid traits", "[attribut
 
         WHEN("Checking if traits type is valid")
         {
-            THEN("Result is false") 
-            { 
-                REQUIRE(!traits.isValid()); 
-                REQUIRE(traits.isInvalid()); 
+            THEN("Result is false")
+            {
+                REQUIRE(!traits.isValid());
+                REQUIRE(traits.isInvalid());
             }
         }
     }
@@ -270,10 +267,10 @@ SCENARIO("Attribute traits are invalid if not set with valid traits", "[attribut
 
         WHEN("Checking if traits type is valid")
         {
-            THEN("Result is false") 
-            { 
-                REQUIRE(!traits.isValid()); 
-                REQUIRE(traits.isInvalid()); 
+            THEN("Result is false")
+            {
+                REQUIRE(!traits.isValid());
+                REQUIRE(traits.isInvalid());
             }
         }
     }
@@ -283,10 +280,10 @@ SCENARIO("Attribute traits are invalid if not set with valid traits", "[attribut
 
         WHEN("Checking if traits type is valid")
         {
-            THEN("Result is true") 
-            { 
-                REQUIRE(traits.isValid()); 
-                REQUIRE(!traits.isInvalid()); 
+            THEN("Result is true")
+            {
+                REQUIRE(traits.isValid());
+                REQUIRE(!traits.isInvalid());
             }
         }
     }

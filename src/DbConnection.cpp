@@ -33,13 +33,13 @@ namespace pqxx_conn
 {
     //=============================================================================
     //=============================================================================
-    DbConnection::DbConnection() { _logger = spdlog::get(LibLoggerName); }
+    DbConnection::DbConnection(DbStoreMethod db_store_method) : _db_store_method(db_store_method) {}
 
     //=============================================================================
     //=============================================================================
     void DbConnection::connect(const string &connect_string)
     {
-        _logger->info("Connecting to postgres database with string: \"{}\"", connect_string);
+        spdlog::info("Connecting to postgres database with string: \"{}\"", connect_string);
 
         // construct the database connection
         try
@@ -54,28 +54,29 @@ namespace pqxx_conn
 
             // mark the connected flag as true to cache this state
             _connected = true;
-            _logger->info("Connected to postgres successfully");
+            spdlog::info("Connected to postgres successfully");
         }
         catch (const pqxx::broken_connection &ex)
         {
             string msg {"Failed to connect to database. Exception: "};
             msg += ex.what();
 
-            _logger->error("Error: Connecting to postgres database with connect string: \"{}\"", connect_string);
-            _logger->error("Caught error: \"{}\"", ex.what());
-            _logger->error("Throwing connection error with message: \"{}\"", msg);
+            spdlog::error("Error: Connecting to postgres database with connect string: \"{}\"", connect_string);
+            spdlog::error("Caught error: \"{}\"", ex.what());
+            spdlog::error("Throwing connection error with message: \"{}\"", msg);
             Tango::Except::throw_exception("Connection Error", msg, LOCATION_INFO);
         }
 
         // now create and connect the cache objects to the database connection, this
         // will destroy any existing cache objects managed by the unique pointers
-        _conf_id_cache = make_unique<ColumnCache<int, std::string>>(_conn, CONF_TABLE_NAME, CONF_COL_ID, CONF_COL_NAME);
+        _conf_id_cache = make_unique<ColumnCache<int, std::string>>(
+            _conn, schema::ConfTableName, schema::ConfColId, schema::ConfColName);
 
         _error_desc_id_cache = make_unique<ColumnCache<int, std::string>>(
-            _conn, ERR_TABLE_NAME, ERR_COL_ID, ERR_COL_ERROR_DESC);
+            _conn, schema::ErrTableName, schema::ErrColId, schema::ErrColErrorDesc);
 
         _event_id_cache = make_unique<ColumnCache<int, std::string>>(
-            _conn, HISTORY_EVENT_TABLE_NAME, HISTORY_EVENT_COL_EVENT_ID, HISTORY_EVENT_COL_EVENT);
+            _conn, schema::HistoryEventTableName, schema::HistoryEventColEventId, schema::HistoryEventColEvent);
     }
 
     //=============================================================================
@@ -96,7 +97,7 @@ namespace pqxx_conn
 
         // stop attempts to use the connection
         _connected = false;
-        _logger->debug("Disconnected from the postgres database");
+        spdlog::debug("Disconnected from the postgres database");
     }
 
     //=============================================================================
@@ -121,7 +122,7 @@ namespace pqxx_conn
         assert(_error_desc_id_cache != nullptr);
         assert(_event_id_cache != nullptr);
 
-        _logger->trace("Storing new attribute {} of type {}", full_attr_name, traits);
+        spdlog::trace("Storing new attribute {} of type {}", full_attr_name, traits);
 
         checkConnection(LOCATION_INFO);
 
@@ -132,9 +133,9 @@ namespace pqxx_conn
             string msg {
                 "This attribute [" + full_attr_name + "] already exists in the database. Unable to add it again."};
 
-            _logger->error("Error: The attribute already exists in the database and can not be added again");
-            _logger->error("Attribute details. Name: {} traits: {}", full_attr_name, traits);
-            _logger->error("Throwing consistency error with message: \"{}\"", msg);
+            spdlog::error("Error: The attribute already exists in the database and can not be added again");
+            spdlog::error("Attribute details. Name: {} traits: {}", full_attr_name, traits);
+            spdlog::error("Throwing consistency error with message: \"{}\"", msg);
             Tango::Except::throw_exception("Consistency Error", msg, LOCATION_INFO);
         }
 
@@ -146,14 +147,14 @@ namespace pqxx_conn
 
                 if (!tx.prepared(StoreAttribute).exists())
                 {
-                    tx.conn().prepare(StoreAttribute, QueryBuilder::storeAttributeQuery());
-                    _logger->trace("Created prepared statement for: {}", StoreAttribute);
+                    tx.conn().prepare(StoreAttribute, QueryBuilder::storeAttributeStatement());
+                    spdlog::trace("Created prepared statement for: {}", StoreAttribute);
                 }
 
                 // execute the statement with the expectation that we get a row back
                 auto row = tx.exec_prepared1(StoreAttribute,
                     full_attr_name,
-                    _query_builder.tableName(traits),
+                    QueryBuilder::tableName(traits),
                     control_system,
                     att_domain,
                     att_family,
@@ -171,7 +172,7 @@ namespace pqxx_conn
                 return row.at(0).as<int>();
             });
 
-            _logger->debug("Stored new attribute {} of type {} with db id: {}", full_attr_name, traits, conf_id);
+            spdlog::debug("Stored new attribute {} of type {} with db id: {}", full_attr_name, traits, conf_id);
 
             // cache the new conf id for future use
             _conf_id_cache->cacheValue(conf_id, full_attr_name);
@@ -180,7 +181,7 @@ namespace pqxx_conn
         {
             handlePqxxError("The attribute [" + full_attr_name + "] was not saved.",
                 ex.base().what(),
-                QueryBuilder::storeAttributeQuery(),
+                QueryBuilder::storeAttributeStatement(),
                 LOCATION_INFO);
         }
     }
@@ -196,7 +197,7 @@ namespace pqxx_conn
         assert(_error_desc_id_cache != nullptr);
         assert(_event_id_cache != nullptr);
 
-        _logger->trace("Storing history event {} for attribute {}", event, full_attr_name);
+        spdlog::trace("Storing history event {} for attribute {}", event, full_attr_name);
 
         checkConnection(LOCATION_INFO);
         checkAttributeExists(full_attr_name, LOCATION_INFO);
@@ -210,10 +211,10 @@ namespace pqxx_conn
             string msg {
                 "The event [" + event + "] is missing in both the cache and database, this is an unrecoverable error."};
 
-            _logger->error(
+            spdlog::error(
                 "Event found missing, this occurred when storing event: {} for attribute: {}", event, full_attr_name);
 
-            _logger->error("Throwing consistency error with message: \"{}\"", msg);
+            spdlog::error("Throwing consistency error with message: \"{}\"", msg);
             Tango::Except::throw_exception("Consistency Error", msg, LOCATION_INFO);
         }
 
@@ -225,8 +226,8 @@ namespace pqxx_conn
 
                 if (!tx.prepared(StoreHistoryEvent).exists())
                 {
-                    tx.conn().prepare(StoreHistoryEvent, QueryBuilder::storeHistoryEventQuery());
-                    _logger->trace("Created prepared statement for: {}", StoreHistoryEvent);
+                    tx.conn().prepare(StoreHistoryEvent, QueryBuilder::storeHistoryEventStatement());
+                    spdlog::trace("Created prepared statement for: {}", StoreHistoryEvent);
                 }
 
                 // expect no result, this is an insert only query
@@ -234,13 +235,13 @@ namespace pqxx_conn
                 tx.commit();
             });
 
-            _logger->debug("Stored event {} and for attribute {}", event, full_attr_name);
+            spdlog::debug("Stored event {} and for attribute {}", event, full_attr_name);
         }
         catch (const pqxx::pqxx_exception &ex)
         {
             handlePqxxError("The attribute [" + full_attr_name + "] event [" + event + "] was not saved.",
                 ex.base().what(),
-                QueryBuilder::storeHistoryEventQuery(),
+                QueryBuilder::storeHistoryEventStatement(),
                 LOCATION_INFO);
         }
     }
@@ -260,24 +261,29 @@ namespace pqxx_conn
         const string &description)
     {
         assert(!full_attr_name.empty());
-        assert(!label.empty());
-        assert(!unit.empty());
-        assert(!standard_unit.empty());
-        assert(!display_unit.empty());
-        assert(!format.empty());
-        assert(!archive_rel_change.empty());
-        assert(!archive_abs_change.empty());
-        assert(!archive_period.empty());
-        assert(!description.empty());
         assert(_conn != nullptr);
         assert(_conf_id_cache != nullptr);
         assert(_error_desc_id_cache != nullptr);
         assert(_event_id_cache != nullptr);
 
-        _logger->trace("Storing parameter event for attribute {}", full_attr_name);
+        spdlog::trace("Storing parameter event for attribute {}", full_attr_name);
 
-        _logger->trace("Parmater event data: event_time {}, label {}, unit {}, standard_unit {}, display_unit {}, "
-                       "format {}, archive_rel_change {}, archive_abs_change {}, archive_period {}, description {}",
+        auto check_parameter = [](auto &name, auto &value) {
+            if (value.empty())
+                spdlog::warn("Parameter {} is empty. Please set in the device server", name);
+        };
+
+        check_parameter("label", label);
+        check_parameter("unit", unit);
+        check_parameter("standard_unit", standard_unit);
+        check_parameter("display_unit", display_unit);
+        check_parameter("archive_rel_change", archive_rel_change);
+        check_parameter("archive_abs_change", archive_abs_change);
+        check_parameter("archive_period", archive_period);
+        check_parameter("description", description);
+
+        spdlog::trace("Parmater event data: event_time {}, label {}, unit {}, standard_unit {}, display_unit {}, "
+                      "format {}, archive_rel_change {}, archive_abs_change {}, archive_period {}, description {}",
             event_time,
             label,
             unit,
@@ -300,8 +306,8 @@ namespace pqxx_conn
 
                 if (!tx.prepared(StoreParameterEvent).exists())
                 {
-                    tx.conn().prepare(StoreParameterEvent, QueryBuilder::storeParameterEventQuery());
-                    _logger->trace("Created prepared statement for: {}", StoreParameterEvent);
+                    tx.conn().prepare(StoreParameterEvent, QueryBuilder::storeParameterEventStatement());
+                    spdlog::trace("Created prepared statement for: {}", StoreParameterEvent);
                 }
 
                 // no result expected
@@ -321,13 +327,13 @@ namespace pqxx_conn
                 tx.commit();
             });
 
-            _logger->debug("Stored parameter event and for attribute {}", full_attr_name);
+            spdlog::debug("Stored parameter event and for attribute {}", full_attr_name);
         }
         catch (const pqxx::pqxx_exception &ex)
         {
             handlePqxxError("The attribute [" + full_attr_name + "] parameter event was not saved.",
                 ex.base().what(),
-                QueryBuilder::storeParameterEventQuery(),
+                QueryBuilder::storeParameterEventStatement(),
                 LOCATION_INFO);
         }
     }
@@ -348,7 +354,7 @@ namespace pqxx_conn
         assert(_error_desc_id_cache != nullptr);
         assert(_event_id_cache != nullptr);
 
-        _logger->trace("Storing error message event for attribute {}. Quality: {}. Error message: \"{}\"",
+        spdlog::trace("Storing error message event for attribute {}. Quality: {}. Error message: \"{}\"",
             full_attr_name,
             quality,
             error_msg);
@@ -367,11 +373,11 @@ namespace pqxx_conn
             string msg {"The error message [" + error_msg +
                 "] is missing in both the cache and database, this is an unrecoverable error."};
 
-            _logger->error("Error message found missing, this occurred when storing msg: \"{}\" for attribute: {}",
+            spdlog::error("Error message found missing, this occurred when storing msg: \"{}\" for attribute: {}",
                 error_msg,
                 full_attr_name);
 
-            _logger->error("Throwing consistency error with message: \"{}\"", msg);
+            spdlog::error("Throwing consistency error with message: \"{}\"", msg);
             Tango::Except::throw_exception("Consistency Error", msg, LOCATION_INFO);
         }
 
@@ -384,9 +390,8 @@ namespace pqxx_conn
                 if (!tx.prepared(_query_builder.storeDataEventErrorName(traits)).exists())
                 {
                     tx.conn().prepare(_query_builder.storeDataEventErrorName(traits),
-                        _query_builder.storeDataEventErrorQuery(traits));
-                    _logger->trace(
-                        "Created prepared statement for: {}", _query_builder.storeDataEventErrorName(traits));
+                        _query_builder.storeDataEventErrorStatement(traits));
+                    spdlog::trace("Created prepared statement for: {}", _query_builder.storeDataEventErrorName(traits));
                 }
 
                 // no result expected
@@ -421,7 +426,7 @@ namespace pqxx_conn
         checkConnection(LOCATION_INFO);
         checkAttributeExists(full_attr_name, LOCATION_INFO);
 
-        _logger->trace("Fetching last history event for attribute: {}", full_attr_name);
+        spdlog::trace("Fetching last history event for attribute: {}", full_attr_name);
 
         // the result
         string last_event;
@@ -434,7 +439,7 @@ namespace pqxx_conn
                 pqxx::work tx {(*_conn), FetchLastHistoryEvent};
 
                 if (!tx.prepared(FetchLastHistoryEvent).exists())
-                    tx.conn().prepare(FetchLastHistoryEvent, QueryBuilder::fetchLastHistoryEventQuery());
+                    tx.conn().prepare(FetchLastHistoryEvent, QueryBuilder::fetchLastHistoryEventStatement());
 
                 // unless this is the first time this attribute event history has
                 // been queried, then we expect something back
@@ -452,7 +457,7 @@ namespace pqxx_conn
         {
             handlePqxxError("Can not return last event for attribute [" + full_attr_name + "].",
                 ex.base().what(),
-                QueryBuilder::fetchLastHistoryEventQuery(),
+                QueryBuilder::fetchLastHistoryEventStatement(),
                 LOCATION_INFO);
         }
 
@@ -471,11 +476,11 @@ namespace pqxx_conn
 
         if (_conf_id_cache->valueExists(full_attr_name))
         {
-            _logger->trace("Query attribute archived returns true for: {}", full_attr_name);
+            spdlog::trace("Query attribute archived returns true for: {}", full_attr_name);
             return true;
         }
 
-        _logger->trace("Query attribute archived returns false for: {}", full_attr_name);
+        spdlog::trace("Query attribute archived returns false for: {}", full_attr_name);
         return false;
     }
 
@@ -492,7 +497,7 @@ namespace pqxx_conn
         checkConnection(LOCATION_INFO);
         checkAttributeExists(full_attr_name, LOCATION_INFO);
 
-        _logger->trace("Fetching attribute traits for attribute: {}", full_attr_name);
+        spdlog::trace("Fetching attribute traits for attribute: {}", full_attr_name);
 
         AttributeTraits traits;
 
@@ -504,7 +509,7 @@ namespace pqxx_conn
                 pqxx::work tx {(*_conn), FetchAttributeTraits};
 
                 if (!tx.prepared(FetchAttributeTraits).exists())
-                    tx.conn().prepare(FetchAttributeTraits, QueryBuilder::fetchAttributeTraitsQuery());
+                    tx.conn().prepare(FetchAttributeTraits, QueryBuilder::fetchAttributeTraitsStatement());
 
                 // always expect a result, the type info for the attribute
                 auto row = tx.exec_prepared1(FetchAttributeTraits, full_attr_name);
@@ -519,7 +524,7 @@ namespace pqxx_conn
         {
             handlePqxxError("Can not return the type traits for attribute [" + full_attr_name + "].",
                 ex.base().what(),
-                QueryBuilder::fetchAttributeTraitsQuery(),
+                QueryBuilder::fetchAttributeTraitsStatement(),
                 LOCATION_INFO);
         }
 
@@ -530,7 +535,7 @@ namespace pqxx_conn
     //=============================================================================
     void DbConnection::storeEvent(const std::string &full_attr_name, const std::string &event)
     {
-        _logger->debug("Event {} needs adding to the database, by request of attribute {}", event, full_attr_name);
+        spdlog::debug("Event {} needs adding to the database, by request of attribute {}", event, full_attr_name);
 
         try
         {
@@ -541,8 +546,8 @@ namespace pqxx_conn
 
                 if (!tx.prepared(StoreHistoryString).exists())
                 {
-                    tx.conn().prepare(StoreHistoryString, QueryBuilder::storeHistoryStringQuery());
-                    _logger->trace("Created prepared statement for: {}", StoreHistoryString);
+                    tx.conn().prepare(StoreHistoryString, QueryBuilder::storeHistoryStringStatement());
+                    spdlog::trace("Created prepared statement for: {}", StoreHistoryString);
                 }
 
                 auto row = tx.exec_prepared1(StoreHistoryString, event);
@@ -552,7 +557,7 @@ namespace pqxx_conn
                 return row.at(0).as<int>();
             });
 
-            _logger->debug(
+            spdlog::debug(
                 "Stored event {} for attribute {} and got database id for it: {}", event, full_attr_name, event_id);
 
             // cache the new event id for future use
@@ -562,7 +567,7 @@ namespace pqxx_conn
         {
             handlePqxxError("The event [" + event + "] for attribute [" + full_attr_name + "] was not saved.",
                 ex.base().what(),
-                QueryBuilder::storeHistoryStringQuery(),
+                QueryBuilder::storeHistoryStringStatement(),
                 LOCATION_INFO);
         }
     }
@@ -571,7 +576,7 @@ namespace pqxx_conn
     //=============================================================================
     void DbConnection::storeErrorMsg(const std::string &full_attr_name, const std::string &error_msg)
     {
-        _logger->debug(
+        spdlog::debug(
             "Error message \"{}\" needs adding to the database, by request of attribute {}", error_msg, full_attr_name);
 
         try
@@ -582,8 +587,8 @@ namespace pqxx_conn
 
                 if (!tx.prepared(StoreErrorString).exists())
                 {
-                    tx.conn().prepare(StoreErrorString, QueryBuilder::storeErrorQuery());
-                    _logger->trace("Created prepared statement for: {}", StoreErrorString);
+                    tx.conn().prepare(StoreErrorString, QueryBuilder::storeErrorStatement());
+                    spdlog::trace("Created prepared statement for: {}", StoreErrorString);
                 }
 
                 // expect a single row returned
@@ -594,7 +599,7 @@ namespace pqxx_conn
                 return row.at(0).as<int>();
             });
 
-            _logger->debug("Stored error message \"{}\" for attribute {} and got database id for it: {}",
+            spdlog::debug("Stored error message \"{}\" for attribute {} and got database id for it: {}",
                 error_msg,
                 full_attr_name,
                 error_id);
@@ -606,7 +611,7 @@ namespace pqxx_conn
         {
             handlePqxxError("The error string [" + error_msg + "] for attribute [" + full_attr_name + "] was not saved",
                 ex.base().what(),
-                QueryBuilder::storeErrorQuery(),
+                QueryBuilder::storeErrorStatement(),
                 LOCATION_INFO);
         }
     }
@@ -622,9 +627,9 @@ namespace pqxx_conn
             string msg {"This attribute [" + full_attr_name +
                 "] does not exist in the database. Unable to work with this attribute until it is added."};
 
-            _logger->error("Error: The attribute does not exist in the database, add it first.");
-            _logger->error("Attribute details. Name: {}", full_attr_name);
-            _logger->error("Throwing consistency error with message: \"{}\"", msg);
+            spdlog::error("Error: The attribute does not exist in the database, add it first.");
+            spdlog::error("Attribute details. Name: {}", full_attr_name);
+            spdlog::error("Throwing consistency error with message: \"{}\"", msg);
             Tango::Except::throw_exception("Consistency Error", msg, location);
         }
     }
@@ -638,10 +643,10 @@ namespace pqxx_conn
             string msg {
                 "Connection to database is closed. Ensure it has been opened before trying to use the connection."};
 
-            _logger->error(
+            spdlog::error(
                 "Error: The DbConnection is showing a closed connection status, open it before using store functions");
 
-            _logger->error("Throwing connection error with message: \"{}\"", msg);
+            spdlog::error("Throwing connection error with message: \"{}\"", msg);
             Tango::Except::throw_exception("Connection Error", msg, location);
         }
     }
@@ -652,12 +657,11 @@ namespace pqxx_conn
         const string &msg, const string &what, const string &query, const std::string &location)
     {
         string full_msg {"The database transaction failed. " + msg};
-        _logger->error("Error: An unexpected error occurred when trying to run the database query");
-        _logger->error("Caught error at: {} Error: \"{}\"", location, what);
-        _logger->error("Error: Failed query: {}", query);
-        _logger->error("Throwing storage error with message: \"{}\"", full_msg);
+        spdlog::error("Error: An unexpected error occurred when trying to run the database query");
+        spdlog::error("Caught error at: {} Error: \"{}\"", location, what);
+        spdlog::error("Error: Failed query: {}", query);
+        spdlog::error("Throwing storage error with message: \"{}\"", full_msg);
         Tango::Except::throw_exception("Storage Error", full_msg, location);
     }
-
 } // namespace pqxx_conn
 } // namespace hdbpp_internal

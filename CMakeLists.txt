@@ -19,8 +19,8 @@ set(LIBHDBPP_TIMESCALE_NAME "libhdb++timescale")
 
 # Versioning
 set(VERSION_MAJOR "0")
-set(VERSION_MINOR "9")
-set(VERSION_PATCH "2")
+set(VERSION_MINOR "10")
+set(VERSION_PATCH "0")
 set(VERSION_METADATA "")
 set(VERSION_STRING ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
 
@@ -137,7 +137,7 @@ add_subdirectory(src)
 add_library(libhdbpp_timescale_shared_library SHARED ${SRC_FILES})
 
 target_link_libraries(libhdbpp_timescale_shared_library 
-    PUBLIC ${TDB_FOUND_LIBRARIES} pqxx_static libhdbpp_headers spdlog Threads::Threads
+    PUBLIC ${TDB_FOUND_LIBRARIES} pqxx_static libhdbpp_headers spdlog::spdlog_header_only Threads::Threads
     PRIVATE TangoInterfaceLibrary)
 
 target_include_directories(libhdbpp_timescale_shared_library 

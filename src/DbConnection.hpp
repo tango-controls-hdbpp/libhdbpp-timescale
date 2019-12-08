@@ -43,11 +43,20 @@ namespace pqxx_conn
     {
     public:
         // TODO add options fields - json string
-        // TODO add error feedback
         // TODO add fetch DataType function
 
-        DbConnection();
-        virtual ~DbConnection() {}
+        // Sets the priority to use when accessing the database.
+        enum DbStoreMethod
+        {
+            // Compose insert strings and execute each in turn
+            InsertString,
+
+            // Where possible, use prepared statements, this is quicker than
+            // using strings
+            PreparedStatement
+        };
+
+        DbConnection(DbStoreMethod db_store_method);
 
         // connection API
         void connect(const string &connect_string) override;
@@ -145,8 +154,8 @@ namespace pqxx_conn
         std::unique_ptr<ColumnCache<int, std::string>> _event_id_cache;
         std::unique_ptr<ColumnCache<int, int>> _type_id_cache;
 
-        // logging subsystem
-        std::shared_ptr<spdlog::logger> _logger;
+        // configured db access method
+        DbStoreMethod _db_store_method;
     };
 } // namespace pqxx_conn
 } // namespace hdbpp_internal

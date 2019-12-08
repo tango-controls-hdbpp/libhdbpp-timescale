@@ -21,5 +21,11 @@ target_compile_definitions(benchmark-tests
 set_target_properties(benchmark-tests
     PROPERTIES 
         LINK_FLAGS "-Wl,--no-undefined"
-        CXX_CLANG_TIDY ${DO_CLANG_TIDY}
         CXX_STANDARD 14)
+
+if(DO_CLANG_TIDY)
+    set_target_properties(unit-tests  
+        PROPERTIES 
+        CXX_CLANG_TIDY ${DO_CLANG_TIDY})
+endif(DO_CLANG_TIDY)
+

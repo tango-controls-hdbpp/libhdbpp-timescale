@@ -104,10 +104,20 @@ HdbppTimescaleDb::HdbppTimescaleDb(const vector<string> &configuration)
     auto level = param_to_lower(HdbppTimescaleDbUtils::getConfigParam(libhdb_conf, "logging_level", false));
     auto log_file = HdbppTimescaleDbUtils::getConfigParam(libhdb_conf, "log_file", false);
     auto log_console = HdbppTimescaleDbUtils::getConfigParam(libhdb_conf, "log_console", false);
+    auto log_syslog = HdbppTimescaleDbUtils::getConfigParam(libhdb_conf, "log_syslog", false);
     auto log_file_name = HdbppTimescaleDbUtils::getConfigParam(libhdb_conf, "log_file_name", false);
 
-    LogConfigurator::initLogging(
-        param_to_lower(log_file) == "true", param_to_lower(log_console) == "true", log_file_name);
+    // init the base logging system
+    LogConfigurator::initLogging();
+
+    if (param_to_lower(log_file) == "true")
+        LogConfigurator::initFileLogging(log_file_name);
+
+    if (param_to_lower(log_console) == "true")
+        LogConfigurator::initConsoleLogging();
+
+    if (param_to_lower(log_syslog) == "true")
+        LogConfigurator::initSyslogLogging();
 
     if (level == "error" || level.empty())
         LogConfigurator::setLoggingLevel(spdlog::level::level_enum::err);
@@ -125,7 +135,9 @@ HdbppTimescaleDb::HdbppTimescaleDb(const vector<string> &configuration)
         LogConfigurator::setLoggingLevel(spdlog::level::level_enum::err);
 
     spdlog::info("Logging level: {}", level);
-    spdlog::info("Logging to file: {}, logging to console: {}", log_file, log_console);
+    spdlog::info("Logging to console: {}", log_console);
+    spdlog::info("Logging to syslog: {}", log_syslog);
+    spdlog::info("Logging to file: {}", log_file);
     spdlog::info("Logfile (if any): {}", log_file_name);
 
     spdlog::info("Starting libhdbpp-timescale shared library...");
@@ -135,7 +147,7 @@ HdbppTimescaleDb::HdbppTimescaleDb(const vector<string> &configuration)
     spdlog::info("Mandatory config parameter connect_string: {}", connection_string);
 
     // allocate a connection to store data with
-    Conn = make_unique<pqxx_conn::DbConnection>();
+    Conn = make_unique<pqxx_conn::DbConnection>(pqxx_conn::DbConnection::DbStoreMethod::PreparedStatement);
 
     // now bring up the connection
     Conn->connect(connection_string);
@@ -271,5 +283,5 @@ AbstractDB *HdbppTimescaleDbFactory::create_db(vector<string> configuration)
 DBFactory *getDBFactory()
 {
     auto *factory = new hdbpp::HdbppTimescaleDbFactory();
-    return static_cast<DBFactory*>(factory);
+    return static_cast<DBFactory *>(factory);
 }

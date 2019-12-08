@@ -38,9 +38,9 @@ namespace pqxx_conn
     {
     public:
         ColumnCache(std::shared_ptr<pqxx::connection> conn,
-            const std::string &table_name,
-            const std::string &column_name,
-            const std::string &reference);
+            std::string table_name,
+            std::string column_name,
+            std::string reference);
 
         // query if the reference has a value, if its not cached it will be
         // loaded from the database
@@ -80,22 +80,19 @@ namespace pqxx_conn
         // cache of values to a reference, the unordered map is not sorted
         // so we do not loose time on each insert having it resorted
         std::unordered_map<TRef, TValue> _values;
-
-        // logging subsystem
-        std::shared_ptr<spdlog::logger> _logger;
     };
 
     //=============================================================================
     //=============================================================================
     template<typename TValue, typename TRef>
     ColumnCache<TValue, TRef>::ColumnCache(std::shared_ptr<pqxx::connection> conn,
-        const std::string &table_name,
-        const std::string &column_name,
-        const std::string &reference) :
-        _conn(conn),
-        _table_name(table_name),
-        _column_name(column_name),
-        _reference(reference)
+        std::string table_name,
+        std::string column_name,
+        std::string reference) :
+        _conn(std::move(conn)),
+        _table_name(std::move(table_name)),
+        _column_name(std::move(column_name)),
+        _reference(std::move(reference))
     {
         assert(_conn != nullptr);
         assert(!_table_name.empty());
@@ -106,9 +103,7 @@ namespace pqxx_conn
         _fetch_all_query_name = _column_name + _table_name + _reference + "_all";
         _fetch_id_query_name = _column_name + _table_name + _reference + "_id";
 
-        _logger = spdlog::get(LibLoggerName);
-
-        _logger->trace("Cache created for table: {} using columns {}/{}", _table_name, _column_name, _reference);
+        spdlog::trace("Cache created for table: {} using columns {}/{}", _table_name, _column_name, _reference);
     }
 
     //=============================================================================
@@ -131,9 +126,9 @@ namespace pqxx_conn
                 if (!tx.prepared(_fetch_all_query_name).exists())
                 {
                     tx.conn().prepare(_fetch_all_query_name,
-                        QueryBuilder::fetchAllValuesQuery(_column_name, _table_name, _reference));
+                        QueryBuilder::fetchAllValuesStatement(_column_name, _table_name, _reference));
 
-                    _logger->trace("Created prepared statement for: {}", _fetch_all_query_name);
+                    spdlog::trace("Created prepared statement for: {}", _fetch_all_query_name);
                 }
 
                 auto result = tx.exec_prepared(_fetch_all_query_name);
@@ -143,7 +138,7 @@ namespace pqxx_conn
                 for (const auto &row : result)
                     _values.insert({row[1].template as<TRef>(), row[0].template as<TValue>()});
 
-                _logger->debug("Loaded: {} values into cache", _values.size());
+                spdlog::debug("Loaded: {} values into cache", _values.size());
             });
         }
         catch (const pqxx::pqxx_exception &ex)
@@ -151,9 +146,9 @@ namespace pqxx_conn
             string msg {"The database transaction failed. Unable to fetchAll for column: " + _column_name +
                 " in table: " + _table_name + ". Error: " + ex.base().what()};
 
-            _logger->error("Error: An unexpected error occurred when trying to run the database query");
-            _logger->error("Caught error: \"{}\"", ex.base().what());
-            _logger->error("Throwing storage error with message: \"{}\"", msg);
+            spdlog::error("Error: An unexpected error occurred when trying to run the database query");
+            spdlog::error("Caught error: \"{}\"", ex.base().what());
+            spdlog::error("Throwing storage error with message: \"{}\"", msg);
 
             Tango::Except::throw_exception("Storage Error", msg, LOCATION_INFO);
         }
@@ -170,12 +165,8 @@ namespace pqxx_conn
         // need to go to the database
         auto value_iter = _values.find(reference);
 
-        if (value_iter != _values.end())
-        {
-            // found a cached value, return asap
-            return true;
-        }
-        else
+        // not found, search the database
+        if (value_iter == _values.end())
         {
             try
             {
@@ -186,14 +177,16 @@ namespace pqxx_conn
 
                     if (!tx.prepared(_fetch_id_query_name).exists())
                     {
-                        tx.conn().prepare(
-                            _fetch_id_query_name, QueryBuilder::fetchValueQuery(_column_name, _table_name, _reference));
+                        tx.conn().prepare(_fetch_id_query_name,
+                            QueryBuilder::fetchValueStatement(_column_name, _table_name, _reference));
 
-                        _logger->trace("Created prepared statement for: {}", _fetch_id_query_name);
+                        spdlog::trace("Created prepared statement for: {}", _fetch_id_query_name);
                     }
 
                     auto result = tx.exec_prepared(_fetch_id_query_name, reference);
                     tx.commit();
+
+                    auto value_exists = false;
 
                     // no result is not an error, the value simply does not exist and its
                     // up to the caller to deal with the situation
@@ -206,8 +199,8 @@ namespace pqxx_conn
                             auto value = result.at(0).at(0).template as<TValue>();
                             _values.insert({reference, value});
 
-                            _logger->debug("Cached value: \'{} \' with reference: \'{}\'", value, reference);
-                            return true;
+                            spdlog::debug(R"(Cached value: '{} ' with reference: '{}')", value, reference);
+                            value_exists = true;
                         }
                         else
                         {
@@ -216,7 +209,7 @@ namespace pqxx_conn
                         }
                     }
 
-                    return false;
+                    return value_exists;
                 });
             }
             catch (const pqxx::pqxx_exception &ex)
@@ -224,15 +217,15 @@ namespace pqxx_conn
                 string msg {"The database transaction failed. Unable to query column: " + _column_name +
                     " in table: " + _table_name + ". Error: " + ex.base().what()};
 
-                _logger->error("Error: An unexpected error occurred when trying to run the database query");
-                _logger->error("Caught error: \"{}\"", ex.base().what());
-                _logger->error("Throwing storage error with message: \"{}\"", msg);
+                spdlog::error("Error: An unexpected error occurred when trying to run the database query");
+                spdlog::error("Caught error: \"{}\"", ex.base().what());
+                spdlog::error("Throwing storage error with message: \"{}\"", msg);
 
                 Tango::Except::throw_exception("Storage Error", msg, LOCATION_INFO);
             }
         }
 
-        return false;
+        return true;
     }
 
     //=============================================================================
@@ -248,7 +241,7 @@ namespace pqxx_conn
         {
             // this is pretty fatal, we can not store information if it does not exist
             string msg {"Unable to find a value in either the cache or database for reference: " + reference};
-            _logger->error("Error: {}", msg);
+            spdlog::error("Error: {}", msg);
             Tango::Except::throw_exception("Storage Error", msg, LOCATION_INFO);
         }
 
@@ -267,12 +260,12 @@ namespace pqxx_conn
         // the caller to deal with
         if (_values.find(reference) != _values.end())
         {
-            _logger->warn("Value already exists in cache, not caching. Value: {} with reference: {}", value, reference);
+            spdlog::warn("Value already exists in cache, not caching. Value: {} with reference: {}", value, reference);
             return;
         }
 
         _values.insert({reference, value});
-        _logger->debug("Cached new value: {} with reference: {} by request", value, reference);
+        spdlog::debug("Cached new value: {} with reference: {} by request", value, reference);
     }
 
     //=============================================================================

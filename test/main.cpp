@@ -18,13 +18,15 @@
    along with libhdb++timescale.  If not, see <http://www.gnu.org/licenses/>. */
 
 #define CATCH_CONFIG_RUNNER
+#undef CATCH_CONFIG_FAST_COMPILE
 
 #include "LibUtils.hpp"
 #include "catch2/catch.hpp"
 
 int main(int argc, char *argv[])
 {
-    hdbpp_internal::LogConfigurator::initLogging(false, true, "/tmp/hdb/test.log");
+    hdbpp_internal::LogConfigurator::initLogging();
+    //hdbpp_internal::LogConfigurator::initConsoleLogging();
     hdbpp_internal::LogConfigurator::setLoggingLevel(spdlog::level::err);
 
     int result = Catch::Session().run(argc, argv);

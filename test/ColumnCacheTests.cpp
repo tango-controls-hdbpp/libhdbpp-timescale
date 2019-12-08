@@ -27,7 +27,7 @@
 using namespace std;
 using namespace hdbpp_internal;
 using namespace hdbpp_internal::pqxx_conn;
-using namespace hdbpp_test::psql_conn_test;
+using namespace hdbpp_test::psql_connection;
 
 namespace value_cache_test
 {
@@ -72,7 +72,7 @@ shared_ptr<pqxx::connection> connectDb()
 
 using namespace value_cache_test;
 
-SCENARIO("ColumnCache can access and retrieve data from the database", "[db-access][column-cache][psql]")
+SCENARIO("ColumnCache can access and retrieve data from the database", "[db-access][column-cache]")
 {
     auto conn = connectDb();
 
@@ -108,7 +108,7 @@ SCENARIO("ColumnCache can access and retrieve data from the database", "[db-acce
     conn->disconnect();
 }
 
-SCENARIO("ColumnCache can grown in size when caching", "[db-access][column-cache][psql]")
+SCENARIO("ColumnCache can grown in size when caching", "[db-access][column-cache]")
 {
     auto conn = connectDb();
 
@@ -172,7 +172,7 @@ SCENARIO("ColumnCache can grown in size when caching", "[db-access][column-cache
     conn->disconnect();
 }
 
-SCENARIO("ColumnCache will handle the same value being added twice", "[db-access][column-cache][psql]")
+SCENARIO("ColumnCache will handle the same value being added twice", "[db-access][column-cache]")
 {
     auto conn = connectDb();
 
@@ -203,7 +203,7 @@ SCENARIO("ColumnCache will handle the same value being added twice", "[db-access
     conn->disconnect();
 }
 
-SCENARIO("It is an error to request invalid values", "[db-access][column-cache][psql]")
+SCENARIO("It is an error to request invalid values", "[db-access][column-cache]")
 {
     auto conn = connectDb();
 
@@ -223,7 +223,7 @@ SCENARIO("It is an error to request invalid values", "[db-access][column-cache][
     conn->disconnect();
 }
 
-SCENARIO("Clearing the cache does not stop entries being cached again", "[db-access][column-cache][psql]")
+SCENARIO("Clearing the cache does not stop entries being cached again", "[db-access][column-cache]")
 {
     auto conn = connectDb();
 
@@ -256,7 +256,7 @@ SCENARIO("Clearing the cache does not stop entries being cached again", "[db-acc
 }
 
 SCENARIO("ColumnCache will fetch values from db and cache them as they are requested by reference",
-    "[db-access][column-cache][psql]")
+    "[db-access][column-cache]")
 {
     auto conn = connectDb();
 

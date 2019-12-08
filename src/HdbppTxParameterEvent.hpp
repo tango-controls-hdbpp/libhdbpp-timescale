@@ -37,7 +37,6 @@ class HdbppTxParameterEvent : public HdbppTxBase<Conn>
 {
 public:
     HdbppTxParameterEvent(Conn &conn) : HdbppTxBase<Conn>(conn) {}
-    virtual ~HdbppTxParameterEvent() {}
 
     HdbppTxParameterEvent<Conn> &withName(const std::string &fqdn_attr_name)
     {
