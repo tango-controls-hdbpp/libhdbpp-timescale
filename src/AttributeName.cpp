@@ -94,7 +94,7 @@ const string &AttributeName::tangoHostWithDomain()
             hints.ai_socktype = SOCK_STREAM;
             hints.ai_flags = AI_CANONNAME;
 
-            struct addrinfo *result, *rp;
+            struct addrinfo *result;
             const int status = getaddrinfo(server_name.c_str(), nullptr, &hints, &result);
 
             if (status != 0)
@@ -104,9 +104,7 @@ const string &AttributeName::tangoHostWithDomain()
 
                 return tangoHost();
             }
-
-            for (rp = result; rp != nullptr; rp = rp->ai_next)
-                server_name_with_domain = string(rp->ai_canonname) + tango_host.substr(tango_host.find(':', 0));
+            server_name_with_domain = string(result->ai_canonname) + tango_host.substr(tango_host.find(':', 0));
 
             freeaddrinfo(result); // all done with this structure
             _tango_host_with_domain_cache = server_name_with_domain;
