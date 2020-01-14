@@ -391,6 +391,7 @@ namespace pqxx_conn
                 {
                     tx.conn().prepare(_query_builder.storeDataEventErrorName(traits),
                         _query_builder.storeDataEventErrorStatement(traits));
+
                     spdlog::trace("Created prepared statement for: {}", _query_builder.storeDataEventErrorName(traits));
                 }
 
@@ -412,6 +413,47 @@ namespace pqxx_conn
                 LOCATION_INFO);
         }
     }
+
+    //=============================================================================
+    //=============================================================================
+    void DbConnection::storeAttributeTtl(const std::string &full_attr_name, unsigned int ttl)
+    {
+        assert(!full_attr_name.empty());
+        assert(_conn != nullptr);
+        assert(_conf_id_cache != nullptr);
+
+
+        checkConnection(LOCATION_INFO);
+        checkAttributeExists(full_attr_name, LOCATION_INFO);
+
+        spdlog::trace("Setting ttl for attribute: {} to: {}", full_attr_name, ttl);
+
+        try
+        {
+            // create and perform a pqxx transaction
+            pqxx::perform([&, this]() {
+                pqxx::work tx {(*_conn), StoreTtl};
+
+                if (!tx.prepared(StoreTtl).exists())
+                {
+                    tx.conn().prepare(StoreTtl, QueryBuilder::storeTtlStatement());
+                    spdlog::trace("Created prepared statement for: {}", StoreTtl);
+                }
+
+                // no result expected
+                tx.exec_prepared0(StoreTtl, ttl, _conf_id_cache->value(full_attr_name));
+                tx.commit();
+            });
+        }
+        catch (const pqxx::pqxx_exception &ex)
+        {
+            handlePqxxError("The attribute [" + full_attr_name + "] ttl [" + std::to_string(ttl) + "] was not saved.",
+                ex.base().what(),
+                QueryBuilder::storeTtlStatement(),
+                LOCATION_INFO);
+        }
+    }
+
 
     //=============================================================================
     //=============================================================================

@@ -36,6 +36,11 @@
 
 #include <tango.h>
 
+// This file conforms to the pqxx style, rather than our own, since it is an extension 
+// to that project, therefore we have many liniting readability errors raised when 
+// using clang-tidy. To make our compile clean, we simply disable linting for many lines
+// in the file
+
 namespace pqxx
 {
 namespace internal
@@ -43,78 +48,91 @@ namespace internal
     template<>
     struct type_name<uint8_t>
     {
+        // NOLINTNEXTLINE (readability-identifier-naming)
         static constexpr const char *value = "uint8_t";
     };
 
     template<>
     struct type_name<Tango::DevState>
     {
+        // NOLINTNEXTLINE (readability-identifier-naming)
         static constexpr const char *value = "Tango::DevState";
     };
 
     template<>
     struct type_name<std::vector<double>>
     {
+        // NOLINTNEXTLINE (readability-identifier-naming)
         static constexpr const char *value = "vector<double>";
     };
 
     template<>
     struct type_name<std::vector<float>>
     {
+        // NOLINTNEXTLINE (readability-identifier-naming)
         static constexpr const char *value = "vector<float>";
     };
 
     template<>
     struct type_name<std::vector<int32_t>>
     {
+        // NOLINTNEXTLINE (readability-identifier-naming)
         static constexpr const char *value = "vector<int32_t>";
     };
 
     template<>
     struct type_name<std::vector<uint32_t>>
     {
+        // NOLINTNEXTLINE (readability-identifier-naming)
         static constexpr const char *value = "vector<uint32_t>";
     };
 
     template<>
     struct type_name<std::vector<int64_t>>
     {
+        // NOLINTNEXTLINE (readability-identifier-naming)
         static constexpr const char *value = "vector<int64_t>";
     };
 
     template<>
     struct type_name<std::vector<uint64_t>>
     {
+        // NOLINTNEXTLINE (readability-identifier-naming)
         static constexpr const char *value = "vector<uint64_t>";
     };
 
     template<>
     struct type_name<std::vector<int16_t>>
     {
+        // NOLINTNEXTLINE (readability-identifier-naming)
         static constexpr const char *value = "vector<int16_t>";
     };
 
     template<>
     struct type_name<std::vector<uint16_t>>
     {
+        // NOLINTNEXTLINE (readability-identifier-naming)
         static constexpr const char *value = "vector<uint16_t>";
     };
 
     template<>
     struct type_name<std::vector<uint8_t>>
     {
+        // NOLINTNEXTLINE (readability-identifier-naming)
         static constexpr const char *value = "vector<uint8_t>";
     };
 
     template<>
     struct type_name<std::vector<bool>>
     {
+        // NOLINTNEXTLINE (readability-identifier-naming)
         static constexpr const char *value = "vector<bool>";
     };
 
     template<>
     struct type_name<std::vector<std::string>>
     {
+        // NOLINTNEXTLINE (readability-identifier-naming)
         static constexpr const char *value = "vector<std::string>";
     };
 } // namespace internal
@@ -127,10 +145,16 @@ struct string_traits<std::vector<T>>
 {
 public:
     static constexpr const char *name() noexcept { return internal::type_name<T>::value; }
+
+    // NOLINTNEXTLINE (readability-identifier-naming)
     static constexpr bool has_null() noexcept { return false; }
-    static bool is_null(const std::vector<T> &) { return false; }
+
+    // NOLINTNEXTLINE (readability-identifier-naming)
+    static bool is_null(const std::vector<T> &/*unused*/) { return false; }
+
     [[noreturn]] static std::vector<T> null() { internal::throw_null_conversion(name()); }
 
+    // NOLINTNEXTLINE (readability-identifier-naming)
     static void from_string(const char str[], std::vector<T> &value)
     {
         if (str == nullptr)
@@ -166,6 +190,7 @@ public:
         }
     }
 
+    // NOLINTNEXTLINE (readability-identifier-naming)
     static std::string to_string(const std::vector<T> &value)
     {
         if (value.empty())
@@ -184,10 +209,16 @@ struct string_traits<std::vector<std::string>>
 {
 public:
     static constexpr const char *name() noexcept { return "vector<string>"; }
+
+    // NOLINTNEXTLINE (readability-identifier-naming)
     static constexpr bool has_null() noexcept { return false; }
-    static bool is_null(const std::vector<std::string> &) { return false; }
+
+    // NOLINTNEXTLINE (readability-identifier-naming)
+    static bool is_null(const std::vector<std::string> &/*unused*/) { return false; }
+
     [[noreturn]] static std::vector<std::string> null() { internal::throw_null_conversion(name()); }
 
+    // NOLINTNEXTLINE (readability-identifier-naming)
     static void from_string(const char str[], std::vector<std::string> &value)
     {
         if (str == nullptr)
@@ -223,6 +254,7 @@ public:
         }
     }
 
+    // NOLINTNEXTLINE (readability-identifier-naming)
     static std::string to_string(const std::vector<std::string> &value)
     {
         // This function should not be used, so we do a simple basic conversion
@@ -239,10 +271,16 @@ struct string_traits<std::vector<bool>>
 {
 public:
     static constexpr const char *name() noexcept { return "std::vector<bool>"; }
+
+    // NOLINTNEXTLINE (readability-identifier-naming)
     static constexpr bool has_null() noexcept { return false; }
-    static bool is_null(const std::vector<bool> &) { return false; }
+
+    // NOLINTNEXTLINE (readability-identifier-naming)
+    static bool is_null(const std::vector<bool> &/*unused*/) { return false; }
+
     [[noreturn]] static std::vector<bool> null() { internal::throw_null_conversion(name()); }
 
+    // NOLINTNEXTLINE (readability-identifier-naming)
     static void from_string(const char str[], std::vector<bool> &value)
     {
         if (str == nullptr)
@@ -276,6 +314,7 @@ public:
         }
     }
 
+    // NOLINTNEXTLINE (readability-identifier-naming)
     static std::string to_string(const std::vector<bool> &value)
     {
         if (value.empty())

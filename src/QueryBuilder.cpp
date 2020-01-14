@@ -275,6 +275,20 @@ namespace pqxx_conn
 
     //=============================================================================
     //=============================================================================
+    const std::string &QueryBuilder::storeTtlStatement()
+    {
+        // clang-format off
+        static string query = 
+            "UPDATE " + schema::ConfTableName + " SET " +
+                schema::ConfColTtl + "=$1::int WHERE " + schema::ConfColId + "=$2";
+        // clang-format on
+
+        return query;
+    }
+
+
+    //=============================================================================
+    //=============================================================================
     const string QueryBuilder::fetchAllValuesStatement(
         const string &column_name, const string &table_name, const string &reference)
     {

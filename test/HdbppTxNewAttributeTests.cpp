@@ -61,7 +61,7 @@ public:
         att_traits = traits;
     }
 
-    void storeHistoryEvent(const string & /* full_attr_name */, const std::string &event)
+    void storeHistoryEvent(const string & /* full_attr_name */, const string &event)
     {
         new_att_last_event = event;
 
@@ -72,11 +72,11 @@ public:
             att_archived = true;
     }
 
-    std::string fetchLastHistoryEvent(const string & /* unused */) { return new_att_last_event; }
+    string fetchLastHistoryEvent(const string & /* unused */) { return new_att_last_event; }
 
-    bool fetchAttributeArchived(const std::string & /* unused */) { return att_archived; }
+    bool fetchAttributeArchived(const string & /* unused */) { return att_archived; }
 
-    AttributeTraits fetchAttributeTraits(const std::string & /* unused */) { return att_traits; }
+    AttributeTraits fetchAttributeTraits(const string & /* unused */) { return att_traits; }
 
     // expose the results of the store function so they can be checked
     // in the results

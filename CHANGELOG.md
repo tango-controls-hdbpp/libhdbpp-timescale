@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- Added support for time to live feature. 
+
+### Changed
+
+- Excluded large parts of PqxxExtension.hpp from liniting (since it conforms to pqxx coding standards)
+
 ## [0.10.0] - 2019-12-06
 
 ### Added

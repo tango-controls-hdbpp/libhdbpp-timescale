@@ -95,7 +95,7 @@ public:
      * is raised
      *
      * @param fqdn_attr_name Fully qualified attribute nam
-     * @param ttl The time to live in hour, 0 for infinity
+     * @param ttl The time to live in hours, 0 for infinity
      * @throw Tango::DevFailed
      */
     virtual void updateTTL_Attr(std::string fqdn_attr_name, unsigned int ttl);

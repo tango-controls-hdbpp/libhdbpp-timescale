@@ -17,6 +17,7 @@ set(TEST_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/HdbppTxNewAttributeTests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/HdbppTxHistoryEventTests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/HdbppTxParameterEventTests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/HdbppTxUpdateTtlTests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/QueryBuilderTests.cpp)
 
 add_executable(unit-tests ${TEST_SOURCES})

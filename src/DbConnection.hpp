@@ -109,6 +109,9 @@ namespace pqxx_conn
             const std::string &error_msg,
             const AttributeTraits &traits);
 
+        // update the attribute ttl value
+        void storeAttributeTtl(const std::string &full_attr_name, unsigned int ttl);
+
         // fetch API
 
         // get the last history event for the given attribute

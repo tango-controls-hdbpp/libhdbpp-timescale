@@ -1169,3 +1169,46 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
     REQUIRE(testConn().fetchAttributeTraits(attr_name::TestAttrFQDName) == traits);
     SUCCEED("Passed");
 }
+
+TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
+    "Upating an attribute ttl in the database",
+    "[db-access][hdbpp-db-access][db-connection]")
+{
+    AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE};
+    unsigned int new_ttl = 100;
+
+    REQUIRE_NOTHROW(clearTables());
+    auto name = storeAttributeByTraits(traits);
+    REQUIRE_NOTHROW(testConn().storeAttributeTtl(name, new_ttl));
+
+    {
+        pqxx::work tx {verifyConn()};
+
+        string query = "SELECT ttl FROM ";
+        query += schema::ConfTableName;
+        query += " WHERE ";
+        query += schema::ConfColName;
+        query += "='";
+        query += name;
+        query += "'";
+
+        // get the attribute ttl
+        pqxx::row attr_row;
+        REQUIRE_NOTHROW(attr_row = tx.exec1(query));
+        tx.commit();
+
+        REQUIRE(attr_row.at(0).as<unsigned int>() == new_ttl);
+    }
+
+    SUCCEED("Passed");
+}
+
+TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
+    "storeTtl() throws an exception when the attribute is not archived",
+    "[db-access][hdbpp-db-access][db-connection]")
+{
+    AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE};
+    REQUIRE_NOTHROW(clearTables());
+    REQUIRE_THROWS(testConn().storeAttributeTtl(attr_name::TestAttrFQDName, 100));
+    SUCCEED("Passed");
+}
