@@ -29,7 +29,7 @@
 
 namespace hdbpp_internal
 {
-// Update the time to live (ttl) for the attribute in the database. 
+// Update the time to live (ttl) for the attribute in the database.
 template<typename Conn>
 class HdbppTxUpdateTtl : public HdbppTxBase<Conn>
 {
@@ -93,8 +93,7 @@ HdbppTxUpdateTtl<Conn> &HdbppTxUpdateTtl<Conn>::store()
     else
     {
         // attribute does not exist, this is an error condition
-        std::string msg {
-            "Attempt to update the ttl for an attribute that does not exist. Attribute: " +
+        std::string msg {"Attempt to update the ttl for an attribute that does not exist. Attribute: " +
             _attr_name.fqdnAttributeName()};
 
         spdlog::error("Error: {}", msg);

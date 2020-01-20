@@ -36,8 +36,8 @@
 
 #include <tango.h>
 
-// This file conforms to the pqxx style, rather than our own, since it is an extension 
-// to that project, therefore we have many liniting readability errors raised when 
+// This file conforms to the pqxx style, rather than our own, since it is an extension
+// to that project, therefore we have many liniting readability errors raised when
 // using clang-tidy. To make our compile clean, we simply disable linting for many lines
 // in the file
 
@@ -150,7 +150,7 @@ public:
     static constexpr bool has_null() noexcept { return false; }
 
     // NOLINTNEXTLINE (readability-identifier-naming)
-    static bool is_null(const std::vector<T> &/*unused*/) { return false; }
+    static bool is_null(const std::vector<T> & /*unused*/) { return false; }
 
     [[noreturn]] static std::vector<T> null() { internal::throw_null_conversion(name()); }
 
@@ -214,7 +214,7 @@ public:
     static constexpr bool has_null() noexcept { return false; }
 
     // NOLINTNEXTLINE (readability-identifier-naming)
-    static bool is_null(const std::vector<std::string> &/*unused*/) { return false; }
+    static bool is_null(const std::vector<std::string> & /*unused*/) { return false; }
 
     [[noreturn]] static std::vector<std::string> null() { internal::throw_null_conversion(name()); }
 
@@ -276,7 +276,7 @@ public:
     static constexpr bool has_null() noexcept { return false; }
 
     // NOLINTNEXTLINE (readability-identifier-naming)
-    static bool is_null(const std::vector<bool> &/*unused*/) { return false; }
+    static bool is_null(const std::vector<bool> & /*unused*/) { return false; }
 
     [[noreturn]] static std::vector<bool> null() { internal::throw_null_conversion(name()); }
 

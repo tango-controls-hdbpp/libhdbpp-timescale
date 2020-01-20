@@ -424,7 +424,6 @@ namespace pqxx_conn
         assert(_conn != nullptr);
         assert(_conf_id_cache != nullptr);
 
-
         checkConnection(LOCATION_INFO);
         checkAttributeExists(full_attr_name, LOCATION_INFO);
 
@@ -455,7 +454,6 @@ namespace pqxx_conn
                 LOCATION_INFO);
         }
     }
-
 
     //=============================================================================
     //=============================================================================

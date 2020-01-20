@@ -260,10 +260,7 @@ void HdbppTimescaleDb::updateTTL_Attr(std::string fqdn_attr_name, unsigned int t
     assert(!fqdn_attr_name.empty());
     spdlog::trace("TTL event request for attribute: {}, with ttl: {}", fqdn_attr_name, ttl);
 
-    Conn->createTx<HdbppTxUpdateTtl>()
-        .withName(fqdn_attr_name)
-        .withTtl(ttl)
-        .store();
+    Conn->createTx<HdbppTxUpdateTtl>().withName(fqdn_attr_name).withTtl(ttl).store();
 }
 
 //=============================================================================

@@ -99,8 +99,8 @@ SCENARIO("Construct and store HdbppTxUpdateTtl data without error", "[hdbpp-tx][
     }
 }
 
-SCENARIO("When attempting to store invalid HdbppTxUpdateTtl states, errors are thrown",
-    "[hdbpp-tx][hdbpp-tx-update-ttl]")
+SCENARIO(
+    "When attempting to store invalid HdbppTxUpdateTtl states, errors are thrown", "[hdbpp-tx][hdbpp-tx-update-ttl]")
 {
     hdbpp_update_ttl_test::MockConnection conn;
     auto ttl = 10;
