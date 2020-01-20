@@ -108,6 +108,7 @@ namespace pqxx_conn
         const string &att_family,
         const string &att_member,
         const string &att_name,
+        unsigned int ttl,
         const AttributeTraits &traits)
     {
         assert(!full_attr_name.empty());
@@ -160,6 +161,7 @@ namespace pqxx_conn
                     att_family,
                     att_member,
                     att_name,
+                    ttl,
                     false,
                     static_cast<unsigned int>(traits.type()),
                     static_cast<unsigned int>(traits.formatType()),

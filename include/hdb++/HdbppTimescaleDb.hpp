@@ -86,7 +86,7 @@ public:
      * @throw Tango::DevFailed
      */
     virtual void configure_Attr(
-        std::string fqdn_attr_name, int type, int format, int write_type, unsigned int /* ttl */);
+        std::string fqdn_attr_name, int type, int format, int write_type, unsigned int ttl);
 
     /**
      * @brief Update the ttl value for an attribute.

@@ -40,7 +40,7 @@ public:
     bool isClosed() const noexcept override { return !isOpen(); }
 
     // mock storeAttribute just records parameters
-    void storeTtl(const string &full_attr_name, unsigned int ttl)
+    void storeAttributeTtl(const string &full_attr_name, unsigned int ttl)
     {
         if (store_ttl_triggers_ex)
             throw runtime_error("A test exception");

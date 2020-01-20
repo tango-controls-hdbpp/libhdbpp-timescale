@@ -25,6 +25,7 @@
 #include "HdbppTxHistoryEvent.hpp"
 #include "HdbppTxNewAttribute.hpp"
 #include "HdbppTxParameterEvent.hpp"
+#include "HdbppTxUpdateTtl.hpp"
 #include "LibUtils.hpp"
 
 #include <locale>
@@ -235,7 +236,7 @@ void HdbppTimescaleDb::insert_param_Attr(
 //=============================================================================
 //=============================================================================
 void HdbppTimescaleDb::configure_Attr(
-    std::string fqdn_attr_name, int type, int format, int write_type, unsigned int /* ttl */)
+    std::string fqdn_attr_name, int type, int format, int write_type, unsigned int ttl)
 {
     assert(!fqdn_attr_name.empty());
     spdlog::trace("Insert new attribute request for attribute: {}", fqdn_attr_name);
@@ -248,6 +249,7 @@ void HdbppTimescaleDb::configure_Attr(
         .withTraits(static_cast<Tango::AttrWriteType>(write_type),
             static_cast<Tango::AttrDataFormat>(format),
             static_cast<Tango::CmdArgType>(type))
+        .withTtl(ttl)
         .store();
 }
 
@@ -258,7 +260,10 @@ void HdbppTimescaleDb::updateTTL_Attr(std::string fqdn_attr_name, unsigned int t
     assert(!fqdn_attr_name.empty());
     spdlog::trace("TTL event request for attribute: {}, with ttl: {}", fqdn_attr_name, ttl);
 
-    // TODO implement
+    Conn->createTx<HdbppTxUpdateTtl>()
+        .withName(fqdn_attr_name)
+        .withTtl(ttl)
+        .store();
 }
 
 //=============================================================================

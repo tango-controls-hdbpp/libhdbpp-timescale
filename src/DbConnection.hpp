@@ -73,6 +73,7 @@ namespace pqxx_conn
             const std::string &att_family,
             const std::string &att_member,
             const std::string &att_name,
+            unsigned int ttl,
             const AttributeTraits &traits);
 
         // store a new history event in the database

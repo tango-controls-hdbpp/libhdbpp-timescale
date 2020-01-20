@@ -50,6 +50,12 @@ public:
         return *this;
     }
 
+    HdbppTxNewAttribute<Conn> &withTtl(unsigned int ttl)
+    {
+        _ttl = ttl;
+        return *this;
+    }
+
     // trigger the database storage routines
     HdbppTxNewAttribute<Conn> &store();
 
@@ -59,6 +65,7 @@ public:
 private:
     AttributeName _attr_name;
     AttributeTraits _traits;
+    unsigned int _ttl = 0;
 };
 
 //=============================================================================
@@ -167,6 +174,7 @@ HdbppTxNewAttribute<Conn> &HdbppTxNewAttribute<Conn>::store()
             _attr_name.family(),
             _attr_name.member(),
             _attr_name.name(),
+            _ttl,
             _traits);
 
         HdbppTxBase<Conn>::connection()

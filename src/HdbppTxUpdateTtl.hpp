@@ -88,7 +88,7 @@ HdbppTxUpdateTtl<Conn> &HdbppTxUpdateTtl<Conn>::store()
     if (HdbppTxBase<Conn>::connection().fetchAttributeArchived(prepared_attr_name))
     {
         // now store the parameter event
-        HdbppTxBase<Conn>::connection().storeTtl(HdbppTxBase<Conn>::attrNameForStorage(_attr_name), _ttl);
+        HdbppTxBase<Conn>::connection().storeAttributeTtl(HdbppTxBase<Conn>::attrNameForStorage(_attr_name), _ttl);
     }
     else
     {
