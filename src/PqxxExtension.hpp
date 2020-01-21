@@ -160,6 +160,7 @@ public:
         if (str == nullptr)
             internal::throw_null_conversion(name());
 
+        // NOLINTNEXTLINE (cppcoreguidelines-pro-bounds-pointer-arithmetic)
         if (str[0] != '{' || str[strlen(str) - 1] != '}')
             throw pqxx::conversion_error("Invalid array format");
 
@@ -224,6 +225,7 @@ public:
         if (str == nullptr)
             internal::throw_null_conversion(name());
 
+        // NOLINTNEXTLINE (cppcoreguidelines-pro-bounds-pointer-arithmetic)
         if (str[0] != '{' || str[strlen(str) - 1] != '}')
             throw pqxx::conversion_error("Invalid array format");
 
@@ -286,6 +288,7 @@ public:
         if (str == nullptr)
             internal::throw_null_conversion(name());
 
+        // NOLINTNEXTLINE (cppcoreguidelines-pro-bounds-pointer-arithmetic)
         if (str[0] != '{' || str[strlen(str) - 1] != '}')
             throw pqxx::conversion_error("Invalid array format");
 
