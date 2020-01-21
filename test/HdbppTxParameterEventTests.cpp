@@ -65,17 +65,17 @@ public:
     bool isClosed() const noexcept override { return !isOpen(); }
 
     // storage API
-    void storeParameterEvent(const std::string &full_attr_name,
+    void storeParameterEvent(const string &full_attr_name,
         double event_time,
-        const std::string &label,
-        const std::string &unit,
-        const std::string &standard_unit,
-        const std::string &display_unit,
-        const std::string &format,
-        const std::string &archive_rel_change,
-        const std::string &archive_abs_change,
-        const std::string &archive_period,
-        const std::string &description)
+        const string &label,
+        const string &unit,
+        const string &standard_unit,
+        const string &display_unit,
+        const string &format,
+        const string &archive_rel_change,
+        const string &archive_abs_change,
+        const string &archive_period,
+        const string &description)
     {
         if (store_attribute_triggers_ex)
             throw runtime_error("A test exception");

@@ -131,8 +131,8 @@ protected:
     pqxx::connection &verifyConn();
 
     void clearTables();
-    void storeAttribute(const AttributeTraits &traits);
-    string storeAttributeByTraits(const AttributeTraits &traits);
+    void storeAttribute(const AttributeTraits &traits, unsigned int ttl = 0);
+    string storeAttributeByTraits(const AttributeTraits &traits, unsigned int ttl = 0);
 
     template<Tango::CmdArgType Type>
     tuple<vector<typename TangoTypeTraits<Type>::type>, vector<typename TangoTypeTraits<Type>::type>>
@@ -205,7 +205,7 @@ void DbConnectionTestsFixture::clearTables()
 
 //=============================================================================
 //=============================================================================
-void DbConnectionTestsFixture::storeAttribute(const AttributeTraits &traits)
+void DbConnectionTestsFixture::storeAttribute(const AttributeTraits &traits, unsigned int ttl)
 {
     REQUIRE_NOTHROW(testConn().storeAttribute(attr_name::TestAttrFinalName,
         attr_name::TestAttrCs,
@@ -213,12 +213,13 @@ void DbConnectionTestsFixture::storeAttribute(const AttributeTraits &traits)
         attr_name::TestAttrFamily,
         attr_name::TestAttrMember,
         attr_name::TestAttrName,
+        ttl,
         traits));
 }
 
 //=============================================================================
 //=============================================================================
-string DbConnectionTestsFixture::storeAttributeByTraits(const AttributeTraits &traits)
+string DbConnectionTestsFixture::storeAttributeByTraits(const AttributeTraits &traits, unsigned int ttl)
 {
     auto name = attr_name::TestAttrFinalName + "_" + tangoEnumToString(traits.type()) + "_" +
         tangoEnumToString(traits.writeType()) + "_" + tangoEnumToString(traits.formatType());
@@ -229,6 +230,7 @@ string DbConnectionTestsFixture::storeAttributeByTraits(const AttributeTraits &t
         attr_name::TestAttrFamily,
         attr_name::TestAttrMember,
         attr_name::TestAttrName,
+        ttl,
         traits));
 
     return name;
@@ -397,7 +399,7 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
     AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE};
 
     REQUIRE_NOTHROW(clearTables());
-    REQUIRE_NOTHROW(storeAttribute(traits));
+    REQUIRE_NOTHROW(storeAttribute(traits, 99));
 
     {
         pqxx::work tx {verifyConn()};
@@ -422,6 +424,7 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
         REQUIRE(attr_row.at(schema::ConfColLastName).as<string>() == attr_name::TestAttrName);
         REQUIRE(attr_row.at(schema::ConfColTableName).as<string>() == QueryBuilder().tableName(traits));
         REQUIRE(attr_row.at(schema::ConfColTypeId).as<int>() == type_row.at(schema::ConfTypeColTypeId).as<int>());
+        REQUIRE(attr_row.at(schema::ConfColTtl).as<int>() == 99);
 
         REQUIRE(attr_row.at(schema::ConfColFormatTypeId).as<int>() ==
             format_row.at(schema::ConfFormatColFormatId).as<int>());
@@ -447,6 +450,7 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
                           attr_name::TestAttrFamily,
                           attr_name::TestAttrMember,
                           attr_name::TestAttrName,
+                          0,
                           traits),
         Tango::DevFailed);
 
@@ -466,6 +470,7 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
                           attr_name::TestAttrFamily,
                           attr_name::TestAttrMember,
                           attr_name::TestAttrName,
+                          0,
                           traits),
         Tango::DevFailed);
 
@@ -1167,5 +1172,48 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
     REQUIRE_NOTHROW(clearTables());
     storeAttribute(traits);
     REQUIRE(testConn().fetchAttributeTraits(attr_name::TestAttrFQDName) == traits);
+    SUCCEED("Passed");
+}
+
+TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
+    "Upating an attribute ttl in the database",
+    "[db-access][hdbpp-db-access][db-connection]")
+{
+    AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE};
+    unsigned int new_ttl = 100;
+
+    REQUIRE_NOTHROW(clearTables());
+    auto name = storeAttributeByTraits(traits);
+    REQUIRE_NOTHROW(testConn().storeAttributeTtl(name, new_ttl));
+
+    {
+        pqxx::work tx {verifyConn()};
+
+        string query = "SELECT ttl FROM ";
+        query += schema::ConfTableName;
+        query += " WHERE ";
+        query += schema::ConfColName;
+        query += "='";
+        query += name;
+        query += "'";
+
+        // get the attribute ttl
+        pqxx::row attr_row;
+        REQUIRE_NOTHROW(attr_row = tx.exec1(query));
+        tx.commit();
+
+        REQUIRE(attr_row.at(0).as<unsigned int>() == new_ttl);
+    }
+
+    SUCCEED("Passed");
+}
+
+TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
+    "storeAttributeTtl() throws an exception when the attribute is not archived",
+    "[db-access][hdbpp-db-access][db-connection]")
+{
+    AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE};
+    REQUIRE_NOTHROW(clearTables());
+    REQUIRE_THROWS(testConn().storeAttributeTtl(attr_name::TestAttrFQDName, 100));
     SUCCEED("Passed");
 }

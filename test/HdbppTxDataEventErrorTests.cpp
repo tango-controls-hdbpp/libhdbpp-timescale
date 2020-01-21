@@ -42,10 +42,10 @@ public:
     bool isOpen() const noexcept override { return _conn_state; }
     bool isClosed() const noexcept override { return !isOpen(); }
 
-    void storeDataEventError(const std::string &full_attr_name,
+    void storeDataEventError(const string &full_attr_name,
         double event_time,
         int quality,
-        const std::string &error_msg,
+        const string &error_msg,
         const AttributeTraits &traits)
     {
         if (store_attribute_triggers_ex)

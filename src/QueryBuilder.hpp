@@ -141,6 +141,7 @@ namespace pqxx_conn
     const string StoreDataEvent = "StoreDataEvent";
     const string StoreDataEventError = "StoreDataEventError";
     const string StoreErrorString = "StoreErrorString";
+    const string StoreTtl = "StoreTtl";
     const string FetchLastHistoryEvent = "FetchLastHistoryEvent";
     const string FetchAttributeTraits = "FetchAttributeTraits";
     const string FetchValue = "FetchKey";
@@ -161,6 +162,7 @@ namespace pqxx_conn
         static const std::string &storeHistoryStringStatement();
         static const std::string &storeParameterEventStatement();
         static const std::string &storeErrorStatement();
+        static const std::string &storeTtlStatement();
         static const std::string &fetchLastHistoryEventStatement();
         static const std::string &fetchAttributeTraitsStatement();
 

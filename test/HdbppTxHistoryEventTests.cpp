@@ -44,7 +44,7 @@ public:
     bool isClosed() const noexcept override { return !isOpen(); }
 
     // storage API
-    void storeHistoryEvent(const string &full_attr_name, const std::string &event)
+    void storeHistoryEvent(const string &full_attr_name, const string &event)
     {
         if (store_attribute_triggers_ex)
             throw runtime_error("A test exception");
@@ -54,7 +54,7 @@ public:
         event_seq.push_back(event);
     }
 
-    std::string fetchLastHistoryEvent(const string & /* unused */) { return att_last_event; }
+    string fetchLastHistoryEvent(const string & /* unused */) { return att_last_event; }
 
     // expose the results of the store function so they can be checked
     // in the results

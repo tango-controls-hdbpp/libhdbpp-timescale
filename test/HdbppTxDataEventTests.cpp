@@ -128,11 +128,11 @@ public:
     bool isClosed() const noexcept override { return !isOpen(); }
 
     template<typename T>
-    void storeDataEvent(const std::string &full_attr_name,
+    void storeDataEvent(const string &full_attr_name,
         double event_time,
         int quality,
-        std::unique_ptr<vector<T>> value_r,
-        std::unique_ptr<vector<T>> value_w,
+        unique_ptr<vector<T>> value_r,
+        unique_ptr<vector<T>> value_w,
         const AttributeTraits &traits)
     {
         if (store_attribute_triggers_ex)

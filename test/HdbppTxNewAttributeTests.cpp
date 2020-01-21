@@ -47,6 +47,7 @@ public:
         const string &att_family,
         const string &att_member,
         const string &att_name,
+        unsigned int ttl,
         const AttributeTraits &traits)
     {
         if (store_attribute_triggers_ex)
@@ -58,10 +59,11 @@ public:
         new_att_family = att_family;
         new_att_member = att_member;
         new_att_name = att_name;
+        new_att_ttl = ttl;
         att_traits = traits;
     }
 
-    void storeHistoryEvent(const string & /* full_attr_name */, const std::string &event)
+    void storeHistoryEvent(const string & /* full_attr_name */, const string &event)
     {
         new_att_last_event = event;
 
@@ -72,11 +74,11 @@ public:
             att_archived = true;
     }
 
-    std::string fetchLastHistoryEvent(const string & /* unused */) { return new_att_last_event; }
+    string fetchLastHistoryEvent(const string & /* unused */) { return new_att_last_event; }
 
-    bool fetchAttributeArchived(const std::string & /* unused */) { return att_archived; }
+    bool fetchAttributeArchived(const string & /* unused */) { return att_archived; }
 
-    AttributeTraits fetchAttributeTraits(const std::string & /* unused */) { return att_traits; }
+    AttributeTraits fetchAttributeTraits(const string & /* unused */) { return att_traits; }
 
     // expose the results of the store function so they can be checked
     // in the results
@@ -92,6 +94,7 @@ public:
     AttributeTraits att_traits;
     bool store_attribute_triggers_ex = false;
     bool att_archived = false;
+    unsigned int new_att_ttl = 0;
 
 private:
     // connection is always open unless test specifies closed
@@ -109,7 +112,7 @@ SCENARIO("Construct and store HdbppTxNewAttribute data without error", "[hdbpp-t
 
         WHEN("Passing a valid configuration with method chaining")
         {
-            tx.withName(TestAttrFQDName).withTraits(Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE);
+            tx.withName(TestAttrFQDName).withTraits(Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE).withTtl(10);
 
             THEN("Then storing the HdbppTxNewAttribute object does not raise an exception")
             {
@@ -128,6 +131,7 @@ SCENARIO("Construct and store HdbppTxNewAttribute data without error", "[hdbpp-t
                     REQUIRE(conn.new_att_family == TestAttrFamily);
                     REQUIRE(conn.new_att_member == TestAttrMember);
                     REQUIRE(conn.new_att_name == TestAttrName);
+                    REQUIRE(conn.new_att_ttl == 10);
                     REQUIRE(conn.att_traits == AttributeTraits(Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE));
                 }
             }

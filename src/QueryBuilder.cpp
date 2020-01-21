@@ -145,20 +145,21 @@ namespace pqxx_conn
                 schema::ConfColFamily + "," +
                 schema::ConfColMember + "," +
                 schema::ConfColLastName + "," + 
+                schema::ConfColTtl + "," + 
                 schema::ConfColHide + ") (" +
                 "SELECT " + 
                     "$1," + 
                     schema::ConfTypeColTypeId + "," + 
                     schema::ConfFormatColFormatId + "," + 
                     schema::ConfWriteColWriteId + 
-                    ",$2,$3,$4,$5,$6,$7,$8 " +
+                    ",$2,$3,$4,$5,$6,$7,$8,$9 " +
                 "FROM " + 
                     schema::ConfTypeTableName + ", " +
                     schema::ConfFormatTableName + ", " +
                     schema::ConfWriteTableName + " " +
-                "WHERE " + schema::ConfTypeTableName + "." + schema::ConfTypeColTypeNum + " = $9 " + 
-                "AND " + schema::ConfFormatTableName + "." + schema::ConfFormatColFormatNum + " = $10 " + 
-                "AND " + schema::ConfWriteTableName + "." + schema::ConfWriteColWriteNum + " = $11) " +
+                "WHERE " + schema::ConfTypeTableName + "." + schema::ConfTypeColTypeNum + " = $10 " + 
+                "AND " + schema::ConfFormatTableName + "." + schema::ConfFormatColFormatNum + " = $11 " + 
+                "AND " + schema::ConfWriteTableName + "." + schema::ConfWriteColWriteNum + " = $12) " +
                 "RETURNING " + schema::ConfColId;
         // clang-format on
 
@@ -268,6 +269,19 @@ namespace pqxx_conn
         static string query = 
             "INSERT INTO " + schema::ErrTableName + " (" +
                 schema::ErrColErrorDesc + ") VALUES ($1) RETURNING " + schema::ErrColId;
+        // clang-format on
+
+        return query;
+    }
+
+    //=============================================================================
+    //=============================================================================
+    const std::string &QueryBuilder::storeTtlStatement()
+    {
+        // clang-format off
+        static string query = 
+            "UPDATE " + schema::ConfTableName + " SET " +
+                schema::ConfColTtl + "=$1::int WHERE " + schema::ConfColId + "=$2";
         // clang-format on
 
         return query;
