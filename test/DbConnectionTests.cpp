@@ -1209,7 +1209,7 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
 }
 
 TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
-    "storeTtl() throws an exception when the attribute is not archived",
+    "storeAttributeTtl() throws an exception when the attribute is not archived",
     "[db-access][hdbpp-db-access][db-connection]")
 {
     AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE};
