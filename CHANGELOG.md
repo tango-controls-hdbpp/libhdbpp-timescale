@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.11.1] - 2020-01-22
+
+### Fixed
+
+- Fix potential crash in AttributeName::tangoHostWithDomain() [#8](https://github.com/tango-controls-hdbpp/libhdbpp-timescale/pull/8)
+
 ## [0.11.0] - 2020-01-21
 
 ### Added
