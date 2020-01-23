@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.11.2] - 2020-01-23
+
+### Fixed
+
+- Incremented version number in CMakeLists.txt
+
 ## [0.11.1] - 2020-01-22
 
 ### Fixed
