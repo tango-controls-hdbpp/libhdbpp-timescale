@@ -26,10 +26,10 @@
 #include "catch2/catch.hpp"
 
 #include <cfloat>
+#include <locale>
 #include <pqxx/pqxx>
 #include <string>
 #include <tuple>
-#include <locale>
 
 using namespace std;
 using namespace pqxx;
@@ -497,13 +497,14 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
         return tmp;
     };
 
-    testConn().storeAttribute(
-        param_to_upper(attr_name::TestAttrFinalName), 
-        param_to_upper(attr_name::TestAttrCs), 
-        param_to_upper(attr_name::TestAttrDomain), 
-        param_to_upper(attr_name::TestAttrFamily), 
-        param_to_upper(attr_name::TestAttrMember), 
-        param_to_upper(attr_name::TestAttrName), 100, traits);
+    testConn().storeAttribute(param_to_upper(attr_name::TestAttrFinalName),
+        param_to_upper(attr_name::TestAttrCs),
+        param_to_upper(attr_name::TestAttrDomain),
+        param_to_upper(attr_name::TestAttrFamily),
+        param_to_upper(attr_name::TestAttrMember),
+        param_to_upper(attr_name::TestAttrName),
+        100,
+        traits);
 
     {
         pqxx::work tx {verifyConn()};
@@ -533,8 +534,8 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
         REQUIRE(attr_row.at(schema::ConfColFormatTypeId).as<int>() ==
             format_row.at(schema::ConfFormatColFormatId).as<int>());
 
-        REQUIRE(attr_row.at(schema::ConfColWriteTypeId).as<int>() ==
-            access_row.at(schema::ConfWriteColWriteId).as<int>());
+        REQUIRE(
+            attr_row.at(schema::ConfColWriteTypeId).as<int>() == access_row.at(schema::ConfWriteColWriteId).as<int>());
     }
 
     SUCCEED("Passed");

@@ -104,20 +104,24 @@ const string &AttributeName::tangoHostWithDomain()
 
                 return tangoHost();
             }
-			
+
             if (result == nullptr)
             {
-                spdlog::error("Error: Unable to add domain to tango host {}: getaddrinfo didn't return the canonical name (result == nullptr)", tango_host);
+                spdlog::error("Error: Unable to add domain to tango host {}: getaddrinfo didn't return the canonical "
+                    "name (result == nullptr)", tango_host);
+
                 return tangoHost();
             }
-			
+
             if (result->ai_canonname == nullptr)
             {
-                spdlog::error("Error: Unable to add domain to tango host {}: getaddrinfo didn't return the canonical name (result->ai_canonname == nullptr)", tango_host);
+                spdlog::error("Error: Unable to add domain to tango host {}: getaddrinfo didn't return the canonical "
+                    "name (result->ai_canonname == nullptr)", tango_host);
+
                 freeaddrinfo(result);
                 return tangoHost();
             }
-            
+
             server_name_with_domain = string(result->ai_canonname) + tango_host.substr(tango_host.find(':', 0));
 
             freeaddrinfo(result); // all done with this structure
