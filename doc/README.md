@@ -19,8 +19,8 @@ The overview is in the main project [README](../README.md).
 
 ## DB Schema
 
-* [Schema](db-schema-config) guidelines and setup.
+* [Schema](db-schema-config.md) guidelines and setup.
 
 ## Configuration
 
-* [Configuration](configuration) parameter details.
+* [Configuration](configuration.md) parameter details.

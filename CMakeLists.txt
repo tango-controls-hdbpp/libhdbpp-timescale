@@ -9,7 +9,7 @@ if ( ${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR} )
 endif()
 
 # Start Build Config -----------------------------------
-cmake_minimum_required(VERSION 3.6)
+cmake_minimum_required(VERSION 3.8)
 set(CMAKE_SKIP_RPATH true)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_COLOR_MAKEFILE ON)
@@ -38,7 +38,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Build options
-option(BUILD_UNIT_TESTS "Build unit tests" OFF)
+set(FETCH_LIBHDBPP_TAG "exp-refactor" CACHE STRING "Libhdbpp branch/tag to clone 'master'")
+option(FETCH_LIBHDBPP "Download and build using a local copy of libhdb++" ON)
+option(FETCH_LIBHDBPP_TAG "When FETCH_LIBHDBPP is enabled, this is the tag fetch ('master')")
+option(BUILD_UNIT_TESTS "Build unit tests" ON)
 option(BUILD_BENCHMARK_TESTS "Build benchmarking tests (Forces RELEASE build)" OFF)
 option(ENABLE_CLANG "Enable clang code and layout analysis" OFF)
 
@@ -66,6 +69,23 @@ list(APPEND CMAKE_PREFIX_PATH "/usr")
 # Find Dependencies  ---------------------
 include(cmake/FindLibraries.cmake)
 
+# Fetch libhdb++ -----------------------------------
+if(FETCH_LIBHDBPP)
+    set(FETCH_PROJECT_NAME "libhdb++")
+    set(FETCH_REPOSITORY_ADDRESS "https://github.com/tango-controls-hdbpp/libhdbpp.git")
+    set(FETCH_REPOSITORY_TAG ${FETCH_LIBHDBPP_TAG})
+    
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/FetchExternal.cmake.in ${CMAKE_BINARY_DIR}/${FETCH_PROJECT_NAME}-download/CMakeLists.txt)
+
+    execute_process(COMMAND "${CMAKE_COMMAND}" -G "${CMAKE_GENERATOR}" .
+        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/${FETCH_PROJECT_NAME}-download" )
+
+    execute_process(COMMAND "${CMAKE_COMMAND}" --build .
+        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/${FETCH_PROJECT_NAME}-download" )
+
+    add_subdirectory("${CMAKE_BINARY_DIR}/${FETCH_PROJECT_NAME}-src" "${CMAKE_BINARY_DIR}/${FETCH_PROJECT_NAME}-build" EXCLUDE_FROM_ALL)
+endif(FETCH_LIBHDBPP)
+
 # Attempt to find the various libraries the project is dependent on
 if(TDB_LIBRARIES)
     find_libraries(LIBRARIES ${TDB_LIBRARIES} SEARCH_PATHS ${LIBRARY_PATHS})
@@ -91,7 +111,6 @@ add_subdirectory(thirdparty/google/benchmark EXCLUDE_FROM_ALL)
 add_subdirectory(thirdparty/google/googletest/googletest EXCLUDE_FROM_ALL)
 
 # Include the thirdparty projects
-add_subdirectory(thirdparty/libhdbpp EXCLUDE_FROM_ALL)
 add_subdirectory(thirdparty/libpqxx  EXCLUDE_FROM_ALL)
 add_subdirectory(thirdparty/spdlog  EXCLUDE_FROM_ALL)
 add_subdirectory(thirdparty/Catch2  EXCLUDE_FROM_ALL)
@@ -133,11 +152,22 @@ add_subdirectory(src)
 
 # Build Targets  -----------------------------------
 
+# split the generator expression out to here so we can make it more
+# readable
+string(CONCAT LIBHDBPP_LIB
+    "$<$<BOOL:"
+        "$<OR:"
+            "$<BOOL:${LIBHDBPP_PROJECT_BUILD}>,"
+            "$<BOOL:${FETCH_LIBHDBPP}>>"
+        ">:"
+        "libhdbpp_headers"
+    ">")
+
 # Shared library --------
 add_library(libhdbpp_timescale_shared_library SHARED ${SRC_FILES})
 
 target_link_libraries(libhdbpp_timescale_shared_library 
-    PUBLIC ${TDB_FOUND_LIBRARIES} pqxx_static libhdbpp_headers spdlog::spdlog_header_only Threads::Threads
+    PUBLIC ${TDB_FOUND_LIBRARIES} pqxx_static ${LIBHDBPP_LIB} spdlog::spdlog_header_only Threads::Threads
     PRIVATE TangoInterfaceLibrary)
 
 target_include_directories(libhdbpp_timescale_shared_library 
@@ -146,6 +176,7 @@ target_include_directories(libhdbpp_timescale_shared_library
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
     PRIVATE 
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>
+        ${INCLUDE_PATHS}
         "${PROJECT_BINARY_DIR}")
 
 set_target_properties(libhdbpp_timescale_shared_library 
@@ -170,7 +201,7 @@ target_compile_options(libhdbpp_timescale_shared_library
 add_library(libhdbpp_timescale_static_library STATIC EXCLUDE_FROM_ALL ${SRC_FILES})
 
 target_link_libraries(libhdbpp_timescale_static_library 
-    PUBLIC ${TDB_FOUND_LIBRARIES} pqxx_static libhdbpp_headers spdlog Threads::Threads
+    PUBLIC ${TDB_FOUND_LIBRARIES} pqxx_static ${LIBHDBPP_LIB} spdlog Threads::Threads
     PRIVATE TangoInterfaceLibrary)
 
 target_include_directories(libhdbpp_timescale_static_library 

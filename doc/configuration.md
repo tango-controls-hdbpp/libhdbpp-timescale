@@ -2,7 +2,8 @@
 
 ## Library Configuration Parameters
 
-Configuration parameters are as follows:
+The following configuration parameters are available. These are passed to the library via a vector of strings, the format is key=value. Normally these values are configured and passed via the LibConfiguration parameters on the EventSubscriber or ConfigManager DeviceServer.
+
 
 | Parameter | Mandatory | Default | Description |
 |------|-----|-----|-----|
