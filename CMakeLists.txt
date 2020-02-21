@@ -9,7 +9,7 @@ if ( ${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR} )
 endif()
 
 # Start Build Config -----------------------------------
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.11)
 set(CMAKE_SKIP_RPATH true)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_COLOR_MAKEFILE ON)
@@ -39,9 +39,9 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Build options
 set(FETCH_LIBHDBPP_TAG "exp-refactor" CACHE STRING "Libhdbpp branch/tag to clone 'master'")
-option(FETCH_LIBHDBPP "Download and build using a local copy of libhdb++" ON)
+option(FETCH_LIBHDBPP "Download and build using a local copy of libhdb++" OFF)
 option(FETCH_LIBHDBPP_TAG "When FETCH_LIBHDBPP is enabled, this is the tag fetch ('master')")
-option(BUILD_UNIT_TESTS "Build unit tests" ON)
+option(BUILD_UNIT_TESTS "Build unit tests" OFF)
 option(BUILD_BENCHMARK_TESTS "Build benchmarking tests (Forces RELEASE build)" OFF)
 option(ENABLE_CLANG "Enable clang code and layout analysis" OFF)
 
@@ -69,29 +69,6 @@ list(APPEND CMAKE_PREFIX_PATH "/usr")
 # Find Dependencies  ---------------------
 include(cmake/FindLibraries.cmake)
 
-# Fetch libhdb++ -----------------------------------
-if(FETCH_LIBHDBPP)
-    set(FETCH_PROJECT_NAME "libhdb++")
-    set(FETCH_REPOSITORY_ADDRESS "https://github.com/tango-controls-hdbpp/libhdbpp.git")
-    set(FETCH_REPOSITORY_TAG ${FETCH_LIBHDBPP_TAG})
-    
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/FetchExternal.cmake.in ${CMAKE_BINARY_DIR}/${FETCH_PROJECT_NAME}-download/CMakeLists.txt)
-
-    execute_process(COMMAND "${CMAKE_COMMAND}" -G "${CMAKE_GENERATOR}" .
-        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/${FETCH_PROJECT_NAME}-download" )
-
-    execute_process(COMMAND "${CMAKE_COMMAND}" --build .
-        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/${FETCH_PROJECT_NAME}-download" )
-
-    add_subdirectory("${CMAKE_BINARY_DIR}/${FETCH_PROJECT_NAME}-src" "${CMAKE_BINARY_DIR}/${FETCH_PROJECT_NAME}-build" EXCLUDE_FROM_ALL)
-endif(FETCH_LIBHDBPP)
-
-# Attempt to find the various libraries the project is dependent on
-if(TDB_LIBRARIES)
-    find_libraries(LIBRARIES ${TDB_LIBRARIES} SEARCH_PATHS ${LIBRARY_PATHS})
-    set(TDB_FOUND_LIBRARIES ${FOUND_LIBRARIES})
-endif(TDB_LIBRARIES)
-
 # First find tango if it has not already been found. Returns an interface library
 # called TangoInterfaceLibrary
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/cmake")
@@ -99,6 +76,31 @@ find_package(Tango)
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
+
+# Fetch libhdb++
+if(FETCH_LIBHDBPP)
+    message(STATUS "Fetching: libhdbpp with tag: '${FETCH_LIBHDBPP_TAG}'")
+    include(FetchContent)
+    set(FETCHCONTENT_QUIET off)
+
+    FetchContent_Declare(
+        libhdbpp
+        GIT_REPOSITORY "https://github.com/tango-controls-hdbpp/libhdbpp.git"
+        GIT_TAG ${FETCH_LIBHDBPP_TAG})
+
+    FetchContent_GetProperties(libhdbpp)
+
+    if(NOT libhdbpp_POPULATED)
+        FetchContent_Populate(libhdbpp)
+        add_subdirectory(${libhdbpp_SOURCE_DIR} ${libhdbpp_BINARY_DIR} EXCLUDE_FROM_ALL)
+    endif() 
+endif(FETCH_LIBHDBPP)
+
+# Attempt to find the various libraries the project is dependent on
+if(TDB_LIBRARIES)
+    find_libraries(LIBRARIES ${TDB_LIBRARIES} SEARCH_PATHS ${LIBRARY_PATHS})
+    set(TDB_FOUND_LIBRARIES ${FOUND_LIBRARIES})
+endif(TDB_LIBRARIES)
 
 # Thirdparty Integration -----------------------------------
 
