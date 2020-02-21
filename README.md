@@ -64,16 +64,16 @@ To build the shared library please read the following.
 
 The project has two types of dependencies, those required by the toolchain, and those to do the actual build. Other dependencies are integrated directly into the project as submodules. The following thirdparty modules exists:
 
-* libpqxx - Modern C++ Postgresql library (Submodule)
-* spdlog - Logging system (Submodule)
-* Catch2 - Unit test subsystem (Submodule)
-* libhdbpp - Part of the hdb++ library loading chain (Modified version of [original](https://github.com/tango-controls-hdbpp/libhdbpp) project. This will be pushed back to the original repository in time)
+* libpqxx - Modern C++ Postgresql library (submodule)
+* spdlog - Logging system (submodule)
+* Catch2 - Unit test subsystem (submodule)
+* libhdbpp - Configuration can now fetch [original](https://github.com/tango-controls-hdbpp/libhdbpp) to aid development. See build flags.
 
 #### Toolchain Dependencies
 
 If wishing to build the project, ensure the following dependencies are met:
 
-* CMake 3.6 or higher
+* CMake 3.11 or higher (for FetchContent)
 * C++14 compatible compiler (code base is using c++14)
 
 #### Build Dependencies
