@@ -3,28 +3,29 @@
 [![TangoControls](https://img.shields.io/badge/-Tango--Controls-7ABB45.svg?style=flat&logo=%20data%3Aimage%2Fpng%3Bbase64%2CiVBORw0KGgoAAAANSUhEUgAAACAAAAAkCAYAAADo6zjiAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAALEwAACxMBAJqcGAAAAsFJREFUWIXtl01IFVEYht9zU%2FvTqOxShLowlOgHykWUGEjUKqiocB1FQURB0KJaRdGiaFM7gzZRLWpTq2olhNQyCtpYCP1gNyIoUTFNnxZzRs8dzvw4Q6564XLnfOf73vedc2a%2BmZEKALgHrC3CUUR8CxZFeEoFalsdM4uLmMgFoIlZLJp3A9ZE4S2oKehhlaR1BTnyg2ocnW%2FxsxEDhbYij4EPVncaeASMAavnS%2FwA8NMaqACNQCew3f4as3KZOYh2SuqTVJeQNiFpn6QGSRVjTH9W%2FiThvcCn6H6n4BvQDvQWFT%2BSIDIFDAKfE3KOAQeBfB0XGPeQvgE67P8ZoB44DvTHmFgJdOQRv%2BUjc%2BavA9siNTWemgfA3TwGquCZ3w8szFIL1ALngIZorndvgJOR0GlP2gtJkzH%2Bd0fGFxW07NqY%2FCrx5QRXcYjbCbmxF1dkBSbi8kpACah3Yi2Sys74cVyxMWY6bk5BTwgRe%2BYlSzLmxNpU3aBeJogk4XWWpJKUeiap3RJYCpQj4QWZDQCuyIAk19Auj%2BAFYGZZjTGjksaBESB8P9iaxUBIaJzjZcCQcwHdj%2BS2Al0xPOeBYYKHk4vfmQ3Y8YkIwRUb7wQGU7j2ePrA1URx93ayd8UpD8klyPbSQfCOMIO05MbI%2BDvwBbjsMdGTwlX21AAMZzEerkaI9zFkP4AeYCPBg6gNuEb6I%2FthFgN1KSQupqzoRELOSed4DGiJala1UmOMr2U%2Bl%2FTWEy9Japa%2Fy41IWi%2FJ3d4%2FkkaAw0Bz3AocArqApwTvet3O3GbgV8qqjAM7bf4N4KMztwTodcYVyelywKSCD5V3xphNXoezuTskNSl4bgxJ6jPGVJJqbN0aSV%2Bd0M0aO7FCs19Jo2lExphXaTkxdRVgQFK7DZVDZ8%2BcpdmQh3wuILh7ut3AEyt%2B51%2BL%2F0cUfwFOX0t0StltmQAAAABJRU5ErkJggg%3D%3D)](http://www.tango-controls.org) [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![](https://img.shields.io/github/release/tango-controls-hdbpp/libhdbpp-timescale.svg)](https://github.com/tango-controls-hdbpp/libhdbpp-timescale/releases)
 
 - [libhdbpp-timescale](#libhdbpp-timescale)
-  - [v0.9.0 To v0.10.0 Update](#v090-To-v0100-Update)
-  - [Cloning](#Cloning)
-  - [Bug Reports + Feature Requests](#Bug-Reports--Feature-Requests)
-  - [Documentation](#Documentation)
-  - [Building](#Building)
-    - [Dependencies](#Dependencies)
-      - [Toolchain Dependencies](#Toolchain-Dependencies)
-      - [Build Dependencies](#Build-Dependencies)
-    - [Building Process](#Building-Process)
-    - [Build Flags](#Build-Flags)
-      - [Standard CMake Flags](#Standard-CMake-Flags)
-      - [Project Flags](#Project-Flags)
-    - [Running Tests](#Running-Tests)
-      - [Unit Tests](#Unit-Tests)
-      - [Benchmark Tests](#Benchmark-Tests)
-  - [Installing](#Installing)
-    - [System Dependencies](#System-Dependencies)
-    - [Installation](#Installation)
-  - [Configuration](#Configuration)
-    - [Library Configuration Parameters](#Library-Configuration-Parameters)
-    - [Configuration Example](#Configuration-Example)
-  - [License](#License)
+  - [v0.9.0 To v0.10.0 Update](#v090-to-v0100-update)
+  - [Cloning](#cloning)
+  - [Bug Reports + Feature Requests](#bug-reports--feature-requests)
+  - [Documentation](#documentation)
+  - [Building](#building)
+    - [Dependencies](#dependencies)
+      - [Toolchain Dependencies](#toolchain-dependencies)
+      - [Build Dependencies](#build-dependencies)
+    - [Building Process](#building-process)
+      - [Ubuntu](#ubuntu)
+    - [Build Flags](#build-flags)
+      - [Standard CMake Flags](#standard-cmake-flags)
+      - [Project Flags](#project-flags)
+    - [Running Tests](#running-tests)
+      - [Unit Tests](#unit-tests)
+      - [Benchmark Tests](#benchmark-tests)
+  - [Installing](#installing)
+    - [System Dependencies](#system-dependencies)
+    - [Installation](#installation)
+  - [Configuration](#configuration)
+    - [Library Configuration Parameters](#library-configuration-parameters)
+    - [Configuration Example](#configuration-example)
+  - [License](#license)
 
 HDB++ backend library for the TimescaleDb extenstion to Postgresql. This library is loaded by libhdbpp to archive events from a Tango Controls system. Currently in a pre v1 release phase.
 
@@ -112,6 +113,16 @@ The pkg-config path can also be set with the cmake argument CMAKE_PREFIX_PATH. T
 cmake -DCMAKE_PREFIX_PATH=/non/standard/tango/install/location ..
 ...
 ```
+
+#### Ubuntu
+
+When using Postgres from the Ubuntu repositoris, it appears to install its development libraries in a slightly different location. Some info on this issue [here](https://gitlab.kitware.com/cmake/cmake/issues/17223). In this case, we set the PostgreSQL_TYPE_INCLUDE_DIR variable directly when calling cmake:
+
+```
+cmake -DPostgreSQL_TYPE_INCLUDE_DIR=/usr/include/postgresql/ ..
+```
+
+This should replace the call to cmake in the previous section.
 
 ### Build Flags
 

@@ -22,7 +22,6 @@
 
 #include <hdb++/AbstractDB.h>
 #include <string>
-#include <tango.h>
 #include <vector>
 
 namespace hdbpp
@@ -32,7 +31,7 @@ class HdbppTimescaleDbFactory : public DBFactory
 public:
 
     // return a new HdbppTimescaleDb object
-    virtual AbstractDB *create_db(std::vector<std::string> configuration);
+    virtual AbstractDB *create_db(const string &id, const std::vector<std::string> &configuration);
 };
 
 } // namespace hdbpp

@@ -39,12 +39,12 @@ namespace hdbpp
 struct HdbppTimescaleDbImplUtils
 {
     static string getConfigParam(const map<string, string> &conf, const string &param, bool mandatory);
-    static map<string, string> extractConfig(vector<string> config, const string &separator);
+    static map<string, string> extractConfig(const vector<string> &config, const string &separator);
 };
 
 //=============================================================================
 //=============================================================================
-map<string, string> HdbppTimescaleDbImplUtils::extractConfig(vector<string> config, const string &separator)
+map<string, string> HdbppTimescaleDbImplUtils::extractConfig(const vector<string> &config, const string &separator)
 {
     map<string, string> results;
 
@@ -78,7 +78,7 @@ string HdbppTimescaleDbImplUtils::getConfigParam(const map<string, string> &conf
 
 //=============================================================================
 //=============================================================================
-HdbppTimescaleDbImpl::HdbppTimescaleDbImpl(const vector<string> &configuration)
+HdbppTimescaleDbImpl::HdbppTimescaleDbImpl(const string &id, const vector<string> &configuration)
 {
     auto param_to_lower = [](auto param) {
         locale loc;
@@ -159,7 +159,7 @@ HdbppTimescaleDbImpl::~HdbppTimescaleDbImpl()
 
 //=============================================================================
 //=============================================================================
-void HdbppTimescaleDbImpl::insert_Attr(Tango::EventData *event_data, HdbEventDataType event_data_type)
+void HdbppTimescaleDbImpl::insert_event(Tango::EventData *event_data, const HdbEventDataType &data_type)
 {
     assert(event_data);
     assert(event_data->attr_value);
@@ -184,9 +184,9 @@ void HdbppTimescaleDbImpl::insert_Attr(Tango::EventData *event_data, HdbEventDat
 
         Conn->createTx<HdbppTxDataEventError>()
             .withName(event_data->attr_name)
-            .withTraits(static_cast<Tango::AttrWriteType>(event_data_type.write_type),
-                static_cast<Tango::AttrDataFormat>(event_data_type.data_format),
-                static_cast<Tango::CmdArgType>(event_data_type.data_type))
+            .withTraits(static_cast<Tango::AttrWriteType>(data_type.write_type),
+                static_cast<Tango::AttrDataFormat>(data_type.data_format),
+                static_cast<Tango::CmdArgType>(data_type.data_type))
             .withError(string(event_data->errors[0].desc))
             .withEventTime(tango_tv)
             .withQuality(event_data->attr_value->get_quality())
@@ -200,9 +200,9 @@ void HdbppTimescaleDbImpl::insert_Attr(Tango::EventData *event_data, HdbEventDat
         // pending on type, format and quality
         Conn->createTx<HdbppTxDataEvent>()
             .withName(event_data->attr_name)
-            .withTraits(static_cast<Tango::AttrWriteType>(event_data_type.write_type),
-                static_cast<Tango::AttrDataFormat>(event_data_type.data_format),
-                static_cast<Tango::CmdArgType>(event_data_type.data_type))
+            .withTraits(static_cast<Tango::AttrWriteType>(data_type.write_type),
+                static_cast<Tango::AttrDataFormat>(data_type.data_format),
+                static_cast<Tango::CmdArgType>(data_type.data_type))
             .withAttribute(event_data->attr_value)
             .withEventTime(event_data->attr_value->get_date())
             .withQuality(event_data->attr_value->get_quality())
@@ -212,23 +212,30 @@ void HdbppTimescaleDbImpl::insert_Attr(Tango::EventData *event_data, HdbEventDat
 
 //=============================================================================
 //=============================================================================
-void HdbppTimescaleDbImpl::insert_param_Attr(
-    Tango::AttrConfEventData *conf_event_data, HdbEventDataType /* event_data_type */)
+void HdbppTimescaleDbImpl::insert_events(vector<tuple<Tango::EventData*, HdbEventDataType>> events)
 {
-    assert(conf_event_data);
-    spdlog::trace("Insert parameter event request for attribute: {}", conf_event_data->attr_name);
+
+}
+
+//=============================================================================
+//=============================================================================
+void HdbppTimescaleDbImpl::insert_param_event(
+    Tango::AttrConfEventData *param_event, const HdbEventDataType & /* data_type */)
+{
+    assert(param_event);
+    spdlog::trace("Insert parameter event request for attribute: {}", param_event->attr_name);
 
     Conn->createTx<HdbppTxParameterEvent>()
-        .withName(conf_event_data->attr_name)
-        .withEventTime(conf_event_data->get_date())
-        .withAttrInfo(*(conf_event_data->attr_conf))
+        .withName(param_event->attr_name)
+        .withEventTime(param_event->get_date())
+        .withAttrInfo(*(param_event->attr_conf))
         .store();
 }
 
 //=============================================================================
 //=============================================================================
-void HdbppTimescaleDbImpl::configure_Attr(
-    std::string fqdn_attr_name, int type, int format, int write_type, unsigned int ttl)
+void HdbppTimescaleDbImpl::add_attribute(
+    const std::string &fqdn_attr_name, int type, int format, int write_type, unsigned int ttl)
 {
     assert(!fqdn_attr_name.empty());
     spdlog::trace("Insert new attribute request for attribute: {}", fqdn_attr_name);
@@ -247,7 +254,7 @@ void HdbppTimescaleDbImpl::configure_Attr(
 
 //=============================================================================
 //=============================================================================
-void HdbppTimescaleDbImpl::updateTTL_Attr(std::string fqdn_attr_name, unsigned int ttl)
+void HdbppTimescaleDbImpl::update_ttl(const std::string &fqdn_attr_name, unsigned int ttl)
 {
     assert(!fqdn_attr_name.empty());
     spdlog::trace("TTL event request for attribute: {}, with ttl: {}", fqdn_attr_name, ttl);
@@ -257,10 +264,31 @@ void HdbppTimescaleDbImpl::updateTTL_Attr(std::string fqdn_attr_name, unsigned i
 
 //=============================================================================
 //=============================================================================
-void HdbppTimescaleDbImpl::event_Attr(std::string fqdn_attr_name, unsigned char event)
+void HdbppTimescaleDbImpl::insert_history_event(const std::string &fqdn_attr_name, unsigned char event)
 {
     assert(!fqdn_attr_name.empty());
     spdlog::trace("History event request for attribute: {}", fqdn_attr_name);
     Conn->createTx<HdbppTxHistoryEvent>().withName(fqdn_attr_name).withEvent(event).store();
 }
+
+//=============================================================================
+//=============================================================================
+bool HdbppTimescaleDbImpl::supported(HdbppFeatures feature)
+{
+    auto supported = false;
+
+    switch(feature)
+    {
+        case HdbppFeatures::TTL:
+            supported = true;
+            break;
+
+        case HdbppFeatures::BATCH_INSERTS:
+            supported = true;
+            break;
+    }
+
+    return supported;
+}
+
 } // namespace hdbpp
