@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Consolidated remaining build/install instructions into README
 - Modified build system to use fetch libhdbpp and include it when requested. This is an aid to development.
 - Supported LIBHDBPP_PROJECT_BUILD flag, that is injected into the build from hdbpp-timescale-project
-- Made compatible with new libhdbpp (namespace and path changes)
+- Made compatible with new libhdbpp (namespace, function and path changes)
 
 ### Removed
 

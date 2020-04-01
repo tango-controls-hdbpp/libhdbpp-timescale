@@ -235,7 +235,7 @@ void HdbppTimescaleDbImpl::insert_param_event(
 //=============================================================================
 //=============================================================================
 void HdbppTimescaleDbImpl::add_attribute(
-    const std::string &fqdn_attr_name, int type, int format, int write_type, unsigned int ttl)
+    const std::string &fqdn_attr_name, int type, int format, int write_type)
 {
     assert(!fqdn_attr_name.empty());
     spdlog::trace("Insert new attribute request for attribute: {}", fqdn_attr_name);
@@ -248,7 +248,7 @@ void HdbppTimescaleDbImpl::add_attribute(
         .withTraits(static_cast<Tango::AttrWriteType>(write_type),
             static_cast<Tango::AttrDataFormat>(format),
             static_cast<Tango::CmdArgType>(type))
-        .withTtl(ttl)
+        .withTtl(0)
         .store();
 }
 
