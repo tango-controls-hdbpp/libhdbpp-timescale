@@ -143,7 +143,7 @@ HdbppTxDataEvent<Conn> &HdbppTxDataEvent<Conn>::store()
 
             break;
 
-        //case Tango::DEV_ENUM: this->template doStoreEnum<?>(); break; // TODO
+        case Tango::DEV_ENUM: this->template doStore<int16_t>(read_extractor, write_extractor); break;
         //case Tango::DEV_ENCODED: this->template doStoreEncoded<vector<uint8_t>>(); break; // TODO
         default:
             std::string msg {

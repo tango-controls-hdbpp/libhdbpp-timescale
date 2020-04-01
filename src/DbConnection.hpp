@@ -83,6 +83,7 @@ namespace pqxx_conn
         void storeParameterEvent(const std::string &full_attr_name,
             double event_time,
             const std::string &label,
+            const std::vector<std::string> &enum_labels,
             const std::string &unit,
             const std::string &standard_unit,
             const std::string &display_unit,

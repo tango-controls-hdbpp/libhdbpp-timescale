@@ -118,6 +118,7 @@ HdbppTxParameterEvent<Conn> &HdbppTxParameterEvent<Conn>::store()
     HdbppTxBase<Conn>::connection().storeParameterEvent(HdbppTxBase<Conn>::attrNameForStorage(_attr_name),
         _event_time,
         _attr_info_ex.label,
+        _attr_info_ex.enum_labels,
         _attr_info_ex.unit,
         _attr_info_ex.standard_unit,
         _attr_info_ex.display_unit,

@@ -210,6 +210,7 @@ namespace pqxx_conn
             schema::ParamColId + "," +
             schema::ParamColEvTime + "," +
             schema::ParamColLabel + "," +
+            schema::ParamColEnumLabels + "," +
             schema::ParamColUnit + "," +
             schema::ParamColStandardUnit + "," +
             schema::ParamColDisplayUnit + "," +
@@ -218,7 +219,7 @@ namespace pqxx_conn
             schema::ParamColArchiveAbsChange + "," +
             schema::ParamColArchivePeriod + "," +
             schema::ParamColDescription + ") " +
-            "VALUES ($1, TO_TIMESTAMP($2), $3, $4, $5, $6, $7, $8, $9, $10, $11)";
+            "VALUES ($1, TO_TIMESTAMP($2), $3, , $5, $6, $7, $8, $9, $10, $11, $12)";
         // clang-format on
 
         return query;

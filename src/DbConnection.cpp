@@ -253,6 +253,7 @@ namespace pqxx_conn
     void DbConnection::storeParameterEvent(const string &full_attr_name,
         double event_time,
         const string &label,
+        const vector<string> &enum_labels,
         const string &unit,
         const string &standard_unit,
         const string &display_unit,
@@ -276,6 +277,7 @@ namespace pqxx_conn
         };
 
         check_parameter("label", label);
+        check_parameter("enum_labels", enum_labels);
         check_parameter("unit", unit);
         check_parameter("standard_unit", standard_unit);
         check_parameter("display_unit", display_unit);
@@ -284,10 +286,11 @@ namespace pqxx_conn
         check_parameter("archive_period", archive_period);
         check_parameter("description", description);
 
-        spdlog::trace("Parmater event data: event_time {}, label {}, unit {}, standard_unit {}, display_unit {}, "
+        spdlog::trace("Parameter event data: event_time {}, label {}, enum_labels {}, unit {}, standard_unit {}, display_unit {}, "
                       "format {}, archive_rel_change {}, archive_abs_change {}, archive_period {}, description {}",
             event_time,
             label,
+            enum_labels,
             unit,
             standard_unit,
             display_unit,
@@ -317,6 +320,7 @@ namespace pqxx_conn
                     _conf_id_cache->value(full_attr_name),
                     event_time,
                     label,
+                    enum_labels,
                     unit,
                     standard_unit,
                     display_unit,
