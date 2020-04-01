@@ -219,7 +219,8 @@ namespace pqxx_conn
             schema::ParamColArchiveAbsChange + "," +
             schema::ParamColArchivePeriod + "," +
             schema::ParamColDescription + ") " +
-            "VALUES ($1, TO_TIMESTAMP($2), $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)";
+            
+	    "VALUES ($1, TO_TIMESTAMP($2), $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)";
         // clang-format on
 
         return query;
@@ -271,8 +272,6 @@ namespace pqxx_conn
         query = query + ",'" + archive_period + "'";
         query = query + ",'" + description + "')";
             
-        // clang-format on
-
         return query;
     }
 
