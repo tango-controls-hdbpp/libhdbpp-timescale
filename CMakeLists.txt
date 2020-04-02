@@ -77,25 +77,6 @@ find_package(Tango)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
-# Fetch libhdb++
-if(FETCH_LIBHDBPP)
-    message(STATUS "Fetching: libhdbpp with tag: '${FETCH_LIBHDBPP_TAG}'")
-    include(FetchContent)
-    set(FETCHCONTENT_QUIET off)
-
-    FetchContent_Declare(
-        libhdbpp
-        GIT_REPOSITORY "https://github.com/tango-controls-hdbpp/libhdbpp.git"
-        GIT_TAG ${FETCH_LIBHDBPP_TAG})
-
-    FetchContent_GetProperties(libhdbpp)
-
-    if(NOT libhdbpp_POPULATED)
-        FetchContent_Populate(libhdbpp)
-        add_subdirectory(${libhdbpp_SOURCE_DIR} ${libhdbpp_BINARY_DIR} EXCLUDE_FROM_ALL)
-    endif() 
-endif(FETCH_LIBHDBPP)
-
 # Attempt to find the various libraries the project is dependent on
 if(TDB_LIBRARIES)
     find_libraries(LIBRARIES ${TDB_LIBRARIES} SEARCH_PATHS ${LIBRARY_PATHS})
@@ -154,22 +135,11 @@ add_subdirectory(src)
 
 # Build Targets  -----------------------------------
 
-# split the generator expression out to here so we can make it more
-# readable
-string(CONCAT LIBHDBPP_LIB
-    "$<$<BOOL:"
-        "$<OR:"
-            "$<BOOL:${LIBHDBPP_PROJECT_BUILD}>,"
-            "$<BOOL:${FETCH_LIBHDBPP}>>"
-        ">:"
-        "libhdbpp_headers"
-    ">")
-
 # Shared library --------
 add_library(libhdbpp_timescale_shared_library SHARED ${SRC_FILES})
 
 target_link_libraries(libhdbpp_timescale_shared_library 
-    PUBLIC ${TDB_FOUND_LIBRARIES} pqxx_static ${LIBHDBPP_LIB} spdlog::spdlog_header_only Threads::Threads
+    PUBLIC ${TDB_FOUND_LIBRARIES} pqxx_static spdlog::spdlog_header_only Threads::Threads
     PRIVATE TangoInterfaceLibrary)
 
 target_include_directories(libhdbpp_timescale_shared_library 
@@ -203,7 +173,7 @@ target_compile_options(libhdbpp_timescale_shared_library
 add_library(libhdbpp_timescale_static_library STATIC EXCLUDE_FROM_ALL ${SRC_FILES})
 
 target_link_libraries(libhdbpp_timescale_static_library 
-    PUBLIC ${TDB_FOUND_LIBRARIES} pqxx_static ${LIBHDBPP_LIB} spdlog Threads::Threads
+    PUBLIC ${TDB_FOUND_LIBRARIES} pqxx_static spdlog Threads::Threads
     PRIVATE TangoInterfaceLibrary)
 
 target_include_directories(libhdbpp_timescale_static_library 

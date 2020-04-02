@@ -29,14 +29,14 @@
 
 namespace hdbpp
 {
-class HdbppTimescaleDbImpl : public AbstractDB
+class HdbppTimescaleDbApi : public AbstractDB
 {
 public:
     
     // Takes a list of configuration parameters to start the driver with
-    HdbppTimescaleDbImpl(const string &id, const std::vector<std::string> &configuration);
+    HdbppTimescaleDbApi(const string &id, const std::vector<std::string> &configuration);
 
-    virtual ~HdbppTimescaleDbImpl();
+    virtual ~HdbppTimescaleDbApi();
 
     // Inserts an attribute archive event for the EventData into the database. If the attribute
     // does not exist in the database, then an exception will be raised. If the attr_value
@@ -71,10 +71,10 @@ public:
     // Check what hdbpp features this library supports. This library supports: TTL, BATCH_INSERTS
     bool supported(HdbppFeatures feature) override;
 
-
 private:
 
-    std::unique_ptr<hdbpp_internal::pqxx_conn::DbConnection> Conn;
+    std::unique_ptr<hdbpp_internal::pqxx_conn::DbConnection> _conn;
+    std::string _identity;
 };
 
 } // namespace hdbpp

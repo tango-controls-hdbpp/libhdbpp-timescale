@@ -18,7 +18,7 @@
    along with libhdb++timescale.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include "hdb++/HdbppTimescaleDb.hpp"
-#include "HdbppTimescaleDbImpl.hpp"
+#include "HdbppTimescaleDbApi.hpp"
 
 namespace hdbpp
 {
@@ -26,7 +26,7 @@ namespace hdbpp
 //=============================================================================
 AbstractDB *HdbppTimescaleDbFactory::create_db(const string &id, const vector<string> &configuration)
 {
-    return new hdbpp::HdbppTimescaleDbImpl(id, configuration);
+    return new hdbpp::HdbppTimescaleDbApi(id, configuration);
 }
 } // namespace hdbpp
 

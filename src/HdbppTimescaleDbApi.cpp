@@ -17,17 +17,17 @@
    You should have received a copy of the Lesser GNU General Public License
    along with libhdb++timescale.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include "HdbppTimescaleDbImpl.hpp"
+#include "HdbppTimescaleDbApi.hpp"
 #include "HdbppTxDataEvent.hpp"
 #include "HdbppTxDataEventError.hpp"
 #include "HdbppTxHistoryEvent.hpp"
 #include "HdbppTxNewAttribute.hpp"
 #include "HdbppTxParameterEvent.hpp"
 #include "HdbppTxUpdateTtl.hpp"
+#include "DbConnection.hpp"
 #include "LibUtils.hpp"
 
 #include <locale>
-#include <vector>
 
 using namespace std;
 using namespace hdbpp_internal;
@@ -36,7 +36,7 @@ namespace hdbpp
 {
 
 // simple class to gather utility functions
-struct HdbppTimescaleDbImplUtils
+struct HdbppTimescaleDbApiUtils
 {
     static string getConfigParam(const map<string, string> &conf, const string &param, bool mandatory);
     static map<string, string> extractConfig(const vector<string> &config, const string &separator);
@@ -44,7 +44,7 @@ struct HdbppTimescaleDbImplUtils
 
 //=============================================================================
 //=============================================================================
-map<string, string> HdbppTimescaleDbImplUtils::extractConfig(const vector<string> &config, const string &separator)
+map<string, string> HdbppTimescaleDbApiUtils::extractConfig(const vector<string> &config, const string &separator)
 {
     map<string, string> results;
 
@@ -61,7 +61,7 @@ map<string, string> HdbppTimescaleDbImplUtils::extractConfig(const vector<string
 
 //=============================================================================
 //=============================================================================
-string HdbppTimescaleDbImplUtils::getConfigParam(const map<string, string> &conf, const string &param, bool mandatory)
+string HdbppTimescaleDbApiUtils::getConfigParam(const map<string, string> &conf, const string &param, bool mandatory)
 {
     auto iter = conf.find(param);
 
@@ -75,10 +75,10 @@ string HdbppTimescaleDbImplUtils::getConfigParam(const map<string, string> &conf
     // an empty string
     return iter == conf.end() ? "" : (*iter).second;
 }
-
+    
 //=============================================================================
 //=============================================================================
-HdbppTimescaleDbImpl::HdbppTimescaleDbImpl(const string &id, const vector<string> &configuration)
+HdbppTimescaleDbApi::HdbppTimescaleDbApi(const string &id, const vector<string> &configuration) : _identity(id)
 {
     auto param_to_lower = [](auto param) {
         locale loc;
@@ -91,26 +91,26 @@ HdbppTimescaleDbImpl::HdbppTimescaleDbImpl(const string &id, const vector<string
     };
 
     // convert the config vector to a map
-    auto libhdb_conf = HdbppTimescaleDbImplUtils::extractConfig(configuration, "=");
+    auto libhdb_conf = HdbppTimescaleDbApiUtils::extractConfig(configuration, "=");
 
     // logging_level optional config parameter ----
-    auto level = param_to_lower(HdbppTimescaleDbImplUtils::getConfigParam(libhdb_conf, "logging_level", false));
-    auto log_file = HdbppTimescaleDbImplUtils::getConfigParam(libhdb_conf, "log_file", false);
-    auto log_console = HdbppTimescaleDbImplUtils::getConfigParam(libhdb_conf, "log_console", false);
-    auto log_syslog = HdbppTimescaleDbImplUtils::getConfigParam(libhdb_conf, "log_syslog", false);
-    auto log_file_name = HdbppTimescaleDbImplUtils::getConfigParam(libhdb_conf, "log_file_name", false);
+    auto level = param_to_lower(HdbppTimescaleDbApiUtils::getConfigParam(libhdb_conf, "logging_level", false));
+    auto log_file = HdbppTimescaleDbApiUtils::getConfigParam(libhdb_conf, "log_file", false);
+    auto log_console = HdbppTimescaleDbApiUtils::getConfigParam(libhdb_conf, "log_console", false);
+    auto log_syslog = HdbppTimescaleDbApiUtils::getConfigParam(libhdb_conf, "log_syslog", false);
+    auto log_file_name = HdbppTimescaleDbApiUtils::getConfigParam(libhdb_conf, "log_file_name", false);
 
     // init the base logging system
-    LogConfigurator::initLogging();
+    LogConfigurator::initLogging(_identity);
 
     if (param_to_lower(log_file) == "true")
-        LogConfigurator::initFileLogging(log_file_name);
+        LogConfigurator::initFileLogging(_identity, log_file_name);
 
     if (param_to_lower(log_console) == "true")
-        LogConfigurator::initConsoleLogging();
+        LogConfigurator::initConsoleLogging(_identity);
 
     if (param_to_lower(log_syslog) == "true")
-        LogConfigurator::initSyslogLogging();
+        LogConfigurator::initSyslogLogging(_identity);
 
     if (level == "error" || level.empty())
         LogConfigurator::setLoggingLevel(spdlog::level::level_enum::err);
@@ -136,30 +136,31 @@ HdbppTimescaleDbImpl::HdbppTimescaleDbImpl(const string &id, const vector<string
     spdlog::info("Starting libhdbpp-timescale shared library...");
 
     // connect_string mandatory config parameter ----
-    auto connection_string = HdbppTimescaleDbImplUtils::getConfigParam(libhdb_conf, "connect_string", true);
+    auto connection_string = HdbppTimescaleDbApiUtils::getConfigParam(libhdb_conf, "connect_string", true);
     spdlog::info("Mandatory config parameter connect_string: {}", connection_string);
 
     // allocate a connection to store data with
-    Conn = make_unique<pqxx_conn::DbConnection>(pqxx_conn::DbConnection::DbStoreMethod::PreparedStatement);
+    _conn = make_unique<pqxx_conn::DbConnection>(pqxx_conn::DbConnection::DbStoreMethod::PreparedStatement);
 
     // now bring up the connection
-    Conn->connect(connection_string);
+    _conn->connect(connection_string);
+
     spdlog::info("Started libhdbpp-timescale shared library successfully");
 }
 
 //=============================================================================
 //=============================================================================
-HdbppTimescaleDbImpl::~HdbppTimescaleDbImpl()
+HdbppTimescaleDbApi::~HdbppTimescaleDbApi()
 {
-    if (Conn->isOpen())
-        Conn->disconnect();
+    if (_conn->isOpen())
+        _conn->disconnect();
 
-    LogConfigurator::shutdownLogging();
+    LogConfigurator::shutdownLogging(_identity);
 }
 
 //=============================================================================
 //=============================================================================
-void HdbppTimescaleDbImpl::insert_event(Tango::EventData *event_data, const HdbEventDataType &data_type)
+void HdbppTimescaleDbApi::insert_event(Tango::EventData *event_data, const HdbEventDataType &data_type)
 {
     assert(event_data);
     assert(event_data->attr_value);
@@ -182,7 +183,7 @@ void HdbppTimescaleDbImpl::insert_event(Tango::EventData *event_data, const HdbE
         tango_tv.tv_usec = tv.tv_usec;
         tango_tv.tv_nsec = 0;
 
-        Conn->createTx<HdbppTxDataEventError>()
+        _conn->createTx<HdbppTxDataEventError>()
             .withName(event_data->attr_name)
             .withTraits(static_cast<Tango::AttrWriteType>(data_type.write_type),
                 static_cast<Tango::AttrDataFormat>(data_type.data_format),
@@ -198,7 +199,7 @@ void HdbppTimescaleDbImpl::insert_event(Tango::EventData *event_data, const HdbE
 
         // build a data event request, this will store 0 or more data elements,
         // pending on type, format and quality
-        Conn->createTx<HdbppTxDataEvent>()
+        _conn->createTx<HdbppTxDataEvent>()
             .withName(event_data->attr_name)
             .withTraits(static_cast<Tango::AttrWriteType>(data_type.write_type),
                 static_cast<Tango::AttrDataFormat>(data_type.data_format),
@@ -212,20 +213,20 @@ void HdbppTimescaleDbImpl::insert_event(Tango::EventData *event_data, const HdbE
 
 //=============================================================================
 //=============================================================================
-void HdbppTimescaleDbImpl::insert_events(vector<tuple<Tango::EventData*, HdbEventDataType>> events)
+void HdbppTimescaleDbApi::insert_events(vector<tuple<Tango::EventData*, HdbEventDataType>> events)
 {
 
 }
 
 //=============================================================================
 //=============================================================================
-void HdbppTimescaleDbImpl::insert_param_event(
+void HdbppTimescaleDbApi::insert_param_event(
     Tango::AttrConfEventData *param_event, const HdbEventDataType & /* data_type */)
 {
     assert(param_event);
     spdlog::trace("Insert parameter event request for attribute: {}", param_event->attr_name);
 
-    Conn->createTx<HdbppTxParameterEvent>()
+    _conn->createTx<HdbppTxParameterEvent>()
         .withName(param_event->attr_name)
         .withEventTime(param_event->get_date())
         .withAttrInfo(*(param_event->attr_conf))
@@ -234,7 +235,7 @@ void HdbppTimescaleDbImpl::insert_param_event(
 
 //=============================================================================
 //=============================================================================
-void HdbppTimescaleDbImpl::add_attribute(
+void HdbppTimescaleDbApi::add_attribute(
     const std::string &fqdn_attr_name, int type, int format, int write_type)
 {
     assert(!fqdn_attr_name.empty());
@@ -243,7 +244,7 @@ void HdbppTimescaleDbImpl::add_attribute(
     // forgive the ugly casting, but for some reason we receive the enum values
     // already cast to ints, we cast them back to enums so they function as
     // enums again
-    Conn->createTx<HdbppTxNewAttribute>()
+    _conn->createTx<HdbppTxNewAttribute>()
         .withName(fqdn_attr_name)
         .withTraits(static_cast<Tango::AttrWriteType>(write_type),
             static_cast<Tango::AttrDataFormat>(format),
@@ -254,26 +255,25 @@ void HdbppTimescaleDbImpl::add_attribute(
 
 //=============================================================================
 //=============================================================================
-void HdbppTimescaleDbImpl::update_ttl(const std::string &fqdn_attr_name, unsigned int ttl)
+void HdbppTimescaleDbApi::update_ttl(const std::string &fqdn_attr_name, unsigned int ttl)
 {
     assert(!fqdn_attr_name.empty());
     spdlog::trace("TTL event request for attribute: {}, with ttl: {}", fqdn_attr_name, ttl);
-
-    Conn->createTx<HdbppTxUpdateTtl>().withName(fqdn_attr_name).withTtl(ttl).store();
+    _conn->createTx<HdbppTxUpdateTtl>().withName(fqdn_attr_name).withTtl(ttl).store();
 }
 
 //=============================================================================
 //=============================================================================
-void HdbppTimescaleDbImpl::insert_history_event(const std::string &fqdn_attr_name, unsigned char event)
+void HdbppTimescaleDbApi::insert_history_event(const std::string &fqdn_attr_name, unsigned char event)
 {
     assert(!fqdn_attr_name.empty());
     spdlog::trace("History event request for attribute: {}", fqdn_attr_name);
-    Conn->createTx<HdbppTxHistoryEvent>().withName(fqdn_attr_name).withEvent(event).store();
+    _conn->createTx<HdbppTxHistoryEvent>().withName(fqdn_attr_name).withEvent(event).store();
 }
 
 //=============================================================================
 //=============================================================================
-bool HdbppTimescaleDbImpl::supported(HdbppFeatures feature)
+bool HdbppTimescaleDbApi::supported(HdbppFeatures feature)
 {
     auto supported = false;
 
