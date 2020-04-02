@@ -72,6 +72,7 @@ namespace attr_info
         "Description about attribute, its \"quoted\",  and 'quoted', yet does it work?";
 
     const std::string AttrInfoLabel = "Label";
+    const std::vector<std::string> AttrInfoEnumLabels = {"label1", "label2"};
     const std::string AttrInfoUnit = "Unit %";
     const std::string AttrInfoStandardUnit = "Standard Unit";
     const std::string AttrInfoDisplayUnit = "Display Unit $";

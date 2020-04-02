@@ -285,7 +285,7 @@ namespace pqxx_conn
         check_parameter("archive_abs_change", archive_abs_change);
         check_parameter("archive_period", archive_period);
         check_parameter("description", description);
-
+/*
         spdlog::trace("Parameter event data: event_time {}, label {}, enum_labels {}, unit {}, standard_unit {}, display_unit {}, "
                       "format {}, archive_rel_change {}, archive_abs_change {}, archive_period {}, description {}",
             event_time,
@@ -299,7 +299,7 @@ namespace pqxx_conn
             archive_abs_change,
             archive_period,
             description);
-
+*/
         checkConnection(LOCATION_INFO);
         checkAttributeExists(full_attr_name, LOCATION_INFO);
 

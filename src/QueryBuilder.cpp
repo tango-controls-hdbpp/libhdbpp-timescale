@@ -230,7 +230,7 @@ namespace pqxx_conn
     //=============================================================================
     const std::string &QueryBuilder::storeParameterEventString(const std::string &full_attr_name,
                     const std::string &event_time,
-                    const std::string &label
+                    const std::string &label,
                     const std::vector<std::string> &enum_labels,
                     const std::string &unit,
                     const std::string &standard_unit,
@@ -262,7 +262,18 @@ namespace pqxx_conn
         query = query + ",TO_TIMESTAMP(" + event_time + ")";
 
         query = query + ",'" + label + "'";
-        query = query + "," + query_utils::DataToString<string>::run(enum_labels, true) + "::text[]";
+        auto iter = enum_labels.begin();
+        string result = "ARRAY[";
+                            
+        result = result + "$$" + pqxx::to_string((*iter)) + "$$";
+                                              
+        for (++iter; iter != enum_labels.end(); ++iter)
+        {
+            result += ",";
+            result += "$$" + pqxx::to_string((*iter)) + "$$";
+        }                                                        
+        result += "]";
+        query = query + "," + result + "::text[]";
         query = query + ",'" + unit + "'";
         query = query + ",'" + standard_unit + "'";
         query = query + ",'" + display_unit + "'";
