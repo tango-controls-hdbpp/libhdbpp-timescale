@@ -171,6 +171,14 @@ namespace data_gen
         using type = Tango::DevState;
         using array = std::unique_ptr<std::vector<Tango::DevState>>;
     };
+    
+    template<>
+    struct TangoTypeTraits<Tango::DEV_ENUM>
+    {
+        using type = int16_t;
+        using array = std::unique_ptr<std::vector<int16_t>>;
+    };
+
 
     template<Tango::CmdArgType Type>
     typename TangoTypeTraits<Type>::array data(int size);
@@ -210,6 +218,9 @@ namespace data_gen
 
     template<>
     typename TangoTypeTraits<Tango::DEV_STATE>::array data<Tango::DEV_STATE>(int size);
+    
+    template<>
+    typename TangoTypeTraits<Tango::DEV_ENUM>::array data<Tango::DEV_ENUM>(int size);
 
     template<typename T>
     std::unique_ptr<std::vector<T>> genericData(int size)

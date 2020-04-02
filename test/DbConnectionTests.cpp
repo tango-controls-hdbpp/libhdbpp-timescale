@@ -677,7 +677,7 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
         //REQUIRE(param_row.at(schema::ParamColEvTime).as<double>() == event_time);
         REQUIRE(param_row.at(schema::ParamColLabel).as<string>() == attr_info::AttrInfoLabel);
         // TODO check enum labels
-        //REQUIRE(param_row.at(schema::ParamColEnumLabels).as<vector<string>>() == attr_info::AttrInfoEnumLabels);
+        REQUIRE(param_row.at(schema::ParamColEnumLabels).as<vector<string>>() == attr_info::AttrInfoEnumLabels);
         REQUIRE(param_row.at(schema::ParamColUnit).as<string>() == attr_info::AttrInfoUnit);
         REQUIRE(param_row.at(schema::ParamColStandardUnit).as<string>() == attr_info::AttrInfoStandardUnit);
         REQUIRE(param_row.at(schema::ParamColDisplayUnit).as<string>() == attr_info::AttrInfoDisplayUnit);
