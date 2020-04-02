@@ -309,46 +309,56 @@ namespace pqxx_conn
             pqxx::perform([&, this]() {
                 pqxx::work tx {(*_conn), StoreParameterEvent};
 
-                auto query = _query_builder.storeParameterEventString(
-                    pqxx::to_string(_conf_id_cache->value(full_attr_name)),
-                    pqxx::to_string(event_time),
-                    pqxx::to_string(label),
-                    enum_labels,
-                    pqxx::to_string(unit),
-                    pqxx::to_string(standard_unit),
-                    pqxx::to_string(display_unit),
-                    pqxx::to_string(format),
-                    pqxx::to_string(archive_rel_change),
-                    pqxx::to_string(archive_abs_change),
-                    pqxx::to_string(archive_period),
-                    pqxx::to_string(description)
-                    );
+                if (_db_store_method == DbStoreMethod::InsertString)
+                {
+                    auto query = _query_builder.storeParameterEventString(
+                        pqxx::to_string(_conf_id_cache->value(full_attr_name)),
+                        pqxx::to_string(event_time),
+                        pqxx::to_string(label),
+                        enum_labels,
+                        pqxx::to_string(unit),
+                        pqxx::to_string(standard_unit),
+                        pqxx::to_string(display_unit),
+                        pqxx::to_string(format),
+                        pqxx::to_string(archive_rel_change),
+                        pqxx::to_string(archive_abs_change),
+                        pqxx::to_string(archive_period),
+                        pqxx::to_string(description)
+                        );
 
                     tx.exec0(query);
-/*
-                if (!tx.prepared(StoreParameterEvent).exists())
-                {
-                    tx.conn().prepare(StoreParameterEvent, QueryBuilder::storeParameterEventStatement());
-                    spdlog::trace("Created prepared statement for: {}", StoreParameterEvent);
                 }
+                else
+                {
+                    if (!tx.prepared(StoreParameterEvent).exists())
+                    {
+                        tx.conn().prepare(StoreParameterEvent, QueryBuilder::storeParameterEventStatement());
+                        spdlog::trace("Created prepared statement for: {}", StoreParameterEvent);
+                    }
 
-                // no result expected
-                tx.exec_prepared0(StoreParameterEvent,
-                    _conf_id_cache->value(full_attr_name),
-                    event_time,
-                    label,
-                    enum_labels,
-                    unit,
-                    standard_unit,
-                    display_unit,
-                    format,
-                    archive_rel_change,
-                    archive_abs_change,
-                    archive_period,
-                    description);
+                    // a string needs quoting to be stored via this method, so it does not cause
+                    // an error in the prepared statement
+                    vector<string> enum_labels_escaped;
+                    for(auto label : enum_labels)
+                        enum_labels_escaped.push_back(tx.esc(label));
+                                   
+                    // no result expected
+                    tx.exec_prepared0(StoreParameterEvent,
+                        _conf_id_cache->value(full_attr_name),
+                        event_time,
+                        label,
+                        enum_labels_escaped,
+                        unit,
+                        standard_unit,
+                        display_unit,
+                        format,
+                        archive_rel_change,
+                        archive_abs_change,
+                        archive_period,
+                        description);
 
-                tx.commit();
-*/
+                    tx.commit();
+                }
             });
 
             spdlog::debug("Stored parameter event and for attribute {}", full_attr_name);
