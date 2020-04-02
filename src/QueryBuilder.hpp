@@ -68,9 +68,9 @@ namespace pqxx_conn
         template<typename T>
         struct DataToString
         {
-            static std::string run(std::unique_ptr<std::vector<T>> &value, const AttributeTraits &traits)
+            static std::string run(std::unique_ptr<std::vector<T>> &value, bool is_array)
             {
-                if (traits.isScalar())
+                if (! is_array)
                     return pqxx::to_string((*value)[0]);
 
                 return "'" + pqxx::to_string(value) + "'";
@@ -81,13 +81,13 @@ namespace pqxx_conn
         template<>
         struct DataToString<bool>
         {
-            static std::string run(std::unique_ptr<std::vector<bool>> &value, const AttributeTraits &traits)
+            static std::string run(std::unique_ptr<std::vector<bool>> &value, bool is_array)
             {
                 // a vector<bool> is not actually a vector<bool>, rather its some kind of bitfield. When
                 // trying to return an element, we appear to get some kind of bitfield reference,
                 // so we return the value to a local variable to remove the reference to the bitfield and
                 // this ensure its actually a bool passed into the conversion framework
-                if (traits.isScalar())
+                if (!is_array)
                 {
                     bool v = (*value)[0];
                     return pqxx::to_string(v);
@@ -103,12 +103,12 @@ namespace pqxx_conn
         template<>
         struct DataToString<std::string>
         {
-            static std::string run(std::unique_ptr<std::vector<std::string>> &value, const AttributeTraits &traits)
+            static std::string run(std::unique_ptr<std::vector<std::string>> &value, bool is_array)
             {
                 // arrays of strings need both the ARRAY keywords and dollar escaping, this is so we
                 // do not have to rely on the postgres escape functions that double and then store
                 // escaped characters. This is a mess when extracting the array of strings.
-                if (traits.isScalar())
+                if (!is_array)
                 {
                     // use dollars to ensure it saves
                     return "$$" + pqxx::to_string((*value)[0]) + "$$";
@@ -160,12 +160,25 @@ namespace pqxx_conn
         static const std::string &storeAttributeStatement();
         static const std::string &storeHistoryEventStatement();
         static const std::string &storeHistoryStringStatement();
-        static const std::string &storeParameterEventStatement();
         static const std::string &storeErrorStatement();
         static const std::string &storeTtlStatement();
         static const std::string &fetchLastHistoryEventStatement();
         static const std::string &fetchAttributeTraitsStatement();
 
+        static const std::string &storeParameterEventStatement();
+        static const std::string &storeParameterEventString(const std::string &full_attr_name,
+                const std::string &event_time,
+                const std::string &label,
+                const std::vector<std::string> &enum_labels,
+                const std::string &unit,
+                const std::string &standard_unit,
+                const std::string &display_unit,
+                const std::string &format,
+                const std::string &archive_rel_change,
+                const std::string &archive_abs_change,
+                const std::string &archive_period,
+                const std::string &description
+                );
         static const std::string fetchValueStatement(
             const std::string &column_name, const std::string &table_name, const std::string &reference);
 
@@ -299,7 +312,7 @@ namespace pqxx_conn
             }
             else
             {
-                query = query + "," + query_utils::DataToString<T>::run(value_r, traits) +
+                query = query + "," + query_utils::DataToString<T>::run(value_r, traits.isArray()) +
                     "::" + query_utils::postgresCast<T>(traits.isArray());
             }
         }
@@ -313,7 +326,7 @@ namespace pqxx_conn
             }
             else
             {
-                query = query + "," + query_utils::DataToString<T>::run(value_w, traits) +
+                query = query + "," + query_utils::DataToString<T>::run(value_w, traits.isArray()) +
                     "::" + query_utils::postgresCast<T>(traits.isArray());
             }
         }

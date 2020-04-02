@@ -309,6 +309,23 @@ namespace pqxx_conn
             pqxx::perform([&, this]() {
                 pqxx::work tx {(*_conn), StoreParameterEvent};
 
+                auto query = _query_builder.storeParameterEventString(
+                    pqxx::to_string(_conf_id_cache->value(full_attr_name)),
+                    pqxx::to_string(event_time),
+                    pqxx::to_string(label),
+                    enum_labels,
+                    pqxx::to_string(unit),
+                    pqxx::to_string(standard_unit),
+                    pqxx::to_string(display_unit),
+                    pqxx::to_string(format),
+                    pqxx::to_string(archive_rel_change),
+                    pqxx::to_string(archive_abs_change),
+                    pqxx::to_string(archive_period),
+                    pqxx::to_string(description)
+                    );
+
+                    tx.exec0(query);
+/*
                 if (!tx.prepared(StoreParameterEvent).exists())
                 {
                     tx.conn().prepare(StoreParameterEvent, QueryBuilder::storeParameterEventStatement());
@@ -331,6 +348,7 @@ namespace pqxx_conn
                     description);
 
                 tx.commit();
+*/
             });
 
             spdlog::debug("Stored parameter event and for attribute {}", full_attr_name);

@@ -219,7 +219,58 @@ namespace pqxx_conn
             schema::ParamColArchiveAbsChange + "," +
             schema::ParamColArchivePeriod + "," +
             schema::ParamColDescription + ") " +
-            "VALUES ($1, TO_TIMESTAMP($2), $3, , $5, $6, $7, $8, $9, $10, $11, $12)";
+            "VALUES ($1, TO_TIMESTAMP($2), $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)";
+        // clang-format on
+
+        return query;
+    }  
+
+    //=============================================================================
+    //=============================================================================
+    const std::string &QueryBuilder::storeParameterEventString(const std::string &full_attr_name,
+                    const std::string &event_time,
+                    const std::string &label
+                    const std::vector<std::string> &enum_labels,
+                    const std::string &unit,
+                    const std::string &standard_unit,
+                    const std::string &display_unit,
+                    const std::string &format,
+                    const std::string &archive_rel_change,
+                    const std::string &archive_abs_change,
+                    const std::string &archive_period,
+                    const std::string &description)
+    {
+        // clang-format off
+        static string query =
+            "INSERT INTO " +
+            schema::ParamTableName + " (" +
+            schema::ParamColId + "," +
+            schema::ParamColEvTime + "," +
+            schema::ParamColLabel + "," +
+            schema::ParamColEnumLabels + "," +
+            schema::ParamColUnit + "," +
+            schema::ParamColStandardUnit + "," +
+            schema::ParamColDisplayUnit + "," +
+            schema::ParamColFormat + "," +
+            schema::ParamColArchiveRelChange + "," +
+            schema::ParamColArchiveAbsChange + "," +
+            schema::ParamColArchivePeriod + "," +
+            schema::ParamColDescription + ") " +
+            "VALUES ('" + full_attr_name + "'";
+        
+        query = query + ",TO_TIMESTAMP(" + event_time + ")";
+
+        query = query + ",'" + label + "'";
+        query = query + "," + query_utils::DataToString<string>::run(enum_labels, true) + "::text[]";
+        query = query + ",'" + unit + "'";
+        query = query + ",'" + standard_unit + "'";
+        query = query + ",'" + display_unit + "'";
+        query = query + ",'" + format + "'";
+        query = query + ",'" + archive_rel_change + "'";
+        query = query + ",'" + archive_abs_change + "'";
+        query = query + ",'" + archive_period + "'";
+        query = query + ",'" + description + "')";
+            
         // clang-format on
 
         return query;
