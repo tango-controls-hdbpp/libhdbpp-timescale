@@ -18,13 +18,14 @@
    along with libhdb++timescale.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include "HdbppTimescaleDbApi.hpp"
+
+#include "DbConnection.hpp"
 #include "HdbppTxDataEvent.hpp"
 #include "HdbppTxDataEventError.hpp"
 #include "HdbppTxHistoryEvent.hpp"
 #include "HdbppTxNewAttribute.hpp"
 #include "HdbppTxParameterEvent.hpp"
 #include "HdbppTxUpdateTtl.hpp"
-#include "DbConnection.hpp"
 #include "LibUtils.hpp"
 
 #include <locale>
@@ -34,7 +35,6 @@ using namespace hdbpp_internal;
 
 namespace hdbpp
 {
-
 // simple class to gather utility functions
 struct HdbppTimescaleDbApiUtils
 {
@@ -75,7 +75,7 @@ string HdbppTimescaleDbApiUtils::getConfigParam(const map<string, string> &conf,
     // an empty string
     return iter == conf.end() ? "" : (*iter).second;
 }
-    
+
 //=============================================================================
 //=============================================================================
 HdbppTimescaleDbApi::HdbppTimescaleDbApi(const string &id, const vector<string> &configuration) : _identity(id)
@@ -213,10 +213,7 @@ void HdbppTimescaleDbApi::insert_event(Tango::EventData *event_data, const HdbEv
 
 //=============================================================================
 //=============================================================================
-void HdbppTimescaleDbApi::insert_events(vector<tuple<Tango::EventData*, HdbEventDataType>> events)
-{
-
-}
+void HdbppTimescaleDbApi::insert_events(vector<tuple<Tango::EventData *, HdbEventDataType>> events) {}
 
 //=============================================================================
 //=============================================================================
@@ -235,8 +232,7 @@ void HdbppTimescaleDbApi::insert_param_event(
 
 //=============================================================================
 //=============================================================================
-void HdbppTimescaleDbApi::add_attribute(
-    const std::string &fqdn_attr_name, int type, int format, int write_type)
+void HdbppTimescaleDbApi::add_attribute(const std::string &fqdn_attr_name, int type, int format, int write_type)
 {
     assert(!fqdn_attr_name.empty());
     spdlog::trace("Insert new attribute request for attribute: {}", fqdn_attr_name);
@@ -277,15 +273,11 @@ bool HdbppTimescaleDbApi::supported(HdbppFeatures feature)
 {
     auto supported = false;
 
-    switch(feature)
+    switch (feature)
     {
-        case HdbppFeatures::TTL:
-            supported = true;
-            break;
+        case HdbppFeatures::TTL: supported = true; break;
 
-        case HdbppFeatures::BATCH_INSERTS:
-            supported = true;
-            break;
+        case HdbppFeatures::BATCH_INSERTS: supported = true; break;
     }
 
     return supported;

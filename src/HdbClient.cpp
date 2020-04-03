@@ -18,6 +18,7 @@
    along with libhdb++timescale.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include "HdbppTimescaleDbApi.hpp"
+
 #include <hdb++/HdbClient.h>
 
 using namespace std;
@@ -36,49 +37,49 @@ HdbClient::HdbClient(const string &id, const vector<string> &configuration)
 //=============================================================================
 void HdbClient::insert_event(Tango::EventData *event, const HdbEventDataType &data_type)
 {
-	_db->insert_event(event, data_type);
+    _db->insert_event(event, data_type);
 }
 
 //=============================================================================
 //=============================================================================
-void HdbClient::insert_events(vector<tuple<Tango::EventData*, HdbEventDataType>> events)
+void HdbClient::insert_events(vector<tuple<Tango::EventData *, HdbEventDataType>> events)
 {
-	_db->insert_events(events);
+    _db->insert_events(events);
 }
 
 //=============================================================================
 //=============================================================================
 void HdbClient::insert_param_event(Tango::AttrConfEventData *data, const HdbEventDataType &data_type)
 {
-	_db->insert_param_event(data, data_type);
+    _db->insert_param_event(data, data_type);
 }
 
 //=============================================================================
 //=============================================================================
 void HdbClient::add_attribute(const string &name, int type, int format, int write_type)
 {
-	_db->add_attribute(name, type, format, write_type);
+    _db->add_attribute(name, type, format, write_type);
 }
 
 //=============================================================================
 //=============================================================================
 void HdbClient::update_ttl(const string &name, unsigned int ttl)
 {
-	_db->update_ttl(name, ttl);
+    _db->update_ttl(name, ttl);
 }
 
 //=============================================================================
 //=============================================================================
 void HdbClient::insert_history_event(const string &name, unsigned char event)
 {
-	_db->insert_history_event(move(name), event);
+    _db->insert_history_event(move(name), event);
 }
 
 //=============================================================================
 //=============================================================================
 bool HdbClient::supported(HdbppFeatures feature)
 {
-	return _db->supported(feature);
+    return _db->supported(feature);
 }
 
 } // namespace hdbpp

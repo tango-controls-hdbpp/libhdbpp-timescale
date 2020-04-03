@@ -20,19 +20,19 @@
 #ifndef _HDBPP_TIMESCALE_IMPL_HPP
 #define _HDBPP_TIMESCALE_IMPL_HPP
 
-#include <hdb++/AbstractDB.h>
 #include "DbConnection.hpp"
+
+#include <hdb++/AbstractDB.h>
+#include <memory>
 #include <string>
 #include <tango.h>
 #include <vector>
-#include <memory>
 
 namespace hdbpp
 {
 class HdbppTimescaleDbApi : public AbstractDB
 {
 public:
-    
     // Takes a list of configuration parameters to start the driver with
     HdbppTimescaleDbApi(const string &id, const std::vector<std::string> &configuration);
 
@@ -46,12 +46,12 @@ public:
 
     // Insert multiple attribute archive events. Any attributes that do not exist will
     // cause an exception. On failure the fall back is to insert events individually
-    void insert_events(std::vector<std::tuple<Tango::EventData*, HdbEventDataType>> events) override;
+    void insert_events(std::vector<std::tuple<Tango::EventData *, HdbEventDataType>> events) override;
 
     // Inserts the attribute configuration data (Tango Attribute Configuration event data)
     // into the database. The attribute must be configured to be stored in HDB++,
     // otherwise an exception will be thrown.
-    void insert_param_event(Tango::AttrConfEventData *param_event, const HdbEventDataType &/* data_type */) override;
+    void insert_param_event(Tango::AttrConfEventData *param_event, const HdbEventDataType & /* data_type */) override;
 
     // Add an attribute to the database. Trying to add an attribute that already exists will
     // cause an exception
@@ -72,7 +72,6 @@ public:
     bool supported(HdbppFeatures feature) override;
 
 private:
-
     std::unique_ptr<hdbpp_internal::pqxx_conn::DbConnection> _conn;
     std::string _identity;
 };

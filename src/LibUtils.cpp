@@ -147,7 +147,7 @@ void LogConfigurator::initLogging(const std::string &identity)
 
             auto dist_sink = make_shared<spdlog::sinks::dist_sink_mt>();
 
-            auto logger = make_shared<spdlog::async_logger>(logging_utils::LibLoggerName  + "_" + identity,
+            auto logger = make_shared<spdlog::async_logger>(logging_utils::LibLoggerName + "_" + identity,
                 dist_sink,
                 spdlog::thread_pool(),
                 spdlog::async_overflow_policy::overrun_oldest);
@@ -176,8 +176,8 @@ void LogConfigurator::initSyslogLogging(const std::string &identity)
         auto logger = spdlog::get(logging_utils::LibLoggerName + "_" + identity);
         auto &sinks_tmp = dynamic_pointer_cast<spdlog::sinks::dist_sink_mt>(*(logger->sinks().begin()))->sinks();
 
-        sinks_tmp.push_back(make_shared<spdlog::sinks::syslog_sink_mt>(
-            logging_utils::SyslogIdent + identity, 0, LOG_USER, false));
+        sinks_tmp.push_back(
+            make_shared<spdlog::sinks::syslog_sink_mt>(logging_utils::SyslogIdent + identity, 0, LOG_USER, false));
     }
     catch (const spdlog::spdlog_ex &ex)
     {

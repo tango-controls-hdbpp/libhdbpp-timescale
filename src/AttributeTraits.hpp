@@ -48,9 +48,7 @@ public:
     ~AttributeTraits() = default;
 
     AttributeTraits(Tango::AttrWriteType write_type, Tango::AttrDataFormat format, Tango::CmdArgType data_type) :
-        _attr_write_type(write_type),
-        _attr_format(format),
-        _attr_type(data_type)
+        _attr_write_type(write_type), _attr_format(format), _attr_type(data_type)
     {}
 
     // general validation

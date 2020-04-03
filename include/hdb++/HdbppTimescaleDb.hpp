@@ -29,7 +29,6 @@ namespace hdbpp
 class HdbppTimescaleDbFactory : public DBFactory
 {
 public:
-
     // return a new HdbppTimescaleDb object
     virtual AbstractDB *create_db(const string &id, const std::vector<std::string> &configuration);
 };
