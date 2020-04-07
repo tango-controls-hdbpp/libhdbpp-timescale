@@ -311,7 +311,7 @@ namespace pqxx_conn
 
                 if (_db_store_method == DbStoreMethod::InsertString)
                 {
-                    auto query = _query_builder.storeParameterEventString(
+                    auto query = hdbpp_internal::pqxx_conn::QueryBuilder::storeParameterEventString(
                         pqxx::to_string(_conf_id_cache->value(full_attr_name)),
                         pqxx::to_string(event_time),
                         pqxx::to_string(label),
@@ -339,7 +339,8 @@ namespace pqxx_conn
                     // a string needs quoting to be stored via this method, so it does not cause
                     // an error in the prepared statement
                     vector<string> enum_labels_escaped;
-                    for(auto label : enum_labels)
+		    enum_labels_escaped.reserve(enum_labels.size());
+                    for(const auto &label : enum_labels)
                         enum_labels_escaped.push_back(tx.esc(label));
                                    
                     // no result expected
@@ -489,7 +490,7 @@ namespace pqxx_conn
 
     //=============================================================================
     //=============================================================================
-    string DbConnection::fetchLastHistoryEvent(const string &full_attr_name)
+    auto DbConnection::fetchLastHistoryEvent(const string &full_attr_name) -> string
     {
         assert(!full_attr_name.empty());
         assert(_conn != nullptr);
@@ -540,7 +541,7 @@ namespace pqxx_conn
 
     //=============================================================================
     //=============================================================================
-    bool DbConnection::fetchAttributeArchived(const std::string &full_attr_name)
+    auto DbConnection::fetchAttributeArchived(const std::string &full_attr_name) -> bool
     {
         assert(!full_attr_name.empty());
         assert(_conn != nullptr);
@@ -560,7 +561,7 @@ namespace pqxx_conn
 
     //=============================================================================
     //=============================================================================
-    AttributeTraits DbConnection::fetchAttributeTraits(const std::string &full_attr_name)
+    auto DbConnection::fetchAttributeTraits(const std::string &full_attr_name) -> AttributeTraits
     {
         assert(!full_attr_name.empty());
         assert(_conn != nullptr);

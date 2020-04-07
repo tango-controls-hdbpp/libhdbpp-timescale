@@ -37,27 +37,27 @@ class HdbppTxNewAttribute : public HdbppTxBase<Conn>
 public:
     HdbppTxNewAttribute(Conn &conn) : HdbppTxBase<Conn>(conn) {}
 
-    HdbppTxNewAttribute<Conn> &withName(const std::string &fqdn_attr_name)
+    auto withName(const std::string &fqdn_attr_name) -> HdbppTxNewAttribute<Conn> &
     {
         _attr_name = AttributeName {fqdn_attr_name};
         return *this;
     }
 
-    HdbppTxNewAttribute<Conn> &withTraits(
-        Tango::AttrWriteType write, Tango::AttrDataFormat format, Tango::CmdArgType type)
+    auto withTraits(
+        Tango::AttrWriteType write, Tango::AttrDataFormat format, Tango::CmdArgType type) -> HdbppTxNewAttribute<Conn> &
     {
         _traits = AttributeTraits(write, format, type);
         return *this;
     }
 
-    HdbppTxNewAttribute<Conn> &withTtl(unsigned int ttl)
+    auto withTtl(unsigned int ttl) -> HdbppTxNewAttribute<Conn> &
     {
         _ttl = ttl;
         return *this;
     }
 
     // trigger the database storage routines
-    HdbppTxNewAttribute<Conn> &store();
+    auto store() -> HdbppTxNewAttribute<Conn> &;
 
     /// @brief Print the HdbppTxNewAttribute object to the stream
     void print(std::ostream &os) const noexcept override;
@@ -71,7 +71,7 @@ private:
 //=============================================================================
 //=============================================================================
 template<typename Conn>
-HdbppTxNewAttribute<Conn> &HdbppTxNewAttribute<Conn>::store()
+auto HdbppTxNewAttribute<Conn>::store() -> HdbppTxNewAttribute<Conn> &
 {
     if (_attr_name.empty())
     {

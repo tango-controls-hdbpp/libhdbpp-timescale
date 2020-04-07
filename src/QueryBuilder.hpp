@@ -37,7 +37,7 @@ namespace std
 template<>
 struct less<hdbpp_internal::AttributeTraits>
 {
-    bool operator()(const hdbpp_internal::AttributeTraits &lhs, const hdbpp_internal::AttributeTraits &rhs) const
+    auto operator()(const hdbpp_internal::AttributeTraits &lhs, const hdbpp_internal::AttributeTraits &rhs) -> bool
     {
         auto a = lhs.type();
         auto b = lhs.writeType();
@@ -59,7 +59,7 @@ namespace pqxx_conn
         // This function generates the postgres cast for the event data insert
         // queries, it is specialized for all possible tango types
         template<typename T>
-        std::string postgresCast(bool is_array);
+        auto postgresCast(bool is_array) -> std::string;
 
         // Convert the given data into a string suitable for storing in the database. These calls
         // are used to build the string version of the insert command, they are required since we
@@ -68,7 +68,7 @@ namespace pqxx_conn
         template<typename T>
         struct DataToString
         {
-            static std::string run(std::unique_ptr<std::vector<T>> &value, bool is_array)
+            static auto run(std::unique_ptr<std::vector<T>> &value, bool is_array) -> std::string
             {
                 if (! is_array)
                     return pqxx::to_string((*value)[0]);
@@ -81,7 +81,7 @@ namespace pqxx_conn
         template<>
         struct DataToString<bool>
         {
-            static std::string run(std::unique_ptr<std::vector<bool>> &value, bool is_array)
+            static auto run(std::unique_ptr<std::vector<bool>> &value, bool is_array) -> std::string
             {
                 // a vector<bool> is not actually a vector<bool>, rather its some kind of bitfield. When
                 // trying to return an element, we appear to get some kind of bitfield reference,
@@ -103,7 +103,7 @@ namespace pqxx_conn
         template<>
         struct DataToString<std::string>
         {
-            static std::string run(std::unique_ptr<std::vector<std::string>> &value, bool is_array)
+            static auto run(std::unique_ptr<std::vector<std::string>> &value, bool is_array) -> std::string
             {
                 // arrays of strings need both the ARRAY keywords and dollar escaping, this is so we
                 // do not have to rely on the postgres escape functions that double and then store
@@ -156,17 +156,17 @@ namespace pqxx_conn
         // these builder functions require no caching, so can be simple static
         // functions
 
-        static std::string tableName(const AttributeTraits &traits);
-        static const std::string &storeAttributeStatement();
-        static const std::string &storeHistoryEventStatement();
-        static const std::string &storeHistoryStringStatement();
-        static const std::string &storeErrorStatement();
-        static const std::string &storeTtlStatement();
-        static const std::string &fetchLastHistoryEventStatement();
-        static const std::string &fetchAttributeTraitsStatement();
+        static auto tableName(const AttributeTraits &traits) -> std::string;
+        static auto storeAttributeStatement() -> const std::string &;
+        static auto storeHistoryEventStatement() -> const std::string &;
+        static auto storeHistoryStringStatement() -> const std::string &;
+        static auto storeErrorStatement() -> const std::string &;
+        static auto storeTtlStatement() -> const std::string &;
+        static auto fetchLastHistoryEventStatement() -> const std::string &;
+        static auto fetchAttributeTraitsStatement() -> const std::string &;
 
-        static const std::string &storeParameterEventStatement();
-        static const std::string &storeParameterEventString(const std::string &full_attr_name,
+        static auto storeParameterEventStatement() -> const std::string &;
+        static auto storeParameterEventString(const std::string &full_attr_name,
                 const std::string &event_time,
                 const std::string &label,
                 const std::vector<std::string> &enum_labels,
@@ -178,47 +178,47 @@ namespace pqxx_conn
                 const std::string &archive_abs_change,
                 const std::string &archive_period,
                 const std::string &description
-                );
-        static const std::string fetchValueStatement(
-            const std::string &column_name, const std::string &table_name, const std::string &reference);
+                ) -> const std::string &;
+        static auto fetchValueStatement(
+            const std::string &column_name, const std::string &table_name, const std::string &reference) -> const std::string;
 
-        static const std::string fetchAllValuesStatement(
-            const std::string &column_name, const std::string &table_name, const std::string &reference);
+        static auto fetchAllValuesStatement(
+            const std::string &column_name, const std::string &table_name, const std::string &reference) -> const std::string;
 
         // Non-static prepared statements
         // these builder functions cache the built queries, therefore they
         // are not static like the others sincethey require data storage
 
-        const std::string &storeDataEventName(const AttributeTraits &traits);
-        const std::string &storeDataEventErrorName(const AttributeTraits &traits);
+        auto storeDataEventName(const AttributeTraits &traits) -> const std::string &;
+        auto storeDataEventErrorName(const AttributeTraits &traits) -> const std::string &;
 
         // Builds a prepared statement for the given traits, the statement is cached
         // internally to improve execution time
         template<typename T>
-        const std::string &storeDataEventStatement(const AttributeTraits &traits);
+        auto storeDataEventStatement(const AttributeTraits &traits) -> const std::string &;
 
         // A variant of storeDataEventStatement that builds a string based on the
         // parameters, this is then passed back to the caller to be executed. No
         // internal caching, so its less efficient, but can be chained in a pipe
         // to batch data to the database.
         template<typename T>
-        const std::string storeDataEventString(const std::string &full_attr_name,
+        auto storeDataEventString(const std::string &full_attr_name,
             const std::string &event_time,
             const std::string &quality,
             std::unique_ptr<vector<T>> &value_r,
             std::unique_ptr<vector<T>> &value_w,
-            const AttributeTraits &traits);
+            const AttributeTraits &traits) -> const std::string;
 
         // Builds a prepared statement for data event errors
-        const std::string &storeDataEventErrorStatement(const AttributeTraits &traits);
+        auto storeDataEventErrorStatement(const AttributeTraits &traits) -> const std::string &;
 
         // Utility
         void print(std::ostream &os) const noexcept;
 
     private:
         // generic function to handle caching items into the cache maps
-        const string &handleCache(
-            std::map<AttributeTraits, std::string> &cache, const AttributeTraits &traits, const std::string &stub);
+        auto handleCache(
+            std::map<AttributeTraits, std::string> &cache, const AttributeTraits &traits, const std::string &stub) -> const std::string &;
 
         // cached query names, these are built from the traits object
         std::map<AttributeTraits, std::string> _data_event_query_names;
@@ -232,7 +232,7 @@ namespace pqxx_conn
     //=============================================================================
     //=============================================================================
     template<typename T>
-    const string &QueryBuilder::storeDataEventStatement(const AttributeTraits &traits)
+    auto QueryBuilder::storeDataEventStatement(const AttributeTraits &traits) -> const std::string &
     {
         // search the cache for a previous entry
         auto result = _data_event_queries.find(traits);
@@ -283,12 +283,12 @@ namespace pqxx_conn
     }
 
     template<typename T>
-    const std::string QueryBuilder::storeDataEventString(const std::string &full_attr_name,
+    auto QueryBuilder::storeDataEventString(const std::string &full_attr_name,
         const std::string &event_time,
         const std::string &quality,
         std::unique_ptr<vector<T>> &value_r,
         std::unique_ptr<vector<T>> &value_w,
-        const AttributeTraits &traits)
+        const AttributeTraits &traits) -> const std::string
     {
         auto query = "INSERT INTO " + QueryBuilder::tableName(traits) + " (" + schema::DatColId + "," +
             schema::DatColDataTime;

@@ -38,7 +38,7 @@ private:
 public:
     HdbppTxDataEvent(Conn &conn) : HdbppTxDataEventBase<Conn, HdbppTxDataEvent>(conn) {}
 
-    HdbppTxDataEvent<Conn> &withAttribute(Tango::DeviceAttribute *dev_attr)
+    auto withAttribute(Tango::DeviceAttribute *dev_attr) -> HdbppTxDataEvent<Conn> &
     {
         // just set the pointer here, we will do a full event data extraction at
         // point of storage, this reduces complexity but limits the functionality, i.e
@@ -48,7 +48,7 @@ public:
     }
 
     // trigger the database storage routines
-    HdbppTxDataEvent<Conn> &store();
+    auto store() -> HdbppTxDataEvent<Conn> &;
 
     void print(std::ostream &os) const noexcept override;
 
@@ -66,7 +66,7 @@ private:
 //=============================================================================
 //=============================================================================
 template<typename Conn>
-HdbppTxDataEvent<Conn> &HdbppTxDataEvent<Conn>::store()
+auto HdbppTxDataEvent<Conn>::store() -> HdbppTxDataEvent<Conn> &
 {
     if (Base::attributeName().empty())
     {
@@ -230,7 +230,7 @@ void HdbppTxDataEvent<Conn>::print(std::ostream &os) const noexcept
 
     os << "HdbppTxDataEvent(base: ";
     HdbppTxDataEventBase<Conn, HdbppTxDataEvent>::print(os);
-    os << ")";
+os << ")";
 }
 
 } // namespace hdbpp_internal

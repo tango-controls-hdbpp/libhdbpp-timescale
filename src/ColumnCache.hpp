@@ -44,13 +44,13 @@ namespace pqxx_conn
 
         // query if the reference has a value, if its not cached it will be
         // loaded from the database
-        bool valueExists(const TRef &reference);
+        auto valueExists(const TRef &reference) -> bool;
 
         // get the value associated with the reference, throws and exception if it does not
         // exist either in the cache or database. The caller can check valueExists()
         // before calling this function to know if its valid to attempt to return
         // the value
-        TValue value(const TRef &reference);
+        auto value(const TRef &reference) -> TValue;
 
         // cache a value in the internal maps
         void cacheValue(const TValue &value, const TRef &reference);
@@ -60,7 +60,7 @@ namespace pqxx_conn
 
         // utility functions
         void clear() noexcept { _values.clear(); }
-        int size() const noexcept { return _values.size(); }
+        auto size() const noexcept -> int { return _values.size(); }
         void print(std::ostream &os) const noexcept;
 
     private:
@@ -157,7 +157,7 @@ namespace pqxx_conn
     //=============================================================================
     //=============================================================================
     template<typename TValue, typename TRef>
-    bool ColumnCache<TValue, TRef>::valueExists(const TRef &reference)
+    auto ColumnCache<TValue, TRef>::valueExists(const TRef &reference) -> bool
     {
         assert(_conn != nullptr);
 
@@ -231,7 +231,7 @@ namespace pqxx_conn
     //=============================================================================
     //=============================================================================
     template<typename TValue, typename TRef>
-    TValue ColumnCache<TValue, TRef>::value(const TRef &reference)
+    auto ColumnCache<TValue, TRef>::value(const TRef &reference) -> TValue
     {
         assert(_conn != nullptr);
 

@@ -36,7 +36,7 @@ public:
     // Takes a list of configuration parameters to start the driver with
     HdbppTimescaleDbApi(const string &id, const std::vector<std::string> &configuration);
 
-    virtual ~HdbppTimescaleDbApi();
+    ~HdbppTimescaleDbImpl() override;
 
     // Inserts an attribute archive event for the EventData into the database. If the attribute
     // does not exist in the database, then an exception will be raised. If the attr_value
@@ -69,7 +69,7 @@ public:
     void insert_history_event(const std::string &fqdn_attr_name, unsigned char event) override;
 
     // Check what hdbpp features this library supports. This library supports: TTL, BATCH_INSERTS
-    bool supported(HdbppFeatures feature) override;
+    auto supported(HdbppFeatures feature) -> bool override;
 
 private:
     std::unique_ptr<hdbpp_internal::pqxx_conn::DbConnection> _conn;
