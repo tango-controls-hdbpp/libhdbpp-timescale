@@ -36,7 +36,7 @@ public:
     // Takes a list of configuration parameters to start the driver with
     HdbppTimescaleDbApi(const string &id, const std::vector<std::string> &configuration);
 
-    ~HdbppTimescaleDbImpl() override;
+    ~HdbppTimescaleDbApi() override;
 
     // Inserts an attribute archive event for the EventData into the database. If the attribute
     // does not exist in the database, then an exception will be raised. If the attr_value
