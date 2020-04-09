@@ -96,22 +96,4 @@ public:
     virtual bool supported(HdbppFeatures feature) = 0;
 };
 
-// Abstract factory class that backend must implement to help create an instance
-// of the storage class deriving from AbstractDB
-class DBFactory
-{
-public:
-    // Create a backend database object, and return it as a pointer
-    virtual AbstractDB *create_db(const string &id, const std::vector<std::string> &configuration) = 0;
-    virtual ~DBFactory() {};
-};
-
-} // namespace hdbpp
-
-extern "C"
-{
-    typedef hdbpp::DBFactory *getDBFactory_t();
-    hdbpp::DBFactory *getDBFactory();
-}
-
 #endif // _HDBPP_ABSTRACTDB_H

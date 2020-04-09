@@ -213,7 +213,10 @@ void HdbppTimescaleDbApi::insert_event(Tango::EventData *event_data, const HdbEv
 
 //=============================================================================
 //=============================================================================
-void HdbppTimescaleDbApi::insert_events(vector<tuple<Tango::EventData *, HdbEventDataType>> events) {}
+void HdbppTimescaleDbApi::insert_events(vector<tuple<Tango::EventData *, HdbEventDataType>> events) 
+{
+    
+}
 
 //=============================================================================
 //=============================================================================
