@@ -96,4 +96,5 @@ public:
     virtual bool supported(HdbppFeatures feature) = 0;
 };
 
+} // namespace hdbpp
 #endif // _HDBPP_ABSTRACTDB_H
