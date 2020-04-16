@@ -59,14 +59,14 @@ void AttributeName::clear() noexcept
 
 //=============================================================================
 //=============================================================================
-auto AttributeName::tangoHost() -> const std::string &
+const string &AttributeName::tangoHost()
 {
     validate();
 
     if (_tango_host_cache.empty())
     {
-        // if tango:// exists on the std::string, strip it off by moving the start in 8 characters
-        auto start = _fqdn_attr_name.find("tango://") == std::string::npos ? 0 : 8;
+        // if tango:// exists on the string, strip it off by moving the start in 8 characters
+        auto start = _fqdn_attr_name.find("tango://") == string::npos ? 0 : 8;
         auto end = _fqdn_attr_name.find('/', start);
         _tango_host_cache = _fqdn_attr_name.substr(start, end - start);
     }
@@ -76,17 +76,17 @@ auto AttributeName::tangoHost() -> const std::string &
 
 //=============================================================================
 //=============================================================================
-auto AttributeName::tangoHostWithDomain() -> const std::string &
+const string &AttributeName::tangoHostWithDomain()
 {
     validate();
 
     if (_tango_host_with_domain_cache.empty())
     {
-        std::string tango_host = tangoHost();
+        string tango_host = tangoHost();
 
-        if (tango_host.find('.') == std::string::npos)
+        if (tango_host.find('.') == string::npos)
         {
-            std::string server_name_with_domain;
+            string server_name_with_domain;
             auto server_name = tango_host.substr(0, tango_host.find(':', 0));
 
             struct addrinfo hints = {};
@@ -104,27 +104,21 @@ auto AttributeName::tangoHostWithDomain() -> const std::string &
 
                 return tangoHost();
             }
-
+			
             if (result == nullptr)
             {
-                spdlog::error("Error: Unable to add domain to tango host {}: getaddrinfo didn't return the canonical "
-                              "name (result == nullptr)",
-                    tango_host);
-
+                spdlog::error("Error: Unable to add domain to tango host {}: getaddrinfo didn't return the canonical name (result == nullptr)", tango_host);
                 return tangoHost();
             }
-
+			
             if (result->ai_canonname == nullptr)
             {
-                spdlog::error("Error: Unable to add domain to tango host {}: getaddrinfo didn't return the canonical "
-                              "name (result->ai_canonname == nullptr)",
-                    tango_host);
-
+                spdlog::error("Error: Unable to add domain to tango host {}: getaddrinfo didn't return the canonical name (result->ai_canonname == nullptr)", tango_host);
                 freeaddrinfo(result);
                 return tangoHost();
             }
-
-            server_name_with_domain = std::string(result->ai_canonname) + tango_host.substr(tango_host.find(':', 0));
+            
+            server_name_with_domain = string(result->ai_canonname) + tango_host.substr(tango_host.find(':', 0));
 
             freeaddrinfo(result); // all done with this structure
             _tango_host_with_domain_cache = server_name_with_domain;
@@ -140,14 +134,14 @@ auto AttributeName::tangoHostWithDomain() -> const std::string &
 
 //=============================================================================
 //=============================================================================
-auto AttributeName::fullAttributeName() -> const std::string &
+const string &AttributeName::fullAttributeName()
 {
     validate();
 
     if (_full_attribute_name_cache.empty())
     {
-        // if tango:// exists on the std::string, strip it off by moving the start in 8 characters
-        auto start = _fqdn_attr_name.find("tango://") == std::string::npos ? 0 : 8;
+        // if tango:// exists on the string, strip it off by moving the start in 8 characters
+        auto start = _fqdn_attr_name.find("tango://") == string::npos ? 0 : 8;
         start = _fqdn_attr_name.find('/', start);
         start++;
         _full_attribute_name_cache = _fqdn_attr_name.substr(start);
@@ -158,7 +152,7 @@ auto AttributeName::fullAttributeName() -> const std::string &
 
 //=============================================================================
 //=============================================================================
-auto AttributeName::domain() -> const std::string &
+const std::string &AttributeName::domain()
 {
     validate();
 
@@ -170,7 +164,7 @@ auto AttributeName::domain() -> const std::string &
 
 //=============================================================================
 //=============================================================================
-auto AttributeName::family() -> const std::string &
+const std::string &AttributeName::family()
 {
     validate();
 
@@ -182,7 +176,7 @@ auto AttributeName::family() -> const std::string &
 
 //=============================================================================
 //=============================================================================
-auto AttributeName::member() -> const std::string &
+const std::string &AttributeName::member()
 {
     validate();
 
@@ -194,7 +188,7 @@ auto AttributeName::member() -> const std::string &
 
 //=============================================================================
 //=============================================================================
-auto AttributeName::name() -> const std::string &
+const std::string &AttributeName::name()
 {
     validate();
 
@@ -206,31 +200,31 @@ auto AttributeName::name() -> const std::string &
 
 //=============================================================================
 //=============================================================================
-void AttributeName::setDomainFamilyMemberName(const std::string &full_attr_name)
+void AttributeName::setDomainFamilyMemberName(const string &full_attr_name)
 {
     auto first_slash = full_attr_name.find('/');
 
-    if (first_slash == std::string::npos)
+    if (first_slash == string::npos)
     {
-        std::string msg {"Invalid attribute name: " + full_attr_name + ". There is no slash in attribute name"};
+        string msg {"Invalid attribute name: " + full_attr_name + ". There is no slash in attribute name"};
         spdlog::error("Error: {}", msg);
         Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
 
     auto second_slash = full_attr_name.find('/', first_slash + 1);
 
-    if (second_slash == std::string::npos)
+    if (second_slash == string::npos)
     {
-        std::string msg {"Invalid attribute name: " + full_attr_name + ". There is only one slash in attribute name"};
+        string msg {"Invalid attribute name: " + full_attr_name + ". There is only one slash in attribute name"};
         spdlog::error("Error: {}", msg);
         Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
 
     auto third_slash = full_attr_name.find('/', second_slash + 1);
 
-    if (third_slash == std::string::npos)
+    if (third_slash == string::npos)
     {
-        std::string msg {"Invalid attribute name: " + full_attr_name + ". There are only two slashes in attribute name"};
+        string msg {"Invalid attribute name: " + full_attr_name + ". There are only two slashes in attribute name"};
         spdlog::error("Error: {}", msg);
         Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
@@ -239,35 +233,35 @@ void AttributeName::setDomainFamilyMemberName(const std::string &full_attr_name)
 
     if (last_slash != third_slash)
     {
-        std::string msg {"Invalid attribute name: " + full_attr_name + ". Too many slashes provided in attribute name"};
+        string msg {"Invalid attribute name: " + full_attr_name + ". Too many slashes provided in attribute name"};
         spdlog::error("Error: {}", msg);
         Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
 
     if (first_slash == 0)
     {
-        std::string msg {"Invalid attribute name: " + full_attr_name + ". Empty domain"};
+        string msg {"Invalid attribute name: " + full_attr_name + ". Empty domain"};
         spdlog::error("Error: {}", msg);
         Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
 
     if (second_slash - first_slash - 1 == 0)
     {
-        std::string msg {"Invalid attribute name: " + full_attr_name + ". Empty family"};
+        string msg {"Invalid attribute name: " + full_attr_name + ". Empty family"};
         spdlog::error("Error: {}", msg);
         Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
 
     if (third_slash - second_slash - 1 == 0)
     {
-        std::string msg {"Invalid attribute name: " + full_attr_name + ". Empty member"};
+        string msg {"Invalid attribute name: " + full_attr_name + ". Empty member"};
         spdlog::error("Error: {}", msg);
         Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
 
     if (third_slash + 1 == full_attr_name.length())
     {
-        std::string msg {"Invalid attribute name: " + full_attr_name + ". Empty name"};
+        string msg {"Invalid attribute name: " + full_attr_name + ". Empty name"};
         spdlog::error("Error: {}", msg);
         Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
@@ -286,7 +280,7 @@ void AttributeName::validate()
     // it means we just tried to execute a complex operation
     if (empty())
     {
-        std::string msg {"AttributeName is empty."};
+        string msg {"AttributeName is empty."};
         spdlog::error("Failed validation for attribute: {}", msg);
         Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
@@ -301,7 +295,7 @@ void AttributeName::print(ostream &os) const
 
 //=============================================================================
 //=============================================================================
-auto AttributeName::operator=(const AttributeName &other) -> AttributeName &
+AttributeName &AttributeName::operator=(const AttributeName &other)
 {
     // clear the cache
     clear();
@@ -313,7 +307,7 @@ auto AttributeName::operator=(const AttributeName &other) -> AttributeName &
 
 //=============================================================================
 //=============================================================================
-auto AttributeName::operator=(AttributeName &&other) noexcept -> AttributeName &
+AttributeName &AttributeName::operator=(AttributeName &&other) noexcept
 {
     // clear the cache
     clear();

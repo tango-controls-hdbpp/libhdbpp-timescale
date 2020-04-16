@@ -26,7 +26,6 @@
 #include "catch2/catch.hpp"
 
 #include <cfloat>
-#include <locale>
 #include <pqxx/pqxx>
 #include <string>
 #include <tuple>
@@ -479,69 +478,6 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
 }
 
 TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
-    "Storing Attributes in the database in uppercase",
-    "[db-access][hdbpp-db-access][db-connection]")
-{
-    DbConnection conn(DbConnection::DbStoreMethod::PreparedStatement);
-    AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_STRING};
-
-    REQUIRE_NOTHROW(clearTables());
-
-    auto param_to_upper = [](auto param) {
-        locale loc;
-        string tmp;
-
-        for (string::size_type i = 0; i < param.length(); ++i)
-            tmp += toupper(param[i], loc);
-
-        return tmp;
-    };
-
-    testConn().storeAttribute(param_to_upper(attr_name::TestAttrFinalName),
-        param_to_upper(attr_name::TestAttrCs),
-        param_to_upper(attr_name::TestAttrDomain),
-        param_to_upper(attr_name::TestAttrFamily),
-        param_to_upper(attr_name::TestAttrMember),
-        param_to_upper(attr_name::TestAttrName),
-        100,
-        traits);
-
-    {
-        pqxx::work tx {verifyConn()};
-        auto attr_row(tx.exec1("SELECT * FROM " + schema::ConfTableName));
-
-        auto type_row(tx.exec1("SELECT " + schema::ConfTypeColTypeId + " FROM " + schema::ConfTypeTableName +
-            " WHERE " + schema::ConfTypeColTypeNum + " = " + std::to_string(traits.type())));
-
-        auto format_row(tx.exec1("SELECT " + schema::ConfFormatColFormatId + " FROM " + schema::ConfFormatTableName +
-            " WHERE " + schema::ConfFormatColFormatNum + " = " + std::to_string(traits.formatType())));
-
-        auto access_row(tx.exec1("SELECT " + schema::ConfWriteColWriteId + " FROM " + schema::ConfWriteTableName +
-            " WHERE " + schema::ConfWriteColWriteNum + " = " + std::to_string(traits.writeType())));
-
-        tx.commit();
-
-        REQUIRE(attr_row.at(schema::ConfColName).as<string>() == param_to_upper(attr_name::TestAttrFQDName));
-        REQUIRE(attr_row.at(schema::ConfColCsName).as<string>() == param_to_upper(attr_name::TestAttrCs));
-        REQUIRE(attr_row.at(schema::ConfColDomain).as<string>() == param_to_upper(attr_name::TestAttrDomain));
-        REQUIRE(attr_row.at(schema::ConfColFamily).as<string>() == param_to_upper(attr_name::TestAttrFamily));
-        REQUIRE(attr_row.at(schema::ConfColMember).as<string>() == param_to_upper(attr_name::TestAttrMember));
-        REQUIRE(attr_row.at(schema::ConfColLastName).as<string>() == param_to_upper(attr_name::TestAttrName));
-        REQUIRE(attr_row.at(schema::ConfColTableName).as<string>() == QueryBuilder().tableName(traits));
-
-        REQUIRE(attr_row.at(schema::ConfColTypeId).as<int>() == type_row.at(schema::ConfTypeColTypeId).as<int>());
-
-        REQUIRE(attr_row.at(schema::ConfColFormatTypeId).as<int>() ==
-            format_row.at(schema::ConfFormatColFormatId).as<int>());
-
-        REQUIRE(
-            attr_row.at(schema::ConfColWriteTypeId).as<int>() == access_row.at(schema::ConfWriteColWriteId).as<int>());
-    }
-
-    SUCCEED("Passed");
-}
-
-TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
     "Storing a series of the same History Events in the database successfully",
     "[db-access][hdbpp-db-access][db-connection]")
 {
@@ -657,7 +593,6 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
     REQUIRE_NOTHROW(testConn().storeParameterEvent(attr_name::TestAttrFinalName,
         event_time,
         attr_info::AttrInfoLabel,
-        attr_info::AttrInfoEnumLabels,
         attr_info::AttrInfoUnit,
         attr_info::AttrInfoStandardUnit,
         attr_info::AttrInfoDisplayUnit,
@@ -676,8 +611,6 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
         // TODO check event time
         //REQUIRE(param_row.at(schema::ParamColEvTime).as<double>() == event_time);
         REQUIRE(param_row.at(schema::ParamColLabel).as<string>() == attr_info::AttrInfoLabel);
-        // TODO check enum labels
-        REQUIRE(param_row.at(schema::ParamColEnumLabels).as<vector<string>>() == attr_info::AttrInfoEnumLabels);
         REQUIRE(param_row.at(schema::ParamColUnit).as<string>() == attr_info::AttrInfoUnit);
         REQUIRE(param_row.at(schema::ParamColStandardUnit).as<string>() == attr_info::AttrInfoStandardUnit);
         REQUIRE(param_row.at(schema::ParamColDisplayUnit).as<string>() == attr_info::AttrInfoDisplayUnit);
@@ -694,7 +627,6 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
     REQUIRE_NOTHROW(testConn().storeParameterEvent(attr_name::TestAttrFinalName,
         event_time,
         attr_info::AttrInfoLabel,
-        attr_info::AttrInfoEnumLabels,
         attr_info::AttrInfoUnit,
         attr_info::AttrInfoStandardUnit,
         attr_info::AttrInfoDisplayUnit,
@@ -730,7 +662,6 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
     REQUIRE_THROWS_AS(conn.storeParameterEvent(attr_name::TestAttrFinalName,
                           event_time,
                           attr_info::AttrInfoLabel,
-                          attr_info::AttrInfoEnumLabels,
                           attr_info::AttrInfoUnit,
                           attr_info::AttrInfoStandardUnit,
                           attr_info::AttrInfoDisplayUnit,

@@ -36,20 +36,20 @@ class HdbppTxUpdateTtl : public HdbppTxBase<Conn>
 public:
     HdbppTxUpdateTtl(Conn &conn) : HdbppTxBase<Conn>(conn) {}
 
-    auto withName(const std::string &fqdn_attr_name) -> HdbppTxUpdateTtl<Conn> &
+    HdbppTxUpdateTtl<Conn> &withName(const std::string &fqdn_attr_name)
     {
         _attr_name = AttributeName {fqdn_attr_name};
         return *this;
     }
 
-    auto withTtl(unsigned int ttl) -> HdbppTxUpdateTtl<Conn> &
+    HdbppTxUpdateTtl<Conn> &withTtl(unsigned int ttl)
     {
         _ttl = ttl;
         return *this;
     }
 
     // trigger the database storage routines
-    auto store() -> HdbppTxUpdateTtl<Conn> &;
+    HdbppTxUpdateTtl<Conn> &store();
 
     /// @brief Print the HdbppTxUpdateTtl object to the stream
     void print(std::ostream &os) const noexcept override;
@@ -64,7 +64,7 @@ private:
 //=============================================================================
 //=============================================================================
 template<typename Conn>
-auto HdbppTxUpdateTtl<Conn>::store() -> HdbppTxUpdateTtl<Conn> &
+HdbppTxUpdateTtl<Conn> &HdbppTxUpdateTtl<Conn>::store()
 {
     if (_attr_name.empty())
     {

@@ -45,49 +45,49 @@ public:
     AttributeName(const AttributeName &attr_name) { *this = attr_name; }
     AttributeName(const std::string &fqdn_attr_name);
 
-    auto fqdnAttributeName() const noexcept -> const std::string & { return _fqdn_attr_name; }
-    auto fullAttributeName() -> const std::string &;
+    const std::string &fqdnAttributeName() const noexcept { return _fqdn_attr_name; }
+    const std::string &fullAttributeName();
 
     // tango host info
-    auto tangoHost() -> const std::string &;
-    auto tangoHostWithDomain() -> const std::string &;
+    const std::string &tangoHost();
+    const std::string &tangoHostWithDomain();
 
     // attribute name elements
-    auto domain() -> const std::string &;
-    auto family() -> const std::string &;
-    auto member() -> const std::string &;
-    auto name() -> const std::string &;
+    const std::string &domain();
+    const std::string &family();
+    const std::string &member();
+    const std::string &name();
 
     // utility functions
     void set(const std::string &fqdn_attr_name);
     void clear() noexcept;
-    auto empty() const noexcept -> bool { return _fqdn_attr_name.empty(); }
+    bool empty() const noexcept { return _fqdn_attr_name.empty(); }
     void print(std::ostream &os) const;
 
-    auto operator==(const AttributeName &other) -> bool { return _fqdn_attr_name == other._fqdn_attr_name; }
-    auto operator!=(const AttributeName &other) -> bool { return !(_fqdn_attr_name == other._fqdn_attr_name); }
-    auto operator=(const AttributeName &other) -> AttributeName &;
-    auto operator=(AttributeName &&other) noexcept -> AttributeName &;
+    bool operator==(const AttributeName &other) const { return _fqdn_attr_name == other._fqdn_attr_name; }
+    bool operator!=(const AttributeName &other) const { return !(_fqdn_attr_name == other._fqdn_attr_name); }
+    AttributeName &operator=(const AttributeName &other);
+    AttributeName &operator=(AttributeName &&other) noexcept;
 
 private:
     // extract the full attribute name, i.e. domain/family/member/name
-    auto getFullAttributeName(const std::string &fqdn_attr_name) -> std::string;
+    std::string getFullAttributeName(const std::string &fqdn_attr_name);
 
     // takes the fqdn and breaks out the various component parts, such
     // as domain, family etc
     void setDomainFamilyMemberName(const std::string &full_attr_name);
 
-    // combine the local domain and tango host as a std::string
-    auto addDomainToTangoHost(const std::string &tango_host) -> std::string;
+    // combine the local domain and tango host as a string
+    std::string addDomainToTangoHost(const std::string &tango_host);
 
     // check if the AttributeName is empty before executing a complex
     // operation, such as returning the tango host
     void validate();
 
-    // the fully qualified domain name std::string
+    // the fully qualified domain name string
     std::string _fqdn_attr_name;
 
-    // each std::string is a cache, and generated only once to save
+    // each string is a cache, and generated only once to save
     // on performance
     std::string _full_attribute_name_cache;
     std::string _tango_host_cache;

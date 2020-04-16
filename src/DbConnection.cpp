@@ -253,7 +253,6 @@ namespace pqxx_conn
     void DbConnection::storeParameterEvent(const string &full_attr_name,
         double event_time,
         const string &label,
-        const vector<string> &enum_labels,
         const string &unit,
         const string &standard_unit,
         const string &display_unit,
@@ -277,7 +276,6 @@ namespace pqxx_conn
         };
 
         check_parameter("label", label);
-        check_parameter("enum_labels", enum_labels);
         check_parameter("unit", unit);
         check_parameter("standard_unit", standard_unit);
         check_parameter("display_unit", display_unit);
@@ -285,12 +283,11 @@ namespace pqxx_conn
         check_parameter("archive_abs_change", archive_abs_change);
         check_parameter("archive_period", archive_period);
         check_parameter("description", description);
-/*
-        spdlog::trace("Parameter event data: event_time {}, label {}, enum_labels {}, unit {}, standard_unit {}, display_unit {}, "
+
+        spdlog::trace("Parmater event data: event_time {}, label {}, unit {}, standard_unit {}, display_unit {}, "
                       "format {}, archive_rel_change {}, archive_abs_change {}, archive_period {}, description {}",
             event_time,
             label,
-            enum_labels,
             unit,
             standard_unit,
             display_unit,
@@ -299,7 +296,7 @@ namespace pqxx_conn
             archive_abs_change,
             archive_period,
             description);
-*/
+
         checkConnection(LOCATION_INFO);
         checkAttributeExists(full_attr_name, LOCATION_INFO);
 
@@ -309,57 +306,27 @@ namespace pqxx_conn
             pqxx::perform([&, this]() {
                 pqxx::work tx {(*_conn), StoreParameterEvent};
 
-                if (_db_store_method == DbStoreMethod::InsertString)
+                if (!tx.prepared(StoreParameterEvent).exists())
                 {
-                    auto query = hdbpp_internal::pqxx_conn::QueryBuilder::storeParameterEventString(
-                        pqxx::to_string(_conf_id_cache->value(full_attr_name)),
-                        pqxx::to_string(event_time),
-                        pqxx::to_string(label),
-                        enum_labels,
-                        pqxx::to_string(unit),
-                        pqxx::to_string(standard_unit),
-                        pqxx::to_string(display_unit),
-                        pqxx::to_string(format),
-                        pqxx::to_string(archive_rel_change),
-                        pqxx::to_string(archive_abs_change),
-                        pqxx::to_string(archive_period),
-                        pqxx::to_string(description)
-                        );
-
-                    tx.exec0(query);
+                    tx.conn().prepare(StoreParameterEvent, QueryBuilder::storeParameterEventStatement());
+                    spdlog::trace("Created prepared statement for: {}", StoreParameterEvent);
                 }
-                else
-                {
-                    if (!tx.prepared(StoreParameterEvent).exists())
-                    {
-                        tx.conn().prepare(StoreParameterEvent, QueryBuilder::storeParameterEventStatement());
-                        spdlog::trace("Created prepared statement for: {}", StoreParameterEvent);
-                    }
 
-                    // a string needs quoting to be stored via this method, so it does not cause
-                    // an error in the prepared statement
-                    vector<string> enum_labels_escaped;
-		    enum_labels_escaped.reserve(enum_labels.size());
-                    for(const auto &label : enum_labels)
-                        enum_labels_escaped.push_back(tx.esc(label));
-                                   
-                    // no result expected
-                    tx.exec_prepared0(StoreParameterEvent,
-                        _conf_id_cache->value(full_attr_name),
-                        event_time,
-                        label,
-                        enum_labels_escaped,
-                        unit,
-                        standard_unit,
-                        display_unit,
-                        format,
-                        archive_rel_change,
-                        archive_abs_change,
-                        archive_period,
-                        description);
+                // no result expected
+                tx.exec_prepared0(StoreParameterEvent,
+                    _conf_id_cache->value(full_attr_name),
+                    event_time,
+                    label,
+                    unit,
+                    standard_unit,
+                    display_unit,
+                    format,
+                    archive_rel_change,
+                    archive_abs_change,
+                    archive_period,
+                    description);
 
-                    tx.commit();
-                }
+                tx.commit();
             });
 
             spdlog::debug("Stored parameter event and for attribute {}", full_attr_name);
@@ -490,7 +457,7 @@ namespace pqxx_conn
 
     //=============================================================================
     //=============================================================================
-    auto DbConnection::fetchLastHistoryEvent(const string &full_attr_name) -> string
+    string DbConnection::fetchLastHistoryEvent(const string &full_attr_name)
     {
         assert(!full_attr_name.empty());
         assert(_conn != nullptr);
@@ -541,7 +508,7 @@ namespace pqxx_conn
 
     //=============================================================================
     //=============================================================================
-    auto DbConnection::fetchAttributeArchived(const std::string &full_attr_name) -> bool
+    bool DbConnection::fetchAttributeArchived(const std::string &full_attr_name)
     {
         assert(!full_attr_name.empty());
         assert(_conn != nullptr);
@@ -561,7 +528,7 @@ namespace pqxx_conn
 
     //=============================================================================
     //=============================================================================
-    auto DbConnection::fetchAttributeTraits(const std::string &full_attr_name) -> AttributeTraits
+    AttributeTraits DbConnection::fetchAttributeTraits(const std::string &full_attr_name)
     {
         assert(!full_attr_name.empty());
         assert(_conn != nullptr);

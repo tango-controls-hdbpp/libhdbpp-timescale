@@ -25,7 +25,7 @@ namespace hdbpp_internal
 {
 //=============================================================================
 //=============================================================================
-auto AttributeTraits::isValid() const noexcept -> bool
+bool AttributeTraits::isValid() const noexcept
 {
     // ensure all the type information is valid
     return _attr_write_type != Tango::WT_UNKNOWN && _attr_format != Tango::FMT_UNKNOWN &&

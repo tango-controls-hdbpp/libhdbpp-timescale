@@ -102,7 +102,6 @@ namespace pqxx_conn
         const std::string ParamColInsTime = "insert_time";
         const std::string ParamColEvTime = "recv_time";
         const std::string ParamColLabel = "label";
-        const std::string ParamColEnumLabels = "enum_labels";
         const std::string ParamColUnit = "unit";
         const std::string ParamColStandardUnit = "standard_unit";
         const std::string ParamColDisplayUnit = "display_unit";
