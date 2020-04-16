@@ -44,7 +44,6 @@ AttributeInfoEx createAttributeInfoEx()
     AttributeInfoEx attr_info;
     attr_info.description = AttrInfoDescription;
     attr_info.label = AttrInfoLabel;
-    attr_info.enum_labels = AttrInfoEnumLabels;
     attr_info.unit = AttrInfoUnit;
     attr_info.standard_unit = AttrInfoStandardUnit;
     attr_info.display_unit = AttrInfoDisplayUnit;
@@ -69,7 +68,6 @@ public:
     void storeParameterEvent(const string &full_attr_name,
         double event_time,
         const string &label,
-        const vector<string> &enum_labels,
         const string &unit,
         const string &standard_unit,
         const string &display_unit,
@@ -85,7 +83,6 @@ public:
         att_name = full_attr_name;
         att_event_time = event_time;
         att_label = label;
-        att_enum_labels = enum_labels;
         att_unit = unit;
         att_standard_unit = standard_unit;
         att_display_unit = display_unit;
@@ -101,7 +98,6 @@ public:
     string att_name;
     double att_event_time = 0;
     string att_label;
-    vector<string> att_enum_labels;
     string att_unit;
     string att_standard_unit;
     string att_display_unit;
@@ -155,7 +151,6 @@ SCENARIO("Construct and store HdbppTxParameterEvent data without error", "[hdbpp
                     REQUIRE(conn.att_name == TestAttrFinalName);
                     REQUIRE(conn.att_event_time == (tango_tv.tv_sec + tango_tv.tv_usec / 1.0e6));
                     REQUIRE(conn.att_label == AttrInfoLabel);
-                    REQUIRE(conn.att_enum_labels == AttrInfoEnumLabels);
                     REQUIRE(conn.att_unit == AttrInfoUnit);
                     REQUIRE(conn.att_standard_unit == AttrInfoStandardUnit);
                     REQUIRE(conn.att_display_unit == AttrInfoDisplayUnit);

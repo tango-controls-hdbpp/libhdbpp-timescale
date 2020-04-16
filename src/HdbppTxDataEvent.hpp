@@ -38,7 +38,7 @@ private:
 public:
     HdbppTxDataEvent(Conn &conn) : HdbppTxDataEventBase<Conn, HdbppTxDataEvent>(conn) {}
 
-    auto withAttribute(Tango::DeviceAttribute *dev_attr) -> HdbppTxDataEvent<Conn> &
+    HdbppTxDataEvent<Conn> &withAttribute(Tango::DeviceAttribute *dev_attr)
     {
         // just set the pointer here, we will do a full event data extraction at
         // point of storage, this reduces complexity but limits the functionality, i.e
@@ -48,7 +48,7 @@ public:
     }
 
     // trigger the database storage routines
-    auto store() -> HdbppTxDataEvent<Conn> &;
+    HdbppTxDataEvent<Conn> &store();
 
     void print(std::ostream &os) const noexcept override;
 
@@ -66,7 +66,7 @@ private:
 //=============================================================================
 //=============================================================================
 template<typename Conn>
-auto HdbppTxDataEvent<Conn>::store() -> HdbppTxDataEvent<Conn> &
+HdbppTxDataEvent<Conn> &HdbppTxDataEvent<Conn>::store()
 {
     if (Base::attributeName().empty())
     {
@@ -143,7 +143,7 @@ auto HdbppTxDataEvent<Conn>::store() -> HdbppTxDataEvent<Conn> &
 
             break;
 
-        case Tango::DEV_ENUM: this->template doStore<int16_t>(read_extractor, write_extractor); break;
+        //case Tango::DEV_ENUM: this->template doStoreEnum<?>(); break; // TODO
         //case Tango::DEV_ENCODED: this->template doStoreEncoded<vector<uint8_t>>(); break; // TODO
         default:
             std::string msg {
@@ -230,7 +230,7 @@ void HdbppTxDataEvent<Conn>::print(std::ostream &os) const noexcept
 
     os << "HdbppTxDataEvent(base: ";
     HdbppTxDataEventBase<Conn, HdbppTxDataEvent>::print(os);
-os << ")";
+    os << ")";
 }
 
 } // namespace hdbpp_internal

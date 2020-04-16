@@ -85,9 +85,8 @@ Tango::DeviceAttribute createDeviceAttribute(const AttributeTraits &traits)
                 return Tango::DeviceAttribute(
                     TestAttrFQDName.c_str(), *generateSpectrumData<Tango::DEV_STATE>(false, size_x + size_y));
 
-            case Tango::DEV_ENUM:
-                return Tango::DeviceAttribute(
-                    TestAttrFQDName.c_str(), *generateSpectrumData<Tango::DEV_ENUM>(false, size_x + size_y));
+                //case Tango::DEV_ENUM:
+                //return Tango::DeviceAttribute(TestAttrFQDName.c_str(), *generateSpectrumData<Tango::DEV_ENUM>(false, size_x + size_y));
 
                 //case Tango::DEV_ENCODED:
                 //return Tango::DeviceAttribute(TestAttrFQDName.c_str(), *generateSpectrumData<Tango::DEV_ENCODED>(false, size_x + size_y));
@@ -440,8 +439,8 @@ TEST_CASE("Creating HdbppTxDataEvents for each tango type and storing them", "[d
         Tango::DEV_USHORT,
         Tango::DEV_UCHAR,
         Tango::DEV_STATE,
-        /* Tango::DEV_ENCODED,*/ 
-        Tango::DEV_ENUM};
+        /* Tango::DEV_ENCODED, 
+        Tango::DEV_ENUM */};
 
     vector<Tango::AttrWriteType> write_types {Tango::READ, Tango::WRITE, Tango::READ_WRITE, Tango::READ_WITH_WRITE};
     vector<Tango::AttrDataFormat> format_types {Tango::SCALAR, Tango::SPECTRUM};

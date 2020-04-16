@@ -37,27 +37,27 @@ class HdbppTxNewAttribute : public HdbppTxBase<Conn>
 public:
     HdbppTxNewAttribute(Conn &conn) : HdbppTxBase<Conn>(conn) {}
 
-    auto withName(const std::string &fqdn_attr_name) -> HdbppTxNewAttribute<Conn> &
+    HdbppTxNewAttribute<Conn> &withName(const std::string &fqdn_attr_name)
     {
         _attr_name = AttributeName {fqdn_attr_name};
         return *this;
     }
 
-    auto withTraits(
-        Tango::AttrWriteType write, Tango::AttrDataFormat format, Tango::CmdArgType type) -> HdbppTxNewAttribute<Conn> &
+    HdbppTxNewAttribute<Conn> &withTraits(
+        Tango::AttrWriteType write, Tango::AttrDataFormat format, Tango::CmdArgType type)
     {
         _traits = AttributeTraits(write, format, type);
         return *this;
     }
 
-    auto withTtl(unsigned int ttl) -> HdbppTxNewAttribute<Conn> &
+    HdbppTxNewAttribute<Conn> &withTtl(unsigned int ttl)
     {
         _ttl = ttl;
         return *this;
     }
 
     // trigger the database storage routines
-    auto store() -> HdbppTxNewAttribute<Conn> &;
+    HdbppTxNewAttribute<Conn> &store();
 
     /// @brief Print the HdbppTxNewAttribute object to the stream
     void print(std::ostream &os) const noexcept override;
@@ -71,7 +71,7 @@ private:
 //=============================================================================
 //=============================================================================
 template<typename Conn>
-auto HdbppTxNewAttribute<Conn>::store() -> HdbppTxNewAttribute<Conn> &
+HdbppTxNewAttribute<Conn> &HdbppTxNewAttribute<Conn>::store()
 {
     if (_attr_name.empty())
     {
@@ -107,7 +107,7 @@ auto HdbppTxNewAttribute<Conn>::store() -> HdbppTxNewAttribute<Conn> &
     }
 
     // unsupported types
-    if (_traits.type() == Tango::DEV_ENCODED)
+    if (_traits.type() == Tango::DEV_ENUM || _traits.type() == Tango::DEV_ENCODED)
     {
         std::string msg {"Unsupported attribute type: " + tangoEnumToString(_traits.type()) +
             ". For attribute: " + _attr_name.fqdnAttributeName()};

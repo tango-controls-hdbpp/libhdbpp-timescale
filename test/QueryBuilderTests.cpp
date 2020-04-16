@@ -49,7 +49,7 @@ SCENARIO("storeDataEventString() returns the correct Value fields for the given 
             {
                 REQUIRE_THAT(result, Contains(schema::DatColValueR));
                 REQUIRE_THAT(result, !Contains(schema::DatColValueW));
-                REQUIRE_THAT(result, Contains(query_utils::DataToString<double>::run(value_r, traits.isArray())));
+                REQUIRE_THAT(result, Contains(query_utils::DataToString<double>::run(value_r, traits)));
             }
         }
         WHEN("Requesting a query string for traits configured for Tango::WRITE")
@@ -63,7 +63,7 @@ SCENARIO("storeDataEventString() returns the correct Value fields for the given 
             {
                 REQUIRE_THAT(result, !Contains(schema::DatColValueR));
                 REQUIRE_THAT(result, Contains(schema::DatColValueW));
-                REQUIRE_THAT(result, Contains(query_utils::DataToString<double>::run(value_w, traits.isArray())));
+                REQUIRE_THAT(result, Contains(query_utils::DataToString<double>::run(value_w, traits)));
             }
         }
         WHEN("Requesting a query string for traits configured for Tango::READ_WRITE")
@@ -77,8 +77,8 @@ SCENARIO("storeDataEventString() returns the correct Value fields for the given 
             {
                 REQUIRE_THAT(result, Contains(schema::DatColValueR));
                 REQUIRE_THAT(result, Contains(schema::DatColValueW));
-                REQUIRE_THAT(result, Contains(query_utils::DataToString<double>::run(value_r, traits.isArray())));
-                REQUIRE_THAT(result, Contains(query_utils::DataToString<double>::run(value_w, traits.isArray())));
+                REQUIRE_THAT(result, Contains(query_utils::DataToString<double>::run(value_r, traits)));
+                REQUIRE_THAT(result, Contains(query_utils::DataToString<double>::run(value_w, traits)));
             }
         }
         WHEN("Requesting a query string for traits configured for Tango::READ_WITH_WRITE")
@@ -92,8 +92,8 @@ SCENARIO("storeDataEventString() returns the correct Value fields for the given 
             {
                 REQUIRE_THAT(result, Contains(schema::DatColValueR));
                 REQUIRE_THAT(result, Contains(schema::DatColValueW));
-                REQUIRE_THAT(result, Contains(query_utils::DataToString<double>::run(value_r, traits.isArray())));
-                REQUIRE_THAT(result, Contains(query_utils::DataToString<double>::run(value_w, traits.isArray())));
+                REQUIRE_THAT(result, Contains(query_utils::DataToString<double>::run(value_r, traits)));
+                REQUIRE_THAT(result, Contains(query_utils::DataToString<double>::run(value_w, traits)));
             }
         }
     }
@@ -120,7 +120,7 @@ SCENARIO("storeDataEventString() adds a null when value is size zero", "[query-s
             {
                 REQUIRE_THAT(result, Contains(schema::DatColValueR));
                 REQUIRE_THAT(result, Contains(schema::DatColValueW));
-                REQUIRE_THAT(result, Contains(query_utils::DataToString<double>::run(value_r, traits.isArray())));
+                REQUIRE_THAT(result, Contains(query_utils::DataToString<double>::run(value_r, traits)));
                 REQUIRE_THAT(result, Contains("NULL"));
             }
         }
@@ -135,7 +135,7 @@ SCENARIO("storeDataEventString() adds a null when value is size zero", "[query-s
             {
                 REQUIRE_THAT(result, Contains(schema::DatColValueR));
                 REQUIRE_THAT(result, Contains(schema::DatColValueW));
-                REQUIRE_THAT(result, Contains(query_utils::DataToString<double>::run(value_w, traits.isArray())));
+                REQUIRE_THAT(result, Contains(query_utils::DataToString<double>::run(value_w, traits)));
                 REQUIRE_THAT(result, Contains("NULL"));
             }
         }

@@ -35,8 +35,8 @@ public:
     // connection API
     virtual void connect(const std::string &connect_string) = 0;
     virtual void disconnect() = 0;
-    virtual auto isOpen() const noexcept -> bool = 0;
-    virtual auto isClosed() const noexcept -> bool = 0;
+    virtual bool isOpen() const noexcept = 0;
+    virtual bool isClosed() const noexcept = 0;
 };
 
 }; // namespace hdbpp_internal

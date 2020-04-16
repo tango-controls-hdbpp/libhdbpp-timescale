@@ -31,7 +31,7 @@ public:
     // this generic method creates transaction objects based on the template
     // parameter. Any parameters are forward directly to the new object
     template<template<typename> class Class, typename... Params>
-    auto createTx(Params &&... params) -> Class<Conn>
+    Class<Conn> createTx(Params &&... params)
     {
         return Class<Conn>((static_cast<Conn &>(*this)), std::forward<Params>(params)...);
     }

@@ -37,14 +37,14 @@ private:
 public:
     HdbppTxDataEventError(Conn &conn) : HdbppTxDataEventBase<Conn, HdbppTxDataEventError>(conn) {}
 
-    auto withError(const std::string &error_msg) -> HdbppTxDataEventError<Conn> &
+    HdbppTxDataEventError<Conn> &withError(const std::string &error_msg)
     {
         _error_msg = error_msg;
         return *this;
     }
 
     // trigger the database storage routines
-    auto store() -> HdbppTxDataEventError<Conn> &;
+    HdbppTxDataEventError<Conn> &store();
 
     /// @brief Print the HdbppTxDataEventError object to the stream
     void print(std::ostream &os) const noexcept override;
@@ -56,7 +56,7 @@ private:
 //=============================================================================
 //=============================================================================
 template<typename Conn>
-auto HdbppTxDataEventError<Conn>::store() -> HdbppTxDataEventError<Conn> &
+HdbppTxDataEventError<Conn> &HdbppTxDataEventError<Conn>::store()
 {
     if (Base::attributeName().empty())
     {

@@ -61,8 +61,8 @@ namespace pqxx_conn
         // connection API
         void connect(const string &connect_string) override;
         void disconnect() override;
-        auto isOpen() const noexcept -> bool override { return _connected; }
-        auto isClosed() const noexcept -> bool override { return !isOpen(); }
+        bool isOpen() const noexcept override { return _connected; }
+        bool isClosed() const noexcept override { return !isOpen(); }
 
         // storage API
 
@@ -83,7 +83,6 @@ namespace pqxx_conn
         void storeParameterEvent(const std::string &full_attr_name,
             double event_time,
             const std::string &label,
-            const std::vector<std::string> &enum_labels,
             const std::string &unit,
             const std::string &standard_unit,
             const std::string &display_unit,
@@ -117,13 +116,13 @@ namespace pqxx_conn
         // fetch API
 
         // get the last history event for the given attribute
-        auto fetchLastHistoryEvent(const std::string &full_attr_name) -> std::string;
+        std::string fetchLastHistoryEvent(const std::string &full_attr_name);
 
         // check if the given attribute is stored in the database
-        auto fetchAttributeArchived(const std::string &full_attr_name) -> bool;
+        bool fetchAttributeArchived(const std::string &full_attr_name);
 
         // get the AttributeTraits of an attribute in the database
-        auto fetchAttributeTraits(const std::string &full_attr_name) -> AttributeTraits;
+        AttributeTraits fetchAttributeTraits(const std::string &full_attr_name);
 
     private:
         void storeEvent(const std::string &full_attr_name, const std::string &event);
