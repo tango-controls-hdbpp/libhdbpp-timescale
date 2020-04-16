@@ -207,7 +207,7 @@ void HdbppTxDataEvent<Conn>::doStore(ReadFunctor extract_read, WriteFunctor extr
         }
 
         // release ownership of the unique_ptr back to the caller
-        return std::move(value);
+        return value;
     };
 
     // attempt to store the error in the database, any exceptions are left to

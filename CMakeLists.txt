@@ -38,9 +38,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Build options
-set(FETCH_LIBHDBPP_TAG "exp-refactor" CACHE STRING "Libhdbpp branch/tag to clone 'master'")
-option(FETCH_LIBHDBPP "Download and build using a local copy of libhdb++" ON)
-option(FETCH_LIBHDBPP_TAG "When FETCH_LIBHDBPP is enabled, this is the tag fetch ('master')")
 option(BUILD_UNIT_TESTS "Build unit tests" OFF)
 option(BUILD_BENCHMARK_TESTS "Build benchmarking tests (Forces RELEASE build)" OFF)
 option(ENABLE_CLANG "Enable clang code and layout analysis" OFF)

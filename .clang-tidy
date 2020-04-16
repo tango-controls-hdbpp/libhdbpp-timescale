@@ -1,5 +1,5 @@
 ---
-Checks:          '-*,clang-diagnostic-*,clang-analyzer-*,-*,modernize*,performance*,readability*,bugprone*,clang-analyzer*,cppcoreguidelines*,misc*,-readability-braces-around-statements,-cppcoreguidelines-pro-bounds-array-to-pointer-decay'
+Checks:          '-*,clang-diagnostic-*,clang-analyzer-*,-*,modernize*,performance*,readability*,bugprone*,clang-analyzer*,cppcoreguidelines*,misc*,-readability-braces-around-statements,-cppcoreguidelines-pro-bounds-array-to-pointer-decay,-modernize-use-trailing-return-type'
 WarningsAsErrors: ''
 HeaderFilterRegex: '(src|test)/.*'
 AnalyzeTemporaryDtors: false

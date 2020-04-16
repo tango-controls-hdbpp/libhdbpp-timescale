@@ -28,6 +28,7 @@
 #include <memory>
 #include <random>
 #include <string>
+#include <vector>
 
 namespace hdbpp_test
 {
@@ -221,7 +222,7 @@ namespace data_gen
         for (int i = 0; i < size; i++)
             value->push_back(d(gen));
 
-        return std::move(value);
+        return value;
     }
 
     template<Tango::CmdArgType Type>
@@ -246,5 +247,11 @@ namespace data_gen
         return generateScalarData<Type>(empty_data);
     }
 } // namespace data_gen
+
+namespace utils
+{
+    std::vector<hdbpp_internal::AttributeTraits> getTraits();
+    std::vector<hdbpp_internal::AttributeTraits> getTraitsImplemented();
+} // namespace utils
 } // namespace hdbpp_test
 #endif // _TEST_HELPERS_HPP

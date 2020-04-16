@@ -39,7 +39,7 @@ namespace data_gen
         for (int i = 0; i < size; i++)
             value->push_back(d(gen));
 
-        return move(value);
+        return value;
     }
 
     //=============================================================================
@@ -78,7 +78,7 @@ namespace data_gen
         for (int i = 0; i < size; i++)
             value->push_back(d(gen));
 
-        return move(value);
+        return value;
     }
 
     //=============================================================================
@@ -93,7 +93,7 @@ namespace data_gen
         for (int i = 0; i < size; i++)
             value->push_back(d(gen));
 
-        return move(value);
+        return value;
     }
 
     //=============================================================================
@@ -108,7 +108,7 @@ namespace data_gen
         for (int i = 0; i < size; i++)
             value->push_back(d(gen));
 
-        return move(value);
+        return value;
     }
 
     //=============================================================================
@@ -216,7 +216,7 @@ namespace data_gen
         for (int i = 0; i < size; i++)
             value->push_back(strings[experimental::randint(0, ((int)strings.size()) - 1)]);
 
-        return move(value);
+        return value;
     }
 
     //=============================================================================
@@ -232,7 +232,74 @@ namespace data_gen
         for (int i = 0; i < size; i++)
             value->push_back(d(gen) ? Tango::ON : Tango::OFF);
 
-        return move(value);
+        return value;
     }
 } // namespace data_gen
+
+namespace utils
+{
+    //=============================================================================
+    //=============================================================================
+    vector<AttributeTraits> getTraits()
+    {
+        vector<AttributeTraits> traits_array {};
+
+        vector<Tango::CmdArgType> types {Tango::DEV_BOOLEAN,
+            Tango::DEV_DOUBLE,
+            Tango::DEV_FLOAT,
+            Tango::DEV_STRING,
+            Tango::DEV_LONG,
+            Tango::DEV_ULONG,
+            Tango::DEV_LONG64,
+            Tango::DEV_ULONG64,
+            Tango::DEV_SHORT,
+            Tango::DEV_USHORT,
+            Tango::DEV_UCHAR,
+            Tango::DEV_STATE,
+            Tango::DEV_ENCODED,
+            Tango::DEV_ENUM};
+
+        vector<Tango::AttrWriteType> write_types {Tango::READ, Tango::WRITE, Tango::READ_WRITE, Tango::READ_WITH_WRITE};
+        vector<Tango::AttrDataFormat> format_types {Tango::SCALAR, Tango::SPECTRUM};
+
+        // loop for every combination of type in Tango
+        for (auto &type : types)
+            for (auto &format : format_types)
+                for (auto &write : write_types)
+                    traits_array.emplace_back(AttributeTraits {write, format, type});
+
+        return traits_array;
+    }
+
+    //=============================================================================
+    //=============================================================================
+    vector<AttributeTraits> getTraitsImplemented()
+    {
+        vector<AttributeTraits> traits_array {};
+
+        vector<Tango::CmdArgType> types {Tango::DEV_BOOLEAN,
+            Tango::DEV_DOUBLE,
+            Tango::DEV_FLOAT,
+            Tango::DEV_STRING,
+            Tango::DEV_LONG,
+            Tango::DEV_ULONG,
+            Tango::DEV_LONG64,
+            Tango::DEV_ULONG64,
+            Tango::DEV_SHORT,
+            Tango::DEV_USHORT,
+            Tango::DEV_UCHAR,
+            Tango::DEV_STATE};
+
+        vector<Tango::AttrWriteType> write_types {Tango::READ, Tango::WRITE, Tango::READ_WRITE, Tango::READ_WITH_WRITE};
+        vector<Tango::AttrDataFormat> format_types {Tango::SCALAR, Tango::SPECTRUM};
+
+        // loop for every combination of type in Tango
+        for (auto &type : types)
+            for (auto &format : format_types)
+                for (auto &write : write_types)
+                    traits_array.emplace_back(AttributeTraits {write, format, type});
+
+        return traits_array;
+    }
+} // namespace utils
 } // namespace hdbpp_test

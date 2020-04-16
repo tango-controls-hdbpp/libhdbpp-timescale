@@ -35,7 +35,7 @@ namespace pqxx_conn
         template<typename T>
         struct Store
         {
-            static void run(std::unique_ptr<std::vector<T>> &value,
+            static void run(const std::unique_ptr<std::vector<T>> &value,
                 const AttributeTraits &traits,
                 pqxx::prepare::invocation &inv,
                 pqxx::work & /*unused*/)
@@ -53,7 +53,7 @@ namespace pqxx_conn
         template<>
         struct Store<std::string>
         {
-            static void run(std::unique_ptr<std::vector<std::string>> &value,
+            static void run(const std::unique_ptr<std::vector<std::string>> &value,
                 const AttributeTraits &traits,
                 pqxx::prepare::invocation &inv,
                 pqxx::work &tx)
@@ -77,7 +77,7 @@ namespace pqxx_conn
         template<>
         struct Store<bool>
         {
-            static void run(std::unique_ptr<std::vector<bool>> &value,
+            static void run(const std::unique_ptr<std::vector<bool>> &value,
                 const AttributeTraits &traits,
                 pqxx::prepare::invocation &inv,
                 pqxx::work & /*unused*/)
@@ -119,85 +119,105 @@ namespace pqxx_conn
         checkConnection(LOCATION_INFO);
         checkAttributeExists(full_attr_name, LOCATION_INFO);
 
-        try
+        // if we are buffering the queries, then just save it until the buffer is flushed,
+        // otherwise execute directly
+        if (_enable_buffering)
         {
-            return pqxx::perform([&, this]() {
-                pqxx::work tx {(*_conn), StoreDataEvent};
+            auto query = QueryBuilder::storeDataEventString<T>(pqxx::to_string(_conf_id_cache->value(full_attr_name)),
+                pqxx::to_string(event_time),
+                pqxx::to_string(quality),
+                value_r,
+                value_w,
+                traits);
 
-                // there is a single special case here, arrays of strings need a different syntax to store,
-                // to avoid the quoting. Its likely we will need more for DevEncoded and DevEnum
-                if (_db_store_method == DbStoreMethod::InsertString ||
-                    (traits.isArray() && traits.type() == Tango::DEV_STRING))
-                {
-                    auto query = _query_builder.storeDataEventString<T>(
-                        pqxx::to_string(_conf_id_cache->value(full_attr_name)),
-                        pqxx::to_string(event_time),
-                        pqxx::to_string(quality),
-                        value_r,
-                        value_w,
-                        traits);
+            query += ";";
+            _sql_buffer.push_back(query);
+        }
+        else
+        {
+            try
+            {
+                return pqxx::perform([&, this]() {
+                    pqxx::work tx {(*_conn), StoreDataEvent};
 
-                    tx.exec0(query);
-                }
-                else
-                {
-                    // prepare as a prepared statement, we are going to use these
-                    // queries often
-                    if (!tx.prepared(_query_builder.storeDataEventName(traits)).exists())
+                    // there is a single special case here, arrays of strings need a different syntax to store,
+                    // to avoid the quoting. Its likely we will need more for DevEncoded and DevEnum
+                    if (_db_store_method == DbStoreMethod::InsertString ||
+                        (traits.isArray() && traits.type() == Tango::DEV_STRING) || _enable_buffering)
                     {
-                        tx.conn().prepare(_query_builder.storeDataEventName(traits),
-                            _query_builder.storeDataEventStatement<T>(traits));
+                        auto query = QueryBuilder::storeDataEventString<T>(
+                            pqxx::to_string(_conf_id_cache->value(full_attr_name)),
+                            pqxx::to_string(event_time),
+                            pqxx::to_string(quality),
+                            value_r,
+                            value_w,
+                            traits);
+
+                        if (_enable_buffering)
+                            _sql_buffer.push_back(query);
+                        else
+                            tx.exec0(query);
+                    }
+                    else
+                    {
+                        // prepare as a prepared statement, we are going to use these
+                        // queries often
+                        if (!tx.prepared(_query_builder.storeDataEventName(traits)).exists())
+                        {
+                            tx.conn().prepare(_query_builder.storeDataEventName(traits),
+                                _query_builder.storeDataEventStatement<T>(traits));
+                        }
+
+                        // get the pqxx prepared statement invocation object to allow us to
+                        // bind each parameter in turn, this gives us the flexibility to bind
+                        // conditional parameters (as long as the query string matches)
+                        auto inv = tx.prepared(_query_builder.storeDataEventName(traits));
+
+                        // this lambda stores the data value correctly into the invocation,
+                        // we must treat scalar/spectrum in different ways, one is a single
+                        // element and the other an array. Further, the unique_ptr may be
+                        // empty and signify a null should be stored in the column instead
+                        auto store_value = [&tx, &traits, &inv](auto &value) {
+                            if (value && !value->empty())
+                            {
+                                store_data_utils::Store<T>::run(value, traits, inv, tx);
+                            }
+                            else
+                            {
+                                // no value was given for this field, simply add a null
+                                // instead, this allows invalid quality attributes to be saved
+                                // with no data
+                                inv();
+                            }
+                        };
+
+                        // bind all the parameters
+                        inv(_conf_id_cache->value(full_attr_name));
+                        inv(event_time);
+
+                        if (traits.hasReadData())
+                            store_value(value_r);
+
+                        if (traits.hasWriteData())
+                            store_value(value_w);
+
+                        inv(quality);
+
+                        // execute
+                        inv.exec();
                     }
 
-                    // get the pqxx prepared statement invocation object to allow us to
-                    // bind each parameter in turn, this gives us the flexibility to bind
-                    // conditional parameters (as long as the query string matches)
-                    auto inv = tx.prepared(_query_builder.storeDataEventName(traits));
-
-                    // this lambda stores the data value correctly into the invocation,
-                    // we must treat scalar/spectrum in different ways, one is a single
-                    // element and the other an array. Further, the unique_ptr may be
-                    // empty and signify a null should be stored in the column instead
-                    auto store_value = [&tx, &traits, &inv](auto &value) {
-                        if (value && !value->empty())
-                        {
-                            store_data_utils::Store<T>::run(value, traits, inv, tx);
-                        }
-                        else
-                        {
-                            // no value was given for this field, simply add a null
-                            // instead, this allows invalid quality attributes to be saved
-                            // with no data
-                            inv();
-                        }
-                    };
-
-                    // bind all the parameters
-                    inv(_conf_id_cache->value(full_attr_name));
-                    inv(event_time);
-
-                    if (traits.hasReadData())
-                        store_value(value_r);
-
-                    if (traits.hasWriteData())
-                        store_value(value_w);
-
-                    inv(quality);
-
-                    // execute
-                    inv.exec();
-                }
-
-                // commit the result
-                tx.commit();
-            });
-        }
-        catch (const pqxx::pqxx_exception &ex)
-        {
-            handlePqxxError("The attribute [" + full_attr_name + "] data event was not saved.",
-                ex.base().what(),
-                _query_builder.storeDataEventStatement<T>(traits),
-                LOCATION_INFO);
+                    // commit the result
+                    tx.commit();
+                });
+            }
+            catch (const pqxx::pqxx_exception &ex)
+            {
+                handlePqxxError("The attribute [" + full_attr_name + "] data event was not saved.",
+                    ex.base().what(),
+                    _query_builder.storeDataEventStatement<T>(traits),
+                    LOCATION_INFO);
+            }
         }
     }
 } // namespace pqxx_conn
