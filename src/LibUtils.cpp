@@ -30,7 +30,7 @@ namespace hdbpp_internal
 {
 //=============================================================================
 //=============================================================================
-string tangoEnumToString(Tango::AttrWriteType write_type)
+auto tangoEnumToString(Tango::AttrWriteType write_type) -> string
 {
     switch (write_type)
     {
@@ -46,7 +46,7 @@ string tangoEnumToString(Tango::AttrWriteType write_type)
 
 //=============================================================================
 //=============================================================================
-string tangoEnumToString(Tango::AttrDataFormat format)
+auto tangoEnumToString(Tango::AttrDataFormat format) -> string
 {
     switch (format)
     {
@@ -61,7 +61,7 @@ string tangoEnumToString(Tango::AttrDataFormat format)
 
 //=============================================================================
 //=============================================================================
-string tangoEnumToString(Tango::CmdArgType type)
+auto tangoEnumToString(Tango::CmdArgType type) -> string
 {
     switch (type)
     {
@@ -87,7 +87,7 @@ string tangoEnumToString(Tango::CmdArgType type)
 
 //=============================================================================
 //=============================================================================
-string tangoEnumToString(Tango::AttrQuality quality)
+auto tangoEnumToString(Tango::AttrQuality quality) -> string
 {
     switch (quality)
     {
@@ -103,7 +103,7 @@ string tangoEnumToString(Tango::AttrQuality quality)
 
 //=============================================================================
 //=============================================================================
-ostream &operator<<(ostream &os, Tango::AttrWriteType write_type)
+auto operator<<(ostream &os, Tango::AttrWriteType write_type) -> ostream &
 {
     os << tangoEnumToString(write_type);
     return os;
@@ -111,7 +111,7 @@ ostream &operator<<(ostream &os, Tango::AttrWriteType write_type)
 
 //=============================================================================
 //=============================================================================
-ostream &operator<<(ostream &os, Tango::AttrDataFormat format)
+auto operator<<(ostream &os, Tango::AttrDataFormat format) -> ostream &
 {
     os << tangoEnumToString(format);
     return os;
@@ -119,7 +119,7 @@ ostream &operator<<(ostream &os, Tango::AttrDataFormat format)
 
 //=============================================================================
 //=============================================================================
-ostream &operator<<(ostream &os, Tango::CmdArgType type)
+auto operator<<(ostream &os, Tango::CmdArgType type) -> ostream &
 {
     os << tangoEnumToString(type);
     return os;
@@ -127,7 +127,7 @@ ostream &operator<<(ostream &os, Tango::CmdArgType type)
 
 //=============================================================================
 //=============================================================================
-ostream &operator<<(ostream &os, Tango::AttrQuality quality)
+auto operator<<(ostream &os, Tango::AttrQuality quality) -> ostream &
 {
     os << tangoEnumToString(quality);
     return os;
@@ -135,9 +135,9 @@ ostream &operator<<(ostream &os, Tango::AttrQuality quality)
 
 //=============================================================================
 //=============================================================================
-void LogConfigurator::initLogging()
+void LogConfigurator::initLogging(const std::string &identity)
 {
-    auto logger = spdlog::get(logging_utils::LibLoggerName);
+    auto logger = spdlog::get(logging_utils::LibLoggerName + "_" + identity);
 
     if (!logger)
     {
@@ -147,7 +147,7 @@ void LogConfigurator::initLogging()
 
             auto dist_sink = make_shared<spdlog::sinks::dist_sink_mt>();
 
-            auto logger = make_shared<spdlog::async_logger>(logging_utils::LibLoggerName,
+            auto logger = make_shared<spdlog::async_logger>(logging_utils::LibLoggerName + "_" + identity,
                 dist_sink,
                 spdlog::thread_pool(),
                 spdlog::async_overflow_policy::overrun_oldest);
@@ -169,13 +169,15 @@ void LogConfigurator::initLogging()
 
 //=============================================================================
 //=============================================================================
-void LogConfigurator::initSyslogLogging()
+void LogConfigurator::initSyslogLogging(const std::string &identity)
 {
     try
     {
-        auto logger = spdlog::get(logging_utils::LibLoggerName);
+        auto logger = spdlog::get(logging_utils::LibLoggerName + "_" + identity);
         auto &sinks_tmp = dynamic_pointer_cast<spdlog::sinks::dist_sink_mt>(*(logger->sinks().begin()))->sinks();
-        sinks_tmp.push_back(make_shared<spdlog::sinks::syslog_sink_mt>(logging_utils::SyslogIdent, 0, LOG_USER, false));
+
+        sinks_tmp.push_back(
+            make_shared<spdlog::sinks::syslog_sink_mt>(logging_utils::SyslogIdent + identity, 0, LOG_USER, false));
     }
     catch (const spdlog::spdlog_ex &ex)
     {
@@ -187,11 +189,11 @@ void LogConfigurator::initSyslogLogging()
 
 //=============================================================================
 //=============================================================================
-void LogConfigurator::initConsoleLogging()
+void LogConfigurator::initConsoleLogging(const std::string &identity)
 {
     try
     {
-        auto logger = spdlog::get(logging_utils::LibLoggerName);
+        auto logger = spdlog::get(logging_utils::LibLoggerName + "_" + identity);
         auto &sinks_tmp = dynamic_pointer_cast<spdlog::sinks::dist_sink_mt>(*(logger->sinks().begin()))->sinks();
         sinks_tmp.push_back(make_shared<spdlog::sinks::stdout_color_sink_mt>());
     }
@@ -205,11 +207,11 @@ void LogConfigurator::initConsoleLogging()
 
 //=============================================================================
 //=============================================================================
-void LogConfigurator::initFileLogging(const std::string &log_file_name)
+void LogConfigurator::initFileLogging(const std::string &identity, const std::string &log_file_name)
 {
     try
     {
-        auto logger = spdlog::get(logging_utils::LibLoggerName);
+        auto logger = spdlog::get(logging_utils::LibLoggerName + "_" + identity);
         auto &sinks_tmp = dynamic_pointer_cast<spdlog::sinks::dist_sink_mt>(*(logger->sinks().begin()))->sinks();
         sinks_tmp.push_back(make_shared<spdlog::sinks::rotating_file_sink_mt>(log_file_name, 1024 * 1024 * 10, 3));
     }
@@ -223,9 +225,9 @@ void LogConfigurator::initFileLogging(const std::string &log_file_name)
 
 //=============================================================================
 //=============================================================================
-void LogConfigurator::shutdownLogging()
+void LogConfigurator::shutdownLogging(const std::string &identity)
 {
-    auto logger = spdlog::get(logging_utils::LibLoggerName);
+    auto logger = spdlog::get(logging_utils::LibLoggerName + "_" + identity);
 
     if (!logger)
     {

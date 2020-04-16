@@ -39,7 +39,7 @@ public:
 
     HdbppTxHistoryEvent(Conn &conn) : HdbppTxBase<Conn>(conn) {}
 
-    HdbppTxHistoryEvent<Conn> &withName(const std::string &fqdn_attr_name)
+    auto withName(const std::string &fqdn_attr_name) -> HdbppTxHistoryEvent<Conn> &
     {
         _attr_name = AttributeName {fqdn_attr_name};
         return *this;
@@ -47,17 +47,17 @@ public:
 
     // this overload converts the event types defined in libhdb to
     // usable strings
-    HdbppTxHistoryEvent<Conn> &withEvent(unsigned char event);
+    auto withEvent(unsigned char event) -> HdbppTxHistoryEvent<Conn> &;
 
     // allow the adding of any type of event
-    HdbppTxHistoryEvent<Conn> &withEvent(const std::string &event)
+    auto withEvent(const std::string &event) -> HdbppTxHistoryEvent<Conn> &
     {
         _event = event;
         return *this;
     }
 
     // trigger the database storage routines
-    HdbppTxHistoryEvent<Conn> &store();
+    auto store() -> HdbppTxHistoryEvent<Conn> &;
 
     /// @brief Print the HdbppTxHistoryEvent object to the stream
     void print(std::ostream &os) const noexcept override;
@@ -70,7 +70,7 @@ private:
 //=============================================================================
 //=============================================================================
 template<typename Conn>
-HdbppTxHistoryEvent<Conn> &HdbppTxHistoryEvent<Conn>::withEvent(unsigned char event)
+auto HdbppTxHistoryEvent<Conn>::withEvent(unsigned char event) -> HdbppTxHistoryEvent<Conn> &
 {
     // convert the unsigned char history type of a string, we will store the event
     // based on this string, so its simpler to extract the data at a later point
@@ -84,8 +84,7 @@ HdbppTxHistoryEvent<Conn> &HdbppTxHistoryEvent<Conn>::withEvent(unsigned char ev
         case libhdbpp_compatibility::HdbppInsertParam: _event = events::InsertParamEvent; break;
         case libhdbpp_compatibility::HdbppPause: _event = events::PauseEvent; break;
         case libhdbpp_compatibility::HdbppUpdateTTL: _event = events::UpdateTTLEvent; break;
-        default:
-        {
+        default: {
             std::string msg {"Unknown event type passed, unable to convert this into known event system"};
             spdlog::error("Error: {}", msg);
             Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
@@ -98,7 +97,7 @@ HdbppTxHistoryEvent<Conn> &HdbppTxHistoryEvent<Conn>::withEvent(unsigned char ev
 //=============================================================================
 //=============================================================================
 template<typename Conn>
-HdbppTxHistoryEvent<Conn> &HdbppTxHistoryEvent<Conn>::store()
+auto HdbppTxHistoryEvent<Conn>::store() -> HdbppTxHistoryEvent<Conn> &
 {
     if (_attr_name.empty())
     {

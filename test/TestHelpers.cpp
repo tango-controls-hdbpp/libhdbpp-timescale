@@ -234,5 +234,13 @@ namespace data_gen
 
         return move(value);
     }
+
+    //=============================================================================
+    //=============================================================================
+    template<>
+    typename TangoTypeTraits<Tango::DEV_ENUM>::array data<Tango::DEV_ENUM>(int size)
+    {
+        return move(genericData<int16_t>(size));
+    }
 } // namespace data_gen
 } // namespace hdbpp_test

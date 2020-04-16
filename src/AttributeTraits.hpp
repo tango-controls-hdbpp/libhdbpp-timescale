@@ -48,44 +48,42 @@ public:
     ~AttributeTraits() = default;
 
     AttributeTraits(Tango::AttrWriteType write_type, Tango::AttrDataFormat format, Tango::CmdArgType data_type) :
-        _attr_write_type(write_type),
-        _attr_format(format),
-        _attr_type(data_type)
+        _attr_write_type(write_type), _attr_format(format), _attr_type(data_type)
     {}
 
     // general validation
-    bool isValid() const noexcept;
-    bool isInvalid() const noexcept { return !isValid(); }
+    auto isValid() const noexcept -> bool;
+    auto isInvalid() const noexcept -> bool { return !isValid(); }
 
     // format type information
-    bool isArray() const noexcept { return _attr_format == Tango::SPECTRUM; }
-    bool isScalar() const noexcept { return _attr_format == Tango::SCALAR; }
-    bool isImage() const noexcept { return _attr_format == Tango::IMAGE; }
+    auto isArray() const noexcept -> bool { return _attr_format == Tango::SPECTRUM; }
+    auto isScalar() const noexcept -> bool { return _attr_format == Tango::SCALAR; }
+    auto isImage() const noexcept -> bool { return _attr_format == Tango::IMAGE; }
 
     // write type information
-    bool isReadOnly() const noexcept { return _attr_write_type == Tango::READ; }
-    bool isWriteOnly() const noexcept { return _attr_write_type == Tango::WRITE; }
-    bool isReadWrite() const noexcept { return _attr_write_type == Tango::READ_WRITE; }
-    bool isReadWithWrite() const noexcept { return _attr_write_type == Tango::READ_WITH_WRITE; }
-    bool hasReadData() const noexcept { return isReadOnly() || isReadWrite() || isReadWithWrite(); }
-    bool hasWriteData() const noexcept { return isWriteOnly() || isReadWrite() || isReadWithWrite(); }
+    auto isReadOnly() const noexcept -> bool { return _attr_write_type == Tango::READ; }
+    auto isWriteOnly() const noexcept -> bool { return _attr_write_type == Tango::WRITE; }
+    auto isReadWrite() const noexcept -> bool { return _attr_write_type == Tango::READ_WRITE; }
+    auto isReadWithWrite() const noexcept -> bool { return _attr_write_type == Tango::READ_WITH_WRITE; }
+    auto hasReadData() const noexcept -> bool { return isReadOnly() || isReadWrite() || isReadWithWrite(); }
+    auto hasWriteData() const noexcept -> bool { return isWriteOnly() || isReadWrite() || isReadWithWrite(); }
 
     // type access
-    Tango::CmdArgType type() const noexcept { return _attr_type; }
-    Tango::AttrWriteType writeType() const noexcept { return _attr_write_type; }
-    Tango::AttrDataFormat formatType() const noexcept { return _attr_format; }
+    auto type() const noexcept -> Tango::CmdArgType { return _attr_type; }
+    auto writeType() const noexcept -> Tango::AttrWriteType { return _attr_write_type; }
+    auto formatType() const noexcept -> Tango::AttrDataFormat { return _attr_format; }
 
     // various utilities
-    AttributeTraits &operator=(const AttributeTraits &) = default;
-    AttributeTraits &operator=(AttributeTraits &&) = default;
+    auto operator=(const AttributeTraits &) -> AttributeTraits & = default;
+    auto operator=(AttributeTraits &&) -> AttributeTraits &  = default;
 
-    bool operator==(const AttributeTraits &other) const
+    auto operator==(const AttributeTraits &other) const -> bool
     {
         return _attr_write_type == other.writeType() && _attr_format == other.formatType() &&
             _attr_type == other.type();
     }
 
-    bool operator!=(const AttributeTraits &other) const { return !(*this == other); }
+    auto operator!=(const AttributeTraits &other) const -> bool { return !(*this == other); }
 
     void print(std::ostream &os) const noexcept;
 

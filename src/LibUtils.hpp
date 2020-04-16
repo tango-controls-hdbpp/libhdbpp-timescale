@@ -47,25 +47,25 @@ auto operator<<(std::ostream &os, const T &t) -> decltype(t.print(os), static_ca
 }
 
 // to_string functions for tango enums
-std::string tangoEnumToString(Tango::AttrWriteType write_type);
-std::string tangoEnumToString(Tango::AttrDataFormat format);
-std::string tangoEnumToString(Tango::CmdArgType type);
-std::string tangoEnumToString(Tango::AttrQuality quality);
+auto tangoEnumToString(Tango::AttrWriteType write_type) -> std::string;
+auto tangoEnumToString(Tango::AttrDataFormat format) -> std::string;
+auto tangoEnumToString(Tango::CmdArgType type) -> std::string;
+auto tangoEnumToString(Tango::AttrQuality quality) -> std::string;
 
 // some output operators for tango enums
-std::ostream &operator<<(std::ostream &os, Tango::AttrWriteType write_type);
-std::ostream &operator<<(std::ostream &os, Tango::AttrDataFormat format);
-std::ostream &operator<<(std::ostream &os, Tango::CmdArgType type);
-std::ostream &operator<<(std::ostream &os, Tango::AttrQuality quality);
+auto operator<<(std::ostream &os, Tango::AttrWriteType write_type) -> std::ostream &;
+auto operator<<(std::ostream &os, Tango::AttrDataFormat format) -> std::ostream &;
+auto operator<<(std::ostream &os, Tango::CmdArgType type) -> std::ostream &;
+auto operator<<(std::ostream &os, Tango::AttrQuality quality) -> std::ostream &;
 
 struct LogConfigurator
 {
-    static void initLogging();
-    static void initSyslogLogging();
-    static void initConsoleLogging();
-    static void initFileLogging(const std::string &log_file_name);
+    static void initLogging(const std::string &identity);
+    static void initSyslogLogging(const std::string &identity);
+    static void initConsoleLogging(const std::string &identity);
+    static void initFileLogging(const std::string &identity, const std::string &log_file_name);
 
-    static void shutdownLogging();
+    static void shutdownLogging(const std::string &identity);
     static void setLoggingLevel(spdlog::level::level_enum level);
 };
 
@@ -73,10 +73,10 @@ namespace logging_utils
 {
     // SPDLOG config and setup
     const std::string LibLoggerName = "hdbpp";
-    const std::string SyslogIdent = "hdbpp-timescale";
+    const std::string SyslogIdent = "hdbpp-timescale-";
 
     // get the file name from the __FILE__ variable for error messages
-    constexpr auto *getFileName(const char *const path)
+    constexpr auto getFileName(const char *const path) -> auto *
     {
         // We silence clang warnings for this funciton, this is a quick and simple
         // way to produce the file name, and yes we use pointer arithmetic, but

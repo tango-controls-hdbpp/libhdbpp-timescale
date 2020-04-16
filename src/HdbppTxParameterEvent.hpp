@@ -38,20 +38,20 @@ class HdbppTxParameterEvent : public HdbppTxBase<Conn>
 public:
     HdbppTxParameterEvent(Conn &conn) : HdbppTxBase<Conn>(conn) {}
 
-    HdbppTxParameterEvent<Conn> &withName(const std::string &fqdn_attr_name)
+    auto withName(const std::string &fqdn_attr_name) -> HdbppTxParameterEvent<Conn> &
     {
         _attr_name = AttributeName {fqdn_attr_name};
         return *this;
     }
 
-    HdbppTxParameterEvent<Conn> &withAttrInfo(const Tango::AttributeInfoEx &attr_conf)
+    auto withAttrInfo(const Tango::AttributeInfoEx &attr_conf) -> HdbppTxParameterEvent<Conn> &
     {
         _attr_info_ex = attr_conf;
         _attr_info_ex_set = true;
         return *this;
     }
 
-    HdbppTxParameterEvent<Conn> &withEventTime(Tango::TimeVal tv)
+    auto withEventTime(Tango::TimeVal tv) -> HdbppTxParameterEvent<Conn> &
     {
         // convert to a double that can be passed on to the storage api
         _event_time = tv.tv_sec + tv.tv_usec / 1.0e6;
@@ -59,7 +59,7 @@ public:
     }
 
     // trigger the database storage routines
-    HdbppTxParameterEvent<Conn> &store();
+    auto store() -> HdbppTxParameterEvent<Conn> &;
 
     /// @brief Print the HdbppTxParameterEvent object to the stream
     void print(std::ostream &os) const noexcept override;
@@ -83,7 +83,7 @@ private:
 //=============================================================================
 //=============================================================================
 template<typename Conn>
-HdbppTxParameterEvent<Conn> &HdbppTxParameterEvent<Conn>::store()
+auto HdbppTxParameterEvent<Conn>::store() -> HdbppTxParameterEvent<Conn> &
 {
     if (_attr_name.empty())
     {
@@ -118,6 +118,7 @@ HdbppTxParameterEvent<Conn> &HdbppTxParameterEvent<Conn>::store()
     HdbppTxBase<Conn>::connection().storeParameterEvent(HdbppTxBase<Conn>::attrNameForStorage(_attr_name),
         _event_time,
         _attr_info_ex.label,
+        _attr_info_ex.enum_labels,
         _attr_info_ex.unit,
         _attr_info_ex.standard_unit,
         _attr_info_ex.display_unit,
