@@ -619,14 +619,42 @@ namespace pqxx_conn
         }
         catch (const pqxx::pqxx_exception &ex)
         {
+            
+            spdlog::error("Error: An unexpected error occurred when trying to run a multiple event transaction.");
+            spdlog::error("Caught error at: {} Error: \"{}\"", LOCATION_INFO, ex.base().what());
+            spdlog::info("Trying to run multiple event transaction in single bunches.");
+            
+            string full_msg = "";
+            bool single_error = false;
+
+            for (auto const &query : _sql_buffer)
+            {
+                try
+                {
+                    pqxx::perform([&, this]() {
+                        pqxx::work tx {(*_conn), StoreDataEvents};
+                        
+                        tx.exec0(query);
+                        tx.commit();
+                    });
+                }
+                catch (const pqxx::pqxx_exception &ex)
+                {
+                    single_error = true;
+                    spdlog::error("Error: An unexpected error occurred when trying to run the single query: \"{}\"", query);
+                    spdlog::error("Caught error at: {} Error: \"{}\"", LOCATION_INFO, ex.base().what());
+                    full_msg += "Could not run query:" + query + "\n";
+                }
+            }
+            
             // we may try the events individually in future
             _sql_buffer.clear();
-
-            string full_msg {"The multiple event transaction failed."};
-            spdlog::error("Error: An unexpected error occurred when trying to run the database query");
-            spdlog::error("Caught error at: {} Error: \"{}\"", LOCATION_INFO, ex.base().what());
-            spdlog::error("Throwing storage error with message: \"{}\"", full_msg);
-            Tango::Except::throw_exception("Storage Error", full_msg, LOCATION_INFO);
+            
+            if(single_error)
+            {
+                spdlog::error("Throwing storage error with message: \"{}\"", full_msg);
+                Tango::Except::throw_exception("Storage Error", full_msg, LOCATION_INFO);
+            }
         }
 
         _sql_buffer.clear();
