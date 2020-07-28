@@ -127,6 +127,12 @@ protected:
         _db_access = db_access;
         _test_conn.reset(nullptr);
     }
+    
+    void resetConn()
+    {
+        testConn().disconnect();
+        testConn().connect(postgres_db::HdbppConnectionString);
+    }
 
     DbConnection &testConn();
     pqxx::connection &verifyConn();
@@ -138,6 +144,10 @@ protected:
     template<Tango::CmdArgType Type>
     tuple<vector<typename TangoTypeTraits<Type>::type>, vector<typename TangoTypeTraits<Type>::type>>
         storeTestEventData(const string &att_name, const AttributeTraits &traits, int quality = Tango::ATTR_VALID);
+    
+    template<Tango::CmdArgType Type>
+    tuple<vector<typename TangoTypeTraits<Type>::type>, vector<typename TangoTypeTraits<Type>::type>>
+        store2EventDataSameTime(const string &att_name, const AttributeTraits &traits, int quality = Tango::ATTR_VALID);
 
     template<typename T>
     void checkStoreTestEventData(
@@ -233,6 +243,32 @@ string DbConnectionTestsFixture::storeAttributeByTraits(const AttributeTraits &t
         traits));
 
     return name;
+}
+
+//=============================================================================
+//=============================================================================
+template<Tango::CmdArgType Type>
+tuple<vector<typename TangoTypeTraits<Type>::type>, vector<typename TangoTypeTraits<Type>::type>>
+    DbConnectionTestsFixture::store2EventDataSameTime(const string &att_name, const AttributeTraits &traits, int quality)
+{
+    struct timeval tv
+    {};
+    gettimeofday(&tv, nullptr);
+    double event_time = tv.tv_sec + tv.tv_usec / 1.0e6;
+
+    auto r = generateData<Type>(traits, !traits.hasReadData());
+    auto w = generateData<Type>(traits, !traits.hasWriteData());
+    
+    auto r2 = generateData<Type>(traits, !traits.hasReadData());
+    auto w2 = generateData<Type>(traits, !traits.hasWriteData());
+
+    // make a copy for the consistency check
+    auto ret = make_tuple((*r), (*w));
+
+    REQUIRE_NOTHROW(testConn().storeDataEvent(att_name, event_time, quality, move(r), move(w), traits));
+    REQUIRE_NOTHROW(testConn().storeDataEvent(att_name, event_time, quality, move(r2), move(w2), traits));
+
+    return ret;
 }
 
 //=============================================================================
@@ -984,6 +1020,35 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
 }
 
 TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
+    "Storing 2 scalar event data via a buffered sql statement with one statement causing an error",
+    "[db-access][hdbpp-db-access][db-connection]")
+{
+    REQUIRE_NOTHROW(clearTables());
+    resetDbAccess(DbConnection::DbStoreMethod::InsertString);
+
+    testConn().buffer(true);
+
+    AttributeTraits traits {Tango::READ_WRITE, Tango::SCALAR, Tango::DEV_DOUBLE};
+    auto name = storeAttributeByTraits(traits);
+
+    store2EventDataSameTime<Tango::DEV_DOUBLE>(name, traits);
+    
+    REQUIRE_THROWS_AS(testConn().flush(), Tango::DevFailed);
+
+    pqxx::work tx {verifyConn()};
+
+    // now get the count in the table
+    auto result(tx.exec1("SELECT COUNT(*) FROM " + QueryBuilder::tableName(traits)));
+    tx.commit();
+
+    REQUIRE(result.size() == 1);
+    REQUIRE(result[0].as<int>() == 1);
+
+    testConn().buffer(false);
+    SUCCEED("Passed");
+}
+
+TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
     "Storing large number of scalar event data via a buffered sql statement",
     "[db-access][hdbpp-db-access][db-connection]")
 {
@@ -1190,6 +1255,9 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
 
         REQUIRE(error_row.at(schema::ErrColErrorDesc).as<string>() == error_msg);
     }
+
+    //Clear the cache.
+    resetConn();
 
     gettimeofday(&tv, nullptr);
     event_time = tv.tv_sec + tv.tv_usec / 1.0e6;
