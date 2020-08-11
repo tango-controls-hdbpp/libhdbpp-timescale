@@ -108,4 +108,10 @@ public:
 
 } // namespace hdbpp
 
+extern "C"
+{
+    typedef hdbpp::DBFactory *getDBFactory_t();
+    hdbpp::DBFactory *getDBFactory();
+}
+
 #endif // _HDBPP_ABSTRACTDB_H
