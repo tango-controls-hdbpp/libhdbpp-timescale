@@ -26,6 +26,7 @@
 #include "catch2/catch.hpp"
 
 #include <cfloat>
+#include <locale>
 #include <pqxx/pqxx>
 #include <string>
 #include <tuple>
