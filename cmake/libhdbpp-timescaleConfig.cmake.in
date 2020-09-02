@@ -1,0 +1,7 @@
+@PACKAGE_INIT@
+
+find_package(libhdbpp)
+
+include("${CMAKE_CURRENT_LIST_DIR}/libhdbpp-timescaleTargets.cmake")
+
+set(BACKEND_TARGET libhdbpp::libhdbpp_timescale_shared_library)
