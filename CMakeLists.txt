@@ -72,7 +72,7 @@ set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
 # Find the libhdbpp headers
-find_package(libhdbpp)
+find_package(libhdbpp 2)
 
 # If not installed then get them
 if(NOT libhdbpp_FOUND)
@@ -105,21 +105,46 @@ add_subdirectory(thirdparty/google/benchmark EXCLUDE_FROM_ALL)
 add_subdirectory(thirdparty/google/googletest/googletest EXCLUDE_FROM_ALL)
 
 # Include the thirdparty projects
-add_subdirectory(thirdparty/libpqxx  EXCLUDE_FROM_ALL)
+#add_subdirectory(thirdparty/libpqxx  EXCLUDE_FROM_ALL)
 add_subdirectory(thirdparty/spdlog  EXCLUDE_FROM_ALL)
 add_subdirectory(thirdparty/Catch2  EXCLUDE_FROM_ALL)
 
-# For ease of use, we set the libpqxx output to our projects build directory,
-# then if we build libpqxx as a shared library its easy to find 
-set_target_properties(pqxx_shared
-    PROPERTIES
-    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
+# Find the libpqxx package
+find_package(libpqxx 6.4)
 
-# Currently we link libpqxx into our library as a static object, to ease 
-# deployment, so we make this small change here.
-set_target_properties(pqxx_static
-    PROPERTIES
-    POSITION_INDEPENDENT_CODE 1)
+# If not installed then get them
+if(NOT libpqxx_FOUND)
+    include(FetchContent)
+
+    FetchContent_Declare(
+      libpqxx
+      GIT_REPOSITORY https://github.com/jtv/libpqxx.git
+      GIT_TAG        6.4.5
+    )
+
+    FetchContent_GetProperties(libpqxx)
+    if(NOT libpqxx_POPULATED)
+        FetchContent_Populate(libpqxx)
+        add_subdirectory(${libpqxx_SOURCE_DIR} ${libpqxx_BINARY_DIR}
+            EXCLUDE_FROM_ALL)
+    endif()
+
+    # Do not run the tests on the libpqxx build
+    set(SKIP_BUILD_TEST ON)
+
+    # For ease of use, we set the libpqxx output to our projects build directory,
+    # then if we build libpqxx as a shared library its easy to find 
+    set_target_properties(pqxx_shared
+        PROPERTIES
+        LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
+
+    # Currently we link libpqxx into our library as a static object, to ease 
+    # deployment, so we make this small change here.
+    set_target_properties(pqxx_static
+        PROPERTIES
+        POSITION_INDEPENDENT_CODE 1)
+
+endif(NOT libpqxx_FOUND)
 
 # Code Analysis -----------------------------------
 if(ENABLE_CLANG)

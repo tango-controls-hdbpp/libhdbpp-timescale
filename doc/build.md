@@ -6,7 +6,6 @@ To build the shared library please read the following.
 
 The project has two types of dependencies, those required by the toolchain, and those to do the actual build. Other dependencies are integrated directly into the project as submodules. The following thirdparty modules exists:
 
-* libpqxx - Modern C++ Postgresql library (Submodule)
 * spdlog - Logging system (Submodule)
 * Catch2 - Unit test subsystem (Submodule)
 * libhdbpp - Header from the hdb++ library loading chain (Modified version of [original](https://github.com/tango-controls-hdbpp/libhdbpp) project. This will be pushed back to the original repository in time)
@@ -25,7 +24,7 @@ Ensure the development version of the dependencies are installed. These are as f
 * Tango Controls 9 or higher development headers and libraries
 * omniORB release 4 or higher development headers and libraries
 * libzmq3-dev or libzmq5-dev
-* libpq-dev - Postgres C development library
+* libpq-dev or libpqxx - Postgres C development library, to build libpqxx, or directly libpqxx version 6.4
 
 ## Building and Installation
 

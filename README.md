@@ -22,7 +22,6 @@ The library requires a correctly configured [TimescaleDb](https://www.timescale.
 
 The library has been build against a number of other projects, these have been integrated into the repository as sub modules. This may change at a later date if the build system is improved. Current sub modules are:
 
-* libpqxx - Modern C++ Postgresql library
 * spdlog - Logging system
 * Catch2 - Unit test subsystem
 
