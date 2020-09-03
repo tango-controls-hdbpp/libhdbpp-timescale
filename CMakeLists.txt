@@ -92,11 +92,6 @@ if(NOT libhdbpp_FOUND)
 
     add_library(libhdbpp::libhdbpp_headers ALIAS libhdbpp_headers)
 
-    get_target_property(TEST libhdbpp::libhdbpp_headers IMPORTED)
-    get_target_property(TEST1 libhdbpp::libhdbpp_headers INTERFACE_INCLUDE_DIRECTORIES)
-    message(STATUS ${TEST})
-    message(STATUS ${TEST1})
-
 endif(NOT libhdbpp_FOUND)
 
 # Thirdparty Integration -----------------------------------
