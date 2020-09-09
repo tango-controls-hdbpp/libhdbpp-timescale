@@ -146,14 +146,24 @@ add_subdirectory(src)
 
 # Build Targets  -----------------------------------
 
-# Shared library --------
-add_library(libhdbpp_timescale_shared_library SHARED ${SRC_FILES})
+# Export target name for subdirectory build
+get_directory_property(hasParent PARENT_DIRECTORY)
+if(hasParent)
+    set(BACKEND_TARGET_SHARED "libhdbpp_timescale_shared_library" PARENT_SCOPE)
+    set(BACKEND_TARGET_STATIC "libhdbpp_timescale_static_library" PARENT_SCOPE)
+else()
+    set(BACKEND_TARGET_SHARED "libhdbpp_timescale_shared_library")
+    set(BACKEND_TARGET_STATIC "libhdbpp_timescale_static_library")
+endif(hasParent)
 
-target_link_libraries(libhdbpp_timescale_shared_library 
+# Shared library --------
+add_library(${BACKEND_TARGET_SHARED} SHARED ${SRC_FILES})
+
+target_link_libraries(${BACKEND_TARGET_SHARED} 
     PUBLIC libhdbpp::libhdbpp_headers
     PRIVATE Threads::Threads pqxx_static spdlog::spdlog_header_only TangoInterfaceLibrary)
 
-target_include_directories(libhdbpp_timescale_shared_library 
+target_include_directories(${BACKEND_TARGET_SHARED} 
     PUBLIC
         $<INSTALL_INTERFACE:include>
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
@@ -162,7 +172,7 @@ target_include_directories(libhdbpp_timescale_shared_library
         ${INCLUDE_PATHS}
         "${PROJECT_BINARY_DIR}")
 
-set_target_properties(libhdbpp_timescale_shared_library 
+set_target_properties(${BACKEND_TARGET_SHARED} 
     PROPERTIES 
         OUTPUT_NAME hdb++timescale
         LINK_FLAGS "-Wl,--no-undefined"
@@ -172,23 +182,23 @@ set_target_properties(libhdbpp_timescale_shared_library
         SOVERSION ${VERSION_MAJOR})
 
 if(DO_CLANG_TIDY)
-    set_target_properties(libhdbpp_timescale_shared_library 
+    set_target_properties(${BACKEND_TARGET_SHARED} 
         PROPERTIES 
             CXX_CLANG_TIDY ${DO_CLANG_TIDY})
 endif(DO_CLANG_TIDY)
 
-target_compile_options(libhdbpp_timescale_shared_library 
+target_compile_options(${BACKEND_TARGET_SHARED} 
     PRIVATE "$<$<CONFIG:DEBUG>:-g>")
 
 # Static library --------
-add_library(libhdbpp_timescale_static_library STATIC EXCLUDE_FROM_ALL ${SRC_FILES})
+add_library(${BACKEND_TARGET_STATIC} STATIC EXCLUDE_FROM_ALL ${SRC_FILES})
 
-target_link_libraries(libhdbpp_timescale_static_library 
+target_link_libraries(${BACKEND_TARGET_STATIC} 
     INTERFACE libhdbpp::libhdbpp_headers
     PUBLIC pqxx_static spdlog Threads::Threads
     PRIVATE TangoInterfaceLibrary)
 
-target_include_directories(libhdbpp_timescale_static_library 
+target_include_directories(${BACKEND_TARGET_STATIC} 
     PUBLIC
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
     PRIVATE 
@@ -197,21 +207,21 @@ target_include_directories(libhdbpp_timescale_static_library
         "${PROJECT_BINARY_DIR}")
 
 
-set_target_properties(libhdbpp_timescale_static_library 
+set_target_properties(${BACKEND_TARGET_STATIC} 
     PROPERTIES 
         OUTPUT_NAME hdb++timescale
         LINK_FLAGS "-Wl,--no-undefined"
         CXX_STANDARD 14
         EXCLUDE_FROM_ALL 1)
 
-target_compile_options(libhdbpp_timescale_static_library 
+target_compile_options(${BACKEND_TARGET_STATIC} 
     PRIVATE "$<$<CONFIG:DEBUG>:-g>")
 
 # Install Config -----------------------------------
 include(CMakePackageConfigHelpers)
 
 install(
-    TARGETS libhdbpp_timescale_shared_library
+    TARGETS ${BACKEND_TARGET_SHARED}
     EXPORT libhdbpp-timescaleTargets
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
