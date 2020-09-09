@@ -151,10 +151,9 @@ get_directory_property(hasParent PARENT_DIRECTORY)
 if(hasParent)
     set(BACKEND_TARGET_SHARED "libhdbpp_timescale_shared_library" PARENT_SCOPE)
     set(BACKEND_TARGET_STATIC "libhdbpp_timescale_static_library" PARENT_SCOPE)
-else()
-    set(BACKEND_TARGET_SHARED "libhdbpp_timescale_shared_library")
-    set(BACKEND_TARGET_STATIC "libhdbpp_timescale_static_library")
 endif(hasParent)
+set(BACKEND_TARGET_SHARED "libhdbpp_timescale_shared_library")
+set(BACKEND_TARGET_STATIC "libhdbpp_timescale_static_library")
 
 # Shared library --------
 add_library(${BACKEND_TARGET_SHARED} SHARED ${SRC_FILES})
