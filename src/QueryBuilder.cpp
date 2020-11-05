@@ -268,9 +268,9 @@ namespace pqxx_conn
         // clang-format off
         static string query = 
             "INSERT INTO " + schema::ErrTableName + " (" +
-                schema::ErrColErrorDesc + ") VALUES ($1)" +
-                "ON CONFLICT(" + schema::ErrColErrorDesc + ")" +
-                "DO UPDATE SET " + schema::ErrColErrorDesc + "=EXCLUDED." + schema::ErrColErrorDesc +
+                schema::ErrColErrorDesc + ") VALUES ($1) " +
+                "ON CONFLICT(" + schema::ErrColErrorDesc + ") " +
+                "DO UPDATE SET " + schema::ErrColErrorDesc + "=EXCLUDED." + schema::ErrColErrorDesc + " " +
                 "RETURNING " + schema::ErrColId;
         // clang-format on
 
