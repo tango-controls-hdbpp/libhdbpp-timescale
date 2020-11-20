@@ -8,7 +8,7 @@ Configuration parameters are as follows:
 
 | Parameter | Mandatory | Default | Description |
 |------|-----|-----|-----|
-| libname | true | None | Must be "libhdb++timescale.so", this parameter is getting deprecated as the backend is enforced during compilation |
+| libname | true | None | Must be "libhdb++timescale.so", unless the event subscriber is directly built against this backend, in this case this is not needed. |
 | connect_string | true | None | Postgres connection string, eg user=postgres host=localhost port=5432 dbname=hdb password=password |
 | logging_level | false | error | Logging level. See table below |
 | log_file | false | false | Enable logging to file |
