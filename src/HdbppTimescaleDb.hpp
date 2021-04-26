@@ -17,19 +17,21 @@
    You should have received a copy of the Lesser GNU General Public License
    along with libhdb++timescale.  If not, see <http://www.gnu.org/licenses/>. */
 
-#define CATCH_CONFIG_RUNNER
+#ifndef _HDBPP_TIMESCALE_HPP
+#define _HDBPP_TIMESCALE_HPP
 
-#include "LibUtils.hpp"
-#include "catch2/catch.hpp"
+#include <hdb++/AbstractDB.h>
+#include <string>
+#include <vector>
 
-int main(int argc, char *argv[])
+namespace hdbpp
 {
-    hdbpp_internal::LogConfigurator::initLogging("tests");
-    //hdbpp_internal::LogConfigurator::initConsoleLogging("tests");
-    hdbpp_internal::LogConfigurator::setLoggingLevel(spdlog::level::err);
+class HdbppTimescaleDbFactory : public DBFactory
+{
+public:
+    // return a new HdbppTimescaleDb object
+    virtual AbstractDB *create_db(const string &id, const std::vector<std::string> &configuration);
+};
 
-    int result = Catch::Session().run(argc, argv);
-
-    hdbpp_internal::LogConfigurator::shutdownLogging("tests");
-    return result;
-}
+} // namespace hdbpp
+#endif // _HDBPP_TIMESCALE_HPP

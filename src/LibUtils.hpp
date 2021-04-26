@@ -60,12 +60,12 @@ std::ostream &operator<<(std::ostream &os, Tango::AttrQuality quality);
 
 struct LogConfigurator
 {
-    static void initLogging();
-    static void initSyslogLogging();
-    static void initConsoleLogging();
-    static void initFileLogging(const std::string &log_file_name);
+    static void initLogging(const std::string &identity);
+    static void initSyslogLogging(const std::string &identity);
+    static void initConsoleLogging(const std::string &identity);
+    static void initFileLogging(const std::string &identity, const std::string &log_file_name);
 
-    static void shutdownLogging();
+    static void shutdownLogging(const std::string &identity);
     static void setLoggingLevel(spdlog::level::level_enum level);
 };
 
@@ -73,7 +73,7 @@ namespace logging_utils
 {
     // SPDLOG config and setup
     const std::string LibLoggerName = "hdbpp";
-    const std::string SyslogIdent = "hdbpp-timescale";
+    const std::string SyslogIdent = "hdbpp-timescale-";
 
     // get the file name from the __FILE__ variable for error messages
     constexpr auto *getFileName(const char *const path)

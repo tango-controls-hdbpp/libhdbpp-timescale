@@ -9,7 +9,7 @@ if ( ${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR} )
 endif()
 
 # Start Build Config -----------------------------------
-cmake_minimum_required(VERSION 3.6)
+cmake_minimum_required(VERSION 3.11)
 set(CMAKE_SKIP_RPATH true)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_COLOR_MAKEFILE ON)
@@ -18,9 +18,9 @@ set(CMAKE_COLOR_MAKEFILE ON)
 set(LIBHDBPP_TIMESCALE_NAME "libhdb++timescale")
 
 # Versioning
-set(VERSION_MAJOR "0")
-set(VERSION_MINOR "11")
-set(VERSION_PATCH "2")
+set(VERSION_MAJOR "2")
+set(VERSION_MINOR "0")
+set(VERSION_PATCH "0")
 set(VERSION_METADATA "")
 set(VERSION_STRING ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
 
@@ -56,21 +56,12 @@ include(GNUInstallDirs)
 
 message(STATUS "Searching for libraries...")
 
-# Variable to contain a list of all the libs we depend on
-set(TDB_LIBRARIES) 
-
 # allow pkg-config to search the CMAKE_PREFIX_PATH 
 set(PKG_CONFIG_USE_CMAKE_PREFIX_PATH ON)
 list(APPEND CMAKE_PREFIX_PATH "/usr")
 
 # Find Dependencies  ---------------------
 include(cmake/FindLibraries.cmake)
-
-# Attempt to find the various libraries the project is dependent on
-if(TDB_LIBRARIES)
-    find_libraries(LIBRARIES ${TDB_LIBRARIES} SEARCH_PATHS ${LIBRARY_PATHS})
-    set(TDB_FOUND_LIBRARIES ${FOUND_LIBRARIES})
-endif(TDB_LIBRARIES)
 
 # First find tango if it has not already been found. Returns an interface library
 # called TangoInterfaceLibrary
@@ -79,6 +70,29 @@ find_package(Tango)
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
+
+# Find the libhdbpp headers
+find_package(libhdbpp)
+
+# If not installed then get them
+if(NOT libhdbpp_FOUND)
+    include(FetchContent)
+
+    FetchContent_Declare(
+      libhdbpp
+      GIT_REPOSITORY https://github.com/tango-controls-hdbpp/libhdbpp.git
+      GIT_TAG        project-build
+    )
+
+    FetchContent_GetProperties(libhdbpp)
+    if(NOT libhdbpp_POPULATED)
+        FetchContent_Populate(libhdbpp)
+        add_subdirectory(${libhdbpp_SOURCE_DIR} ${libhdbpp_BINARY_DIR})
+    endif()
+
+    add_library(libhdbpp::libhdbpp_headers ALIAS libhdbpp_headers)
+
+endif(NOT libhdbpp_FOUND)
 
 # Thirdparty Integration -----------------------------------
 
@@ -91,7 +105,6 @@ add_subdirectory(thirdparty/google/benchmark EXCLUDE_FROM_ALL)
 add_subdirectory(thirdparty/google/googletest/googletest EXCLUDE_FROM_ALL)
 
 # Include the thirdparty projects
-add_subdirectory(thirdparty/libhdbpp EXCLUDE_FROM_ALL)
 add_subdirectory(thirdparty/libpqxx  EXCLUDE_FROM_ALL)
 add_subdirectory(thirdparty/spdlog  EXCLUDE_FROM_ALL)
 add_subdirectory(thirdparty/Catch2  EXCLUDE_FROM_ALL)
@@ -133,22 +146,32 @@ add_subdirectory(src)
 
 # Build Targets  -----------------------------------
 
+# Export target name for subdirectory build
+get_directory_property(hasParent PARENT_DIRECTORY)
+if(hasParent)
+    set(BACKEND_TARGET_SHARED "libhdbpp_timescale_shared_library" PARENT_SCOPE)
+    set(BACKEND_TARGET_STATIC "libhdbpp_timescale_static_library" PARENT_SCOPE)
+endif(hasParent)
+set(BACKEND_TARGET_SHARED "libhdbpp_timescale_shared_library")
+set(BACKEND_TARGET_STATIC "libhdbpp_timescale_static_library")
+
 # Shared library --------
-add_library(libhdbpp_timescale_shared_library SHARED ${SRC_FILES})
+add_library(${BACKEND_TARGET_SHARED} SHARED ${SRC_FILES})
 
-target_link_libraries(libhdbpp_timescale_shared_library 
-    PUBLIC ${TDB_FOUND_LIBRARIES} pqxx_static libhdbpp_headers spdlog::spdlog_header_only Threads::Threads
-    PRIVATE TangoInterfaceLibrary)
+target_link_libraries(${BACKEND_TARGET_SHARED} 
+    PUBLIC libhdbpp::libhdbpp_headers
+    PRIVATE Threads::Threads pqxx_static spdlog::spdlog_header_only TangoInterfaceLibrary)
 
-target_include_directories(libhdbpp_timescale_shared_library 
+target_include_directories(${BACKEND_TARGET_SHARED} 
     PUBLIC
         $<INSTALL_INTERFACE:include>
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
     PRIVATE 
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>
+        ${INCLUDE_PATHS}
         "${PROJECT_BINARY_DIR}")
 
-set_target_properties(libhdbpp_timescale_shared_library 
+set_target_properties(${BACKEND_TARGET_SHARED} 
     PROPERTIES 
         OUTPUT_NAME hdb++timescale
         LINK_FLAGS "-Wl,--no-undefined"
@@ -158,22 +181,23 @@ set_target_properties(libhdbpp_timescale_shared_library
         SOVERSION ${VERSION_MAJOR})
 
 if(DO_CLANG_TIDY)
-    set_target_properties(libhdbpp_timescale_shared_library 
+    set_target_properties(${BACKEND_TARGET_SHARED} 
         PROPERTIES 
             CXX_CLANG_TIDY ${DO_CLANG_TIDY})
 endif(DO_CLANG_TIDY)
 
-target_compile_options(libhdbpp_timescale_shared_library 
+target_compile_options(${BACKEND_TARGET_SHARED} 
     PRIVATE "$<$<CONFIG:DEBUG>:-g>")
 
 # Static library --------
-add_library(libhdbpp_timescale_static_library STATIC EXCLUDE_FROM_ALL ${SRC_FILES})
+add_library(${BACKEND_TARGET_STATIC} STATIC EXCLUDE_FROM_ALL ${SRC_FILES})
 
-target_link_libraries(libhdbpp_timescale_static_library 
-    PUBLIC ${TDB_FOUND_LIBRARIES} pqxx_static libhdbpp_headers spdlog Threads::Threads
+target_link_libraries(${BACKEND_TARGET_STATIC} 
+    INTERFACE libhdbpp::libhdbpp_headers
+    PUBLIC pqxx_static spdlog Threads::Threads
     PRIVATE TangoInterfaceLibrary)
 
-target_include_directories(libhdbpp_timescale_static_library 
+target_include_directories(${BACKEND_TARGET_STATIC} 
     PUBLIC
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
     PRIVATE 
@@ -182,28 +206,68 @@ target_include_directories(libhdbpp_timescale_static_library
         "${PROJECT_BINARY_DIR}")
 
 
-set_target_properties(libhdbpp_timescale_static_library 
+set_target_properties(${BACKEND_TARGET_STATIC} 
     PROPERTIES 
         OUTPUT_NAME hdb++timescale
         LINK_FLAGS "-Wl,--no-undefined"
         CXX_STANDARD 14
         EXCLUDE_FROM_ALL 1)
 
-target_compile_options(libhdbpp_timescale_static_library 
+target_compile_options(${BACKEND_TARGET_STATIC} 
     PRIVATE "$<$<CONFIG:DEBUG>:-g>")
 
 # Install Config -----------------------------------
+include(CMakePackageConfigHelpers)
+
 install(
-    TARGETS libhdbpp_timescale_shared_library
+    TARGETS ${BACKEND_TARGET_SHARED}
+    EXPORT libhdbpp-timescaleTargets
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
+set(ConfigPackageLocation lib/cmake/libhdbpp-timescale)
+set(Namespace libhdbpp::)
+
+write_basic_package_version_file(
+  "${CMAKE_CURRENT_BINARY_DIR}/libhdbpp-timescale/libhdbpp-timescaleConfigVersion.cmake"
+  VERSION ${VERSION_STRING}
+  COMPATIBILITY AnyNewerVersion
+)
+
+export(EXPORT libhdbpp-timescaleTargets
+  FILE
+    "${CMAKE_CURRENT_BINARY_DIR}/libhdbpp-timescale/libhdbpp-timescaleTargets.cmake"
+  NAMESPACE ${Namespace}
+)
+
+
+# generate the config file that is includes the exports
+configure_package_config_file(cmake/libhdbpp-timescaleConfig.cmake.in
+  "${CMAKE_CURRENT_BINARY_DIR}/libhdbpp-timescale/libhdbpp-timescaleConfig.cmake"
+  INSTALL_DESTINATION
+    ${ConfigPackageLocation}
+  NO_SET_AND_CHECK_MACRO
+  NO_CHECK_REQUIRED_COMPONENTS_MACRO
+)
+
+install(EXPORT libhdbpp-timescaleTargets
+  FILE
+    libhdbpp-timescaleTargets.cmake
+  NAMESPACE
+    ${Namespace}
+  DESTINATION
+    ${ConfigPackageLocation}
+)
+
 install(
-    DIRECTORY ${PROJECT_SOURCE_DIR}/include/
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-    FILES_MATCHING
-    PATTERN HdbppTimescaleDb.hpp)
+  FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/libhdbpp-timescale/libhdbpp-timescaleConfig.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/libhdbpp-timescale/libhdbpp-timescaleConfigVersion.cmake"
+  DESTINATION
+    ${ConfigPackageLocation}
+)
+
 
 # Tests -----------------------------------
 if(BUILD_UNIT_TESTS)

@@ -9,7 +9,7 @@ The project has two types of dependencies, those required by the toolchain, and 
 * libpqxx - Modern C++ Postgresql library (Submodule)
 * spdlog - Logging system (Submodule)
 * Catch2 - Unit test subsystem (Submodule)
-* libhdbpp - Part of the hdb++ library loading chain (Modified version of [original](https://github.com/tango-controls-hdbpp/libhdbpp) project. This will be pushed back to the original repository in time)
+* libhdbpp - Header from the hdb++ library loading chain (Modified version of [original](https://github.com/tango-controls-hdbpp/libhdbpp) project. This will be pushed back to the original repository in time)
 
 ### Toolchain Dependencies
 

@@ -16,17 +16,17 @@
 
    You should have received a copy of the Lesser GNU General Public License
    along with libhdb++timescale.  If not, see <http://www.gnu.org/licenses/>. */
-   
+
 #include "QueryBuilder.hpp"
 #include <benchmark/benchmark.h>
 
 //=============================================================================
 //=============================================================================
-void bmAllocateQueryBuilder(benchmark::State& state) 
+void bmAllocateQueryBuilder(benchmark::State &state)
 {
     // Test - Testing the time it takes to allocate a QueryBuilder, mainly for future test
     // reference
-    hdbpp_internal::LogConfigurator::initLogging();
+    hdbpp_internal::LogConfigurator::initLogging("test");
 
     for (auto _ : state)
         hdbpp_internal::pqxx_conn::QueryBuilder query_builder;
@@ -36,10 +36,10 @@ BENCHMARK(bmAllocateQueryBuilder);
 
 //=============================================================================
 //=============================================================================
-void bmTraitsComparator(benchmark::State& state) 
+void bmTraitsComparator(benchmark::State &state)
 {
     // TEST - Test the AttributeTraits comparator used in the cache inside QueryBuilder,
-    // the test is against a full map with every possible tango traits combination 
+    // the test is against a full map with every possible tango traits combination
     std::map<hdbpp_internal::AttributeTraits, std::string> trait_cache;
 
     vector<Tango::CmdArgType> types {Tango::DEV_DOUBLE,
@@ -84,22 +84,22 @@ BENCHMARK(bmTraitsComparator);
 
 //=============================================================================
 //=============================================================================
-static void writeTypeArgs(benchmark::internal::Benchmark* b) 
+static void writeTypeArgs(benchmark::internal::Benchmark *b)
 {
     vector<Tango::AttrWriteType> write_types {Tango::READ, Tango::WRITE, Tango::READ_WRITE, Tango::READ_WITH_WRITE};
 
-    for (auto & write_type : write_types)
+    for (auto &write_type : write_types)
         b->Args({static_cast<int>(write_type)});
 }
 
 //=============================================================================
 //=============================================================================
 template<typename T>
-void bmStoreDataEventQueryNoCache(benchmark::State& state) 
+void bmStoreDataEventQueryNoCache(benchmark::State &state)
 {
     // TEST - Testing how long it takes to build an Insert Data Event query with
     // an empty cache (this forces the full string to be built)
-    hdbpp_internal::LogConfigurator::initLogging();
+    hdbpp_internal::LogConfigurator::initLogging("test");
 
     hdbpp_internal::AttributeTraits traits 
         {static_cast<Tango::AttrWriteType>(state.range(0)), Tango::SCALAR, Tango::DEV_DOUBLE};
@@ -115,11 +115,11 @@ void bmStoreDataEventQueryNoCache(benchmark::State& state)
 //=============================================================================
 //=============================================================================
 template<typename T>
-void bmStoreDataEventQueryCache(benchmark::State& state) 
+void bmStoreDataEventQueryCache(benchmark::State &state)
 {
     // TEST - Testing the full lookup for an Insert Data QueryEvent query when the cache
-    // map is fully populated 
-    hdbpp_internal::LogConfigurator::initLogging();
+    // map is fully populated
+    hdbpp_internal::LogConfigurator::initLogging("test");
 
     hdbpp_internal::AttributeTraits traits 
         {static_cast<Tango::AttrWriteType>(state.range(0)), Tango::SCALAR, Tango::DEV_DOUBLE};
@@ -147,7 +147,7 @@ void bmStoreDataEventQueryCache(benchmark::State& state)
     for (auto &type : types)
         for (auto &format : format_types)
             for (auto &write : write_types)
-                query_builder.storeDataEventStatement<T>(hdbpp_internal::AttributeTraits{write, format, type});
+                query_builder.storeDataEventStatement<T>(hdbpp_internal::AttributeTraits {write, format, type});
 
     for (auto _ : state)
         query_builder.storeDataEventStatement<T>(traits);

@@ -159,7 +159,7 @@ namespace pqxx_conn
                     // element and the other an array. Further, the unique_ptr may be
                     // empty and signify a null should be stored in the column instead
                     auto store_value = [&tx, &traits, &inv](auto &value) {
-                        if (value && value->size() > 0)
+                        if (value && !value->empty())
                         {
                             store_data_utils::Store<T>::run(value, traits, inv, tx);
                         }

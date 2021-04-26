@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Changed
+
+- Removed public headers as the only needed one is AbstractDB from libhdbpp.
+- Moved some system documentation to hdbpp-timescale-project (the consolidated project).
+- Consolidated remaining build/install instructions into README
+- Modified build system to use fetch libhdbpp and include it when requested. This is an aid to development.
+- Made compatible with new libhdbpp (namespace, function and path changes)
+
+### Removed
+
+- Removed the embedded version of libhdbpp (the build can now source it at build time)
+
 ## [0.11.2] - 2020-01-23
 
 ### Fixed

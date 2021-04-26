@@ -1,12 +1,14 @@
 # Configuration
 
+This is the configuration to use for [event subscribers](https://github.com/tango-controls-hdbpp/hdbpp-es) to use this backend
+
 ## Library Configuration Parameters
 
 Configuration parameters are as follows:
 
 | Parameter | Mandatory | Default | Description |
 |------|-----|-----|-----|
-| libname | true | None | Must be "libhdb++timescale.so" |
+| libname | true | None | Must be "libhdb++timescale.so", unless the event subscriber is directly built against this backend, in this case this is not needed. |
 | connect_string | true | None | Postgres connection string, eg user=postgres host=localhost port=5432 dbname=hdb password=password |
 | logging_level | false | error | Logging level. See table below |
 | log_file | false | false | Enable logging to file |
@@ -27,7 +29,7 @@ The logging_level parameter is case insensitive. Logging levels are as follows:
 
 ## Configuration Example
 
-Short example LibConfiguration property value on an EventSubscriber or ConfigManager. You will HAVE to change the various parts to match your system:
+Short example LibConfiguration property value on an EventSubscriber. You will HAVE to change the various parts to match your system:
 
 ```
 connect_string=user=hdb-user password=password host=hdb-database port=5432 dbname=hdb
