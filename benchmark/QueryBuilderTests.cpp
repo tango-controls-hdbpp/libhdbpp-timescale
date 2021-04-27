@@ -18,6 +18,7 @@
    along with libhdb++timescale.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include "QueryBuilder.hpp"
+
 #include <benchmark/benchmark.h>
 
 //=============================================================================
@@ -67,8 +68,7 @@ void bmTraitsComparator(benchmark::State &state)
             for (auto &write : write_types)
             {
                 // add to the cache for future hits
-                trait_cache.emplace(
-                    hdbpp_internal::AttributeTraits{write, format, type}, 
+                trait_cache.emplace(hdbpp_internal::AttributeTraits {write, format, type},
                     to_string(write) + to_string(format) + to_string(type));
             }
         }
@@ -101,8 +101,8 @@ void bmStoreDataEventQueryNoCache(benchmark::State &state)
     // an empty cache (this forces the full string to be built)
     hdbpp_internal::LogConfigurator::initLogging("test");
 
-    hdbpp_internal::AttributeTraits traits 
-        {static_cast<Tango::AttrWriteType>(state.range(0)), Tango::SCALAR, Tango::DEV_DOUBLE};
+    hdbpp_internal::AttributeTraits traits {
+        static_cast<Tango::AttrWriteType>(state.range(0)), Tango::SCALAR, Tango::DEV_DOUBLE};
 
     for (auto _ : state)
     {
@@ -121,8 +121,8 @@ void bmStoreDataEventQueryCache(benchmark::State &state)
     // map is fully populated
     hdbpp_internal::LogConfigurator::initLogging("test");
 
-    hdbpp_internal::AttributeTraits traits 
-        {static_cast<Tango::AttrWriteType>(state.range(0)), Tango::SCALAR, Tango::DEV_DOUBLE};
+    hdbpp_internal::AttributeTraits traits {
+        static_cast<Tango::AttrWriteType>(state.range(0)), Tango::SCALAR, Tango::DEV_DOUBLE};
 
     vector<Tango::CmdArgType> types {Tango::DEV_DOUBLE,
         Tango::DEV_FLOAT,
@@ -155,5 +155,3 @@ void bmStoreDataEventQueryCache(benchmark::State &state)
 
 BENCHMARK_TEMPLATE(bmStoreDataEventQueryNoCache, bool)->Apply(writeTypeArgs);
 BENCHMARK_TEMPLATE(bmStoreDataEventQueryCache, bool)->Apply(writeTypeArgs);
-
-BENCHMARK_MAIN();

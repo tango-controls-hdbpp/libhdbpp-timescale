@@ -127,6 +127,12 @@ protected:
         _db_access = db_access;
         _test_conn.reset(nullptr);
     }
+    
+    void resetConn()
+    {
+        testConn().disconnect();
+        testConn().connect(postgres_db::HdbppConnectionString);
+    }
 
     DbConnection &testConn();
     pqxx::connection &verifyConn();
@@ -138,14 +144,16 @@ protected:
     template<Tango::CmdArgType Type>
     tuple<vector<typename TangoTypeTraits<Type>::type>, vector<typename TangoTypeTraits<Type>::type>>
         storeTestEventData(const string &att_name, const AttributeTraits &traits, int quality = Tango::ATTR_VALID);
+    
+    template<Tango::CmdArgType Type>
+    tuple<vector<typename TangoTypeTraits<Type>::type>, vector<typename TangoTypeTraits<Type>::type>>
+        store2EventDataSameTime(const string &att_name, const AttributeTraits &traits, int quality = Tango::ATTR_VALID);
 
     template<typename T>
     void checkStoreTestEventData(
         const string &att_name, const AttributeTraits &traits, const tuple<vector<T>, vector<T>> &data);
 
     QueryBuilder &queryBuilder() { return _query_builder; }
-    vector<AttributeTraits> getTraits() const;
-    vector<AttributeTraits> getTraitsImplemented() const;
 
 public:
     DbConnectionTestsFixture() = default;
@@ -180,7 +188,7 @@ pqxx::connection &DbConnectionTestsFixture::verifyConn()
 //=============================================================================
 void DbConnectionTestsFixture::clearTables()
 {
-    vector<AttributeTraits> traits_array = getTraits();
+    vector<AttributeTraits> traits_array = utils::getTraits();
 
     {
         string query = "TRUNCATE ";
@@ -239,66 +247,28 @@ string DbConnectionTestsFixture::storeAttributeByTraits(const AttributeTraits &t
 
 //=============================================================================
 //=============================================================================
-vector<AttributeTraits> DbConnectionTestsFixture::getTraits() const
+template<Tango::CmdArgType Type>
+tuple<vector<typename TangoTypeTraits<Type>::type>, vector<typename TangoTypeTraits<Type>::type>>
+    DbConnectionTestsFixture::store2EventDataSameTime(const string &att_name, const AttributeTraits &traits, int quality)
 {
-    vector<AttributeTraits> traits_array {};
+    struct timeval tv
+    {};
+    gettimeofday(&tv, nullptr);
+    double event_time = tv.tv_sec + tv.tv_usec / 1.0e6;
 
-    vector<Tango::CmdArgType> types {Tango::DEV_BOOLEAN,
-        Tango::DEV_DOUBLE,
-        Tango::DEV_FLOAT,
-        Tango::DEV_STRING,
-        Tango::DEV_LONG,
-        Tango::DEV_ULONG,
-        Tango::DEV_LONG64,
-        Tango::DEV_ULONG64,
-        Tango::DEV_SHORT,
-        Tango::DEV_USHORT,
-        Tango::DEV_UCHAR,
-        Tango::DEV_STATE,
-        Tango::DEV_ENCODED,
-        Tango::DEV_ENUM};
+    auto r = generateData<Type>(traits, !traits.hasReadData());
+    auto w = generateData<Type>(traits, !traits.hasWriteData());
+    
+    auto r2 = generateData<Type>(traits, !traits.hasReadData());
+    auto w2 = generateData<Type>(traits, !traits.hasWriteData());
 
-    vector<Tango::AttrWriteType> write_types {Tango::READ, Tango::WRITE, Tango::READ_WRITE, Tango::READ_WITH_WRITE};
-    vector<Tango::AttrDataFormat> format_types {Tango::SCALAR, Tango::SPECTRUM};
+    // make a copy for the consistency check
+    auto ret = make_tuple((*r), (*w));
 
-    // loop for every combination of type in Tango
-    for (auto &type : types)
-        for (auto &format : format_types)
-            for (auto &write : write_types)
-                traits_array.emplace_back(AttributeTraits {write, format, type});
+    REQUIRE_NOTHROW(testConn().storeDataEvent(att_name, event_time, quality, move(r), move(w), traits));
+    REQUIRE_NOTHROW(testConn().storeDataEvent(att_name, event_time, quality, move(r2), move(w2), traits));
 
-    return traits_array;
-}
-
-//=============================================================================
-//=============================================================================
-vector<AttributeTraits> DbConnectionTestsFixture::getTraitsImplemented() const
-{
-    vector<AttributeTraits> traits_array {};
-
-    vector<Tango::CmdArgType> types {Tango::DEV_BOOLEAN,
-        Tango::DEV_DOUBLE,
-        Tango::DEV_FLOAT,
-        Tango::DEV_STRING,
-        Tango::DEV_LONG,
-        Tango::DEV_ULONG,
-        Tango::DEV_LONG64,
-        Tango::DEV_ULONG64,
-        Tango::DEV_SHORT,
-        Tango::DEV_USHORT,
-        Tango::DEV_UCHAR,
-        Tango::DEV_STATE};
-
-    vector<Tango::AttrWriteType> write_types {Tango::READ, Tango::WRITE, Tango::READ_WRITE, Tango::READ_WITH_WRITE};
-    vector<Tango::AttrDataFormat> format_types {Tango::SCALAR, Tango::SPECTRUM};
-
-    // loop for every combination of type in Tango
-    for (auto &type : types)
-        for (auto &format : format_types)
-            for (auto &write : write_types)
-                traits_array.emplace_back(AttributeTraits {write, format, type});
-
-    return traits_array;
+    return ret;
 }
 
 //=============================================================================
@@ -753,10 +723,10 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
 }
 
 TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
-    "Storing event data for all Tango type combinations in the database (prepared statements)",
+    "Storing single event data for all Tango type combinations in the database (prepared statements)",
     "[db-access][hdbpp-db-access][db-connection]")
 {
-    auto traits_array = getTraitsImplemented();
+    auto traits_array = utils::getTraitsImplemented();
     REQUIRE_NOTHROW(clearTables());
     resetDbAccess(DbConnection::DbStoreMethod::PreparedStatement);
 
@@ -823,10 +793,10 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
 }
 
 TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
-    "Storing event data for all Tango type combinations in the database (insert strings)",
+    "Storing single event data for all Tango type combinations in the database (insert strings)",
     "[db-access][hdbpp-db-access][db-connection]")
 {
-    auto traits_array = getTraitsImplemented();
+    auto traits_array = utils::getTraitsImplemented();
     REQUIRE_NOTHROW(clearTables());
     resetDbAccess(DbConnection::DbStoreMethod::InsertString);
 
@@ -889,6 +859,159 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
         }
     }
 
+    SUCCEED("Passed");
+}
+
+TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
+    "Storing multiple event data via a buffered sql statement",
+    "[db-access][hdbpp-db-access][db-connection]")
+{
+    auto traits_array = utils::getTraitsImplemented();
+    REQUIRE_NOTHROW(clearTables());
+    resetDbAccess(DbConnection::DbStoreMethod::InsertString);
+
+    testConn().buffer(true);
+
+    for (auto &traits : traits_array)
+    {
+        INFO("Inserting data for traits: " << traits);
+        auto name = storeAttributeByTraits(traits);
+
+        switch (traits.type())
+        {
+            case Tango::DEV_BOOLEAN: storeTestEventData<Tango::DEV_BOOLEAN>(name, traits); break;
+
+            case Tango::DEV_SHORT: storeTestEventData<Tango::DEV_SHORT>(name, traits); break;
+
+            case Tango::DEV_LONG: storeTestEventData<Tango::DEV_LONG>(name, traits); break;
+
+            case Tango::DEV_LONG64: storeTestEventData<Tango::DEV_LONG64>(name, traits); break;
+
+            case Tango::DEV_FLOAT: storeTestEventData<Tango::DEV_FLOAT>(name, traits); break;
+
+            case Tango::DEV_DOUBLE: storeTestEventData<Tango::DEV_DOUBLE>(name, traits); break;
+
+            case Tango::DEV_UCHAR: storeTestEventData<Tango::DEV_UCHAR>(name, traits); break;
+
+            case Tango::DEV_USHORT: storeTestEventData<Tango::DEV_USHORT>(name, traits); break;
+
+            case Tango::DEV_ULONG: storeTestEventData<Tango::DEV_ULONG>(name, traits); break;
+
+            case Tango::DEV_ULONG64: storeTestEventData<Tango::DEV_ULONG64>(name, traits); break;
+
+            case Tango::DEV_STRING: storeTestEventData<Tango::DEV_STRING>(name, traits); break;
+
+            case Tango::DEV_STATE: storeTestEventData<Tango::DEV_STATE>(name, traits); break;
+
+            default: throw "Should not be here!";
+        }
+    }
+
+    REQUIRE_NOTHROW(testConn().flush());
+
+    // check the rows, should be four in each table
+    for (auto &traits : traits_array)
+    {
+        pqxx::work tx {verifyConn()};
+
+        // now get the count in the table
+        auto result(tx.exec1("SELECT COUNT(*) FROM " + QueryBuilder::tableName(traits)));
+        tx.commit();
+
+        REQUIRE(result.size() == 1);
+        REQUIRE(result[0].as<int>() == 4);
+    }
+
+    testConn().buffer(false);
+    SUCCEED("Passed");
+}
+
+TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
+    "Storing large number of spectrum event data via a buffered sql statement",
+    "[db-access][hdbpp-db-access][db-connection]")
+{
+    REQUIRE_NOTHROW(clearTables());
+    resetDbAccess(DbConnection::DbStoreMethod::InsertString);
+
+    testConn().buffer(true);
+
+    AttributeTraits traits {Tango::READ_WRITE, Tango::SPECTRUM, Tango::DEV_DOUBLE};
+    auto name = storeAttributeByTraits(traits);
+
+    for (int i = 1; i <= 1000; i++)
+        storeTestEventData<Tango::DEV_DOUBLE>(name, traits);
+
+    REQUIRE_NOTHROW(testConn().flush());
+
+    pqxx::work tx {verifyConn()};
+
+    // now get the count in the table
+    auto result(tx.exec1("SELECT COUNT(*) FROM " + QueryBuilder::tableName(traits)));
+    tx.commit();
+
+    REQUIRE(result.size() == 1);
+    REQUIRE(result[0].as<int>() == 1000);
+
+    testConn().buffer(false);
+    SUCCEED("Passed");
+}
+
+TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
+    "Storing 2 scalar event data via a buffered sql statement with one statement causing an error",
+    "[db-access][hdbpp-db-access][db-connection]")
+{
+    REQUIRE_NOTHROW(clearTables());
+    resetDbAccess(DbConnection::DbStoreMethod::InsertString);
+
+    testConn().buffer(true);
+
+    AttributeTraits traits {Tango::READ_WRITE, Tango::SCALAR, Tango::DEV_DOUBLE};
+    auto name = storeAttributeByTraits(traits);
+
+    store2EventDataSameTime<Tango::DEV_DOUBLE>(name, traits);
+    
+    REQUIRE_THROWS_AS(testConn().flush(), Tango::DevFailed);
+
+    pqxx::work tx {verifyConn()};
+
+    // now get the count in the table
+    auto result(tx.exec1("SELECT COUNT(*) FROM " + QueryBuilder::tableName(traits)));
+    tx.commit();
+
+    REQUIRE(result.size() == 1);
+    REQUIRE(result[0].as<int>() == 1);
+
+    testConn().buffer(false);
+    SUCCEED("Passed");
+}
+
+TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
+    "Storing large number of scalar event data via a buffered sql statement",
+    "[db-access][hdbpp-db-access][db-connection]")
+{
+    REQUIRE_NOTHROW(clearTables());
+    resetDbAccess(DbConnection::DbStoreMethod::InsertString);
+
+    testConn().buffer(true);
+
+    AttributeTraits traits {Tango::READ_WRITE, Tango::SCALAR, Tango::DEV_DOUBLE};
+    auto name = storeAttributeByTraits(traits);
+
+    for (int i = 0; i < 1000; i++)
+        storeTestEventData<Tango::DEV_DOUBLE>(name, traits);
+
+    REQUIRE_NOTHROW(testConn().flush());
+
+    pqxx::work tx {verifyConn()};
+
+    // now get the count in the table
+    auto result(tx.exec1("SELECT COUNT(*) FROM " + QueryBuilder::tableName(traits)));
+    tx.commit();
+
+    REQUIRE(result.size() == 1);
+    REQUIRE(result[0].as<int>() == 1000);
+
+    testConn().buffer(false);
     SUCCEED("Passed");
 }
 
@@ -1069,6 +1192,9 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
 
         REQUIRE(error_row.at(schema::ErrColErrorDesc).as<string>() == error_msg);
     }
+
+    //Clear the cache.
+    resetConn();
 
     gettimeofday(&tv, nullptr);
     event_time = tv.tv_sec + tv.tv_usec / 1.0e6;

@@ -364,7 +364,7 @@ namespace pqxx_conn
         checkConnection(LOCATION_INFO);
         checkAttributeExists(full_attr_name, LOCATION_INFO);
 
-        // first ensure the error message has an id inm the database, otherwise
+        // first ensure the error message has an id in the database, otherwise
         // we can not store data against it
         if (!_error_desc_id_cache->valueExists(error_msg))
             storeErrorMsg(full_attr_name, error_msg);
@@ -383,36 +383,52 @@ namespace pqxx_conn
             Tango::Except::throw_exception("Consistency Error", msg, LOCATION_INFO);
         }
 
-        try
+        if (_enable_buffering)
         {
-            // create and perform a pqxx transaction
-            pqxx::perform([&, this]() {
-                pqxx::work tx {(*_conn), StoreDataEventError};
+            auto query = QueryBuilder::storeDataEventErrorString(pqxx::to_string(_conf_id_cache->value(full_attr_name)),
+                pqxx::to_string(event_time),
+                pqxx::to_string(quality),
+                pqxx::to_string(_error_desc_id_cache->value(error_msg)),
+                traits);
 
-                if (!tx.prepared(_query_builder.storeDataEventErrorName(traits)).exists())
-                {
-                    tx.conn().prepare(_query_builder.storeDataEventErrorName(traits),
-                        _query_builder.storeDataEventErrorStatement(traits));
-
-                    spdlog::trace("Created prepared statement for: {}", _query_builder.storeDataEventErrorName(traits));
-                }
-
-                // no result expected
-                tx.exec_prepared0(_query_builder.storeDataEventErrorName(traits),
-                    _conf_id_cache->value(full_attr_name),
-                    event_time,
-                    quality,
-                    _error_desc_id_cache->value(error_msg));
-
-                tx.commit();
-            });
+            query += ";";
+            _sql_buffer.push_back(query);
         }
-        catch (const pqxx::pqxx_exception &ex)
+        else
         {
-            handlePqxxError("The attribute [" + full_attr_name + "] error message [" + error_msg + "] was not saved.",
-                ex.base().what(),
-                _query_builder.storeDataEventErrorName(traits),
-                LOCATION_INFO);
+            try
+            {
+                // create and perform a pqxx transaction
+                pqxx::perform([&, this]() {
+                    pqxx::work tx {(*_conn), StoreDataEventError};
+
+                    if (!tx.prepared(_query_builder.storeDataEventErrorName(traits)).exists())
+                    {
+                        tx.conn().prepare(_query_builder.storeDataEventErrorName(traits),
+                            _query_builder.storeDataEventErrorStatement(traits));
+
+                        spdlog::trace(
+                            "Created prepared statement for: {}", _query_builder.storeDataEventErrorName(traits));
+                    }
+
+                    // no result expected
+                    tx.exec_prepared0(_query_builder.storeDataEventErrorName(traits),
+                        _conf_id_cache->value(full_attr_name),
+                        event_time,
+                        quality,
+                        _error_desc_id_cache->value(error_msg));
+
+                    tx.commit();
+                });
+            }
+            catch (const pqxx::pqxx_exception &ex)
+            {
+                handlePqxxError(
+                    "The attribute [" + full_attr_name + "] error message [" + error_msg + "] was not saved.",
+                    ex.base().what(),
+                    _query_builder.storeDataEventErrorName(traits),
+                    LOCATION_INFO);
+            }
         }
     }
 
@@ -571,6 +587,77 @@ namespace pqxx_conn
         }
 
         return traits;
+    }
+
+    //=============================================================================
+    //=============================================================================
+    void DbConnection::flush()
+    {
+        spdlog::debug("Flushing buffer of size: {}", _sql_buffer.size());
+
+        if (_sql_buffer.empty())
+        {
+            spdlog::warn("Nothing to flush from the buffer, returning");
+            return;
+        }
+
+        try
+        {
+            pqxx::perform([&, this]() {
+                pqxx::work tx {(*_conn), StoreDataEvents};
+
+                string full_query;
+
+                for (auto const &query : _sql_buffer)
+                    full_query += query;
+
+                tx.exec0(full_query);
+
+                // commit the result
+                tx.commit();
+            });
+        }
+        catch (const pqxx::pqxx_exception &ex)
+        {
+            
+            spdlog::error("Error: An unexpected error occurred when trying to run a multiple event transaction.");
+            spdlog::error("Caught error at: {} Error: \"{}\"", LOCATION_INFO, ex.base().what());
+            spdlog::info("Trying to run multiple event transaction in single bunches.");
+            
+            string full_msg = "";
+            bool single_error = false;
+
+            for (auto const &query : _sql_buffer)
+            {
+                try
+                {
+                    pqxx::perform([&, this]() {
+                        pqxx::work tx {(*_conn), StoreDataEvents};
+                        
+                        tx.exec0(query);
+                        tx.commit();
+                    });
+                }
+                catch (const pqxx::pqxx_exception &ex)
+                {
+                    single_error = true;
+                    spdlog::error("Error: An unexpected error occurred when trying to run the single query: \"{}\"", query);
+                    spdlog::error("Caught error at: {} Error: \"{}\"", LOCATION_INFO, ex.base().what());
+                    full_msg += "Could not run query:" + query + "\n";
+                }
+            }
+            
+            // we may try the events individually in future
+            _sql_buffer.clear();
+            
+            if(single_error)
+            {
+                spdlog::error("Throwing storage error with message: \"{}\"", full_msg);
+                Tango::Except::throw_exception("Storage Error", full_msg, LOCATION_INFO);
+            }
+        }
+
+        _sql_buffer.clear();
     }
 
     //=============================================================================

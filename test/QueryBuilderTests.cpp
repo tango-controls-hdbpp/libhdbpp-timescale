@@ -32,7 +32,6 @@ SCENARIO("storeDataEventString() returns the correct Value fields for the given 
 {
     GIVEN("A query builder object with nothing cached")
     {
-        QueryBuilder query_builder;
         auto value_r = make_unique<vector<double>>(1.1, 2.2);
         auto value_r_empty = make_unique<vector<double>>();
         auto value_w = make_unique<vector<double>>(3.3, 4.4);
@@ -42,7 +41,7 @@ SCENARIO("storeDataEventString() returns the correct Value fields for the given 
         {
             AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE};
 
-            auto result = query_builder.storeDataEventString<double>(
+            auto result = QueryBuilder::storeDataEventString<double>(
                 TestAttrFQDName, string("0"), string("1"), value_r, value_w_empty, traits);
 
             THEN("The result must include the schema::DatColValueR field only")
@@ -56,7 +55,7 @@ SCENARIO("storeDataEventString() returns the correct Value fields for the given 
         {
             AttributeTraits traits {Tango::WRITE, Tango::SCALAR, Tango::DEV_DOUBLE};
 
-            auto result = query_builder.storeDataEventString<double>(
+            auto result = QueryBuilder::storeDataEventString<double>(
                 TestAttrFQDName, string("0"), string("1"), value_r_empty, value_w, traits);
 
             THEN("The result must include the schema::DatColValueW field only")
@@ -70,7 +69,7 @@ SCENARIO("storeDataEventString() returns the correct Value fields for the given 
         {
             AttributeTraits traits {Tango::READ_WRITE, Tango::SCALAR, Tango::DEV_DOUBLE};
 
-            auto result = query_builder.storeDataEventString<double>(
+            auto result = QueryBuilder::storeDataEventString<double>(
                 TestAttrFQDName, string("0"), string("1"), value_r, value_w, traits);
 
             THEN("The result must include both the schema::DatColValueR and schema::DatColValueW field")
@@ -85,7 +84,7 @@ SCENARIO("storeDataEventString() returns the correct Value fields for the given 
         {
             AttributeTraits traits {Tango::READ_WITH_WRITE, Tango::SCALAR, Tango::DEV_DOUBLE};
 
-            auto result = query_builder.storeDataEventString<double>(
+            auto result = QueryBuilder::storeDataEventString<double>(
                 TestAttrFQDName, string("0"), string("1"), value_r, value_w, traits);
 
             THEN("The result must include both the schema::DatColValueR and schema::DatColValueW field")
@@ -103,7 +102,6 @@ SCENARIO("storeDataEventString() adds a null when value is size zero", "[query-s
 {
     GIVEN("A query builder object with nothing cached")
     {
-        QueryBuilder query_builder;
         auto value_r = make_unique<vector<double>>(1.1, 2.2);
         auto value_r_empty = make_unique<vector<double>>();
         auto value_w = make_unique<vector<double>>(3.3, 4.4);
@@ -113,7 +111,7 @@ SCENARIO("storeDataEventString() adds a null when value is size zero", "[query-s
         {
             AttributeTraits traits {Tango::READ_WRITE, Tango::SCALAR, Tango::DEV_DOUBLE};
 
-            auto result = query_builder.storeDataEventString<double>(
+            auto result = QueryBuilder::storeDataEventString<double>(
                 TestAttrFQDName, string("0"), string("1"), value_r, value_w_empty, traits);
 
             THEN("The result must include both the schema::DatColValueR and schema::DatColValueW field")
@@ -128,7 +126,7 @@ SCENARIO("storeDataEventString() adds a null when value is size zero", "[query-s
         {
             AttributeTraits traits {Tango::READ_WRITE, Tango::SCALAR, Tango::DEV_DOUBLE};
 
-            auto result = query_builder.storeDataEventString<double>(
+            auto result = QueryBuilder::storeDataEventString<double>(
                 TestAttrFQDName, string("0"), string("1"), value_r_empty, value_w, traits);
 
             THEN("The result must include both the schema::DatColValueR and schema::DatColValueW field")
@@ -203,21 +201,20 @@ SCENARIO("storeDataEventStatement() returns the correct Value fields for the giv
     }
 }
 
-SCENARIO("Creating valid insert queries with storeDataEventErrorQuery()", "[query-string]")
+SCENARIO("Creating valid insert queries with storeDataEventErrorString()", "[query-string]")
 {
-    QueryBuilder query_builder;
-
     GIVEN("An Attribute traits configured for scalar")
     {
         AttributeTraits traits {Tango::READ, Tango::SCALAR, Tango::DEV_DOUBLE};
 
-        WHEN("Requesting a table name for the traits")
+        WHEN("Requesting an error query string")
         {
-            auto result = QueryBuilder::tableName(traits);
+            auto result = QueryBuilder::storeDataEventErrorString(
+                string("1"), string("0"), string("1"), string("An error message"), traits);
 
-            THEN("The result must include the schema::TypeScalar from the schema")
+            THEN("The result must include the schema::DatColValueR field only")
             {
-                REQUIRE_THAT(result, Contains(schema::TypeScalar));
+                REQUIRE_THAT(result, Contains(string("An error message")));
             }
         }
     }

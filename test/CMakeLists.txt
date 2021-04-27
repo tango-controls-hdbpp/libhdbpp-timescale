@@ -6,7 +6,6 @@ set(CMAKE_COLOR_MAKEFILE ON)
 # Make test executable
 set(TEST_SOURCES 
     ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/TestHelpers.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AttributeNameTests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AttributeTraitsTests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ColumnCacheTests.cpp
@@ -20,11 +19,26 @@ set(TEST_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/HdbppTxUpdateTtlTests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/QueryBuilderTests.cpp)
 
+add_library(test-utils STATIC EXCLUDE_FROM_ALL ${CMAKE_CURRENT_SOURCE_DIR}/TestHelpers.cpp)
+target_compile_options(test-utils PRIVATE -Wall -Wextra -g)
+
+target_link_libraries(test-utils
+    PRIVATE 
+        libhdbpp_timescale_static_library 
+        TangoInterfaceLibrary)
+
+target_include_directories(test-utils
+    PUBLIC ${CMAKE_SOURCE_DIR}/src ${PROJECT_SOURCE_DIR})
+
 add_executable(unit-tests ${TEST_SOURCES})
 target_compile_options(unit-tests PRIVATE -Wall -Wextra -g)
 
 target_link_libraries(unit-tests 
-    PRIVATE libhdbpp_headers libhdbpp_timescale_shared_library Catch2 TangoInterfaceLibrary)
+    PRIVATE 
+        libhdbpp_timescale_static_library 
+        Catch2 
+        TangoInterfaceLibrary
+        test-utils)
 
 target_include_directories(unit-tests 
     PRIVATE ${CMAKE_SOURCE_DIR}/src ${PROJECT_SOURCE_DIR})
@@ -38,4 +52,8 @@ if(DO_CLANG_TIDY)
     set_target_properties(unit-tests  
         PROPERTIES 
             CXX_CLANG_TIDY ${DO_CLANG_TIDY})
+
+    set_target_properties(test-utils
+        PROPERTIES 
+            CXX_CLANG_TIDY ${DO_CLANG_TIDY})    
 endif(DO_CLANG_TIDY)

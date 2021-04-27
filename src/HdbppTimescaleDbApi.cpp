@@ -166,56 +166,31 @@ void HdbppTimescaleDbApi::insert_event(Tango::EventData *event_data, const HdbEv
     assert(event_data->attr_value);
     spdlog::trace("Insert data event for attribute: {}", event_data->attr_name);
 
-    // if there is an error, we store an error, since there will be no data passed in
-    if (event_data->err)
-    {
-        spdlog::trace("Event type is error for attribute: {}", event_data->attr_name);
-
-        // no time data is passed for errors, so make something up
-        struct timeval tv
-        {};
-
-        struct Tango::TimeVal tango_tv
-        {};
-
-        gettimeofday(&tv, nullptr);
-        tango_tv.tv_sec = tv.tv_sec;
-        tango_tv.tv_usec = tv.tv_usec;
-        tango_tv.tv_nsec = 0;
-
-        _conn->createTx<HdbppTxDataEventError>()
-            .withName(event_data->attr_name)
-            .withTraits(static_cast<Tango::AttrWriteType>(data_type.write_type),
-                static_cast<Tango::AttrDataFormat>(data_type.data_format),
-                static_cast<Tango::CmdArgType>(data_type.data_type))
-            .withError(string(event_data->errors[0].desc))
-            .withEventTime(tango_tv)
-            .withQuality(event_data->attr_value->get_quality())
-            .store();
-    }
-    else
-    {
-        spdlog::trace("Event type is data for attribute: {}", event_data->attr_name);
-
-        // build a data event request, this will store 0 or more data elements,
-        // pending on type, format and quality
-        _conn->createTx<HdbppTxDataEvent>()
-            .withName(event_data->attr_name)
-            .withTraits(static_cast<Tango::AttrWriteType>(data_type.write_type),
-                static_cast<Tango::AttrDataFormat>(data_type.data_format),
-                static_cast<Tango::CmdArgType>(data_type.data_type))
-            .withAttribute(event_data->attr_value)
-            .withEventTime(event_data->attr_value->get_date())
-            .withQuality(event_data->attr_value->get_quality())
-            .store();
-    }
+    // hand the call to the internal routine
+    doInsertEvent(event_data, data_type);
 }
 
 //=============================================================================
 //=============================================================================
-void HdbppTimescaleDbApi::insert_events(vector<tuple<Tango::EventData *, HdbEventDataType>> events) 
+void HdbppTimescaleDbApi::insert_events(vector<tuple<Tango::EventData *, HdbEventDataType>> events)
 {
-    
+    _conn->buffer(true);
+
+    try
+    {
+        for (auto event : events)
+            doInsertEvent(get<0>(event), get<1>(event));
+
+        _conn->flush();
+    }
+    catch (Tango::DevFailed &e)
+    {
+        // ensure this is disabled on error
+        _conn->buffer(false);
+        throw;
+    }
+
+    _conn->buffer(false);
 }
 
 //=============================================================================
@@ -284,6 +259,55 @@ bool HdbppTimescaleDbApi::supported(HdbppFeatures feature)
     }
 
     return supported;
+}
+
+//=============================================================================
+//=============================================================================
+void HdbppTimescaleDbApi::doInsertEvent(Tango::EventData *event_data, const HdbEventDataType &data_type)
+{
+    // if there is an error, we store an error, since there will be no data passed in
+    if (event_data->err)
+    {
+        spdlog::trace("Event type is error for attribute: {}", event_data->attr_name);
+
+        // no time data is passed for errors, so make something up
+        struct timeval tv
+        {};
+
+        struct Tango::TimeVal tango_tv
+        {};
+
+        gettimeofday(&tv, nullptr);
+        tango_tv.tv_sec = tv.tv_sec;
+        tango_tv.tv_usec = tv.tv_usec;
+        tango_tv.tv_nsec = 0;
+
+        _conn->createTx<HdbppTxDataEventError>()
+            .withName(event_data->attr_name)
+            .withTraits(static_cast<Tango::AttrWriteType>(data_type.write_type),
+                static_cast<Tango::AttrDataFormat>(data_type.data_format),
+                static_cast<Tango::CmdArgType>(data_type.data_type))
+            .withError(string(event_data->errors[0].desc))
+            .withEventTime(tango_tv)
+            .withQuality(event_data->attr_value->get_quality())
+            .store();
+    }
+    else
+    {
+        spdlog::trace("Event type is data for attribute: {}", event_data->attr_name);
+
+        // build a data event request, this will store 0 or more data elements,
+        // pending on type, format and quality
+        _conn->createTx<HdbppTxDataEvent>()
+            .withName(event_data->attr_name)
+            .withTraits(static_cast<Tango::AttrWriteType>(data_type.write_type),
+                static_cast<Tango::AttrDataFormat>(data_type.data_format),
+                static_cast<Tango::CmdArgType>(data_type.data_type))
+            .withAttribute(event_data->attr_value)
+            .withEventTime(event_data->attr_value->get_date())
+            .withQuality(event_data->attr_value->get_quality())
+            .store();
+    }
 }
 
 } // namespace hdbpp
