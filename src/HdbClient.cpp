@@ -19,7 +19,7 @@
 
 #include "HdbppTimescaleDbApi.hpp"
 
-#include <hdb++/HdbClient.h>
+#include "HdbClient.h"
 
 using namespace std;
 

@@ -84,7 +84,8 @@ HdbppTxHistoryEvent<Conn> &HdbppTxHistoryEvent<Conn>::withEvent(unsigned char ev
         case libhdbpp_compatibility::HdbppInsertParam: _event = events::InsertParamEvent; break;
         case libhdbpp_compatibility::HdbppPause: _event = events::PauseEvent; break;
         case libhdbpp_compatibility::HdbppUpdateTTL: _event = events::UpdateTTLEvent; break;
-        default: {
+        default:
+        {
             std::string msg {"Unknown event type passed, unable to convert this into known event system"};
             spdlog::error("Error: {}", msg);
             Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
