@@ -253,6 +253,7 @@ namespace pqxx_conn
     void DbConnection::storeParameterEvent(const string &full_attr_name,
         double event_time,
         const string &label,
+        const vector<string> &enum_labels,
         const string &unit,
         const string &standard_unit,
         const string &display_unit,
@@ -276,6 +277,7 @@ namespace pqxx_conn
         };
 
         check_parameter("label", label);
+        check_parameter("enum_labels", enum_labels);
         check_parameter("unit", unit);
         check_parameter("standard_unit", standard_unit);
         check_parameter("display_unit", display_unit);
@@ -283,11 +285,12 @@ namespace pqxx_conn
         check_parameter("archive_abs_change", archive_abs_change);
         check_parameter("archive_period", archive_period);
         check_parameter("description", description);
-
-        spdlog::trace("Parmater event data: event_time {}, label {}, unit {}, standard_unit {}, display_unit {}, "
+/*
+        spdlog::trace("Parameter event data: event_time {}, label {}, enum_labels {}, unit {}, standard_unit {}, display_unit {}, "
                       "format {}, archive_rel_change {}, archive_abs_change {}, archive_period {}, description {}",
             event_time,
             label,
+            enum_labels,
             unit,
             standard_unit,
             display_unit,
@@ -296,7 +299,7 @@ namespace pqxx_conn
             archive_abs_change,
             archive_period,
             description);
-
+*/
         checkConnection(LOCATION_INFO);
         checkAttributeExists(full_attr_name, LOCATION_INFO);
 
@@ -312,11 +315,19 @@ namespace pqxx_conn
                     spdlog::trace("Created prepared statement for: {}", StoreParameterEvent);
                 }
 
+                // a string needs quoting to be stored via this method, so it does not cause
+                // an error in the prepared statement
+                vector<string> enum_labels_escaped;
+                enum_labels_escaped.reserve(enum_labels.size());
+                for(const auto &label : enum_labels)
+                    enum_labels_escaped.push_back(tx.esc(label));
+
                 // no result expected
                 tx.exec_prepared0(StoreParameterEvent,
                     _conf_id_cache->value(full_attr_name),
                     event_time,
                     label,
+                    enum_labels_escaped,
                     unit,
                     standard_unit,
                     display_unit,
@@ -473,7 +484,7 @@ namespace pqxx_conn
 
     //=============================================================================
     //=============================================================================
-    string DbConnection::fetchLastHistoryEvent(const string &full_attr_name)
+    auto DbConnection::fetchLastHistoryEvent(const string &full_attr_name) -> string
     {
         assert(!full_attr_name.empty());
         assert(_conn != nullptr);
@@ -524,7 +535,7 @@ namespace pqxx_conn
 
     //=============================================================================
     //=============================================================================
-    bool DbConnection::fetchAttributeArchived(const std::string &full_attr_name)
+    auto DbConnection::fetchAttributeArchived(const std::string &full_attr_name) -> bool
     {
         assert(!full_attr_name.empty());
         assert(_conn != nullptr);
@@ -544,7 +555,7 @@ namespace pqxx_conn
 
     //=============================================================================
     //=============================================================================
-    AttributeTraits DbConnection::fetchAttributeTraits(const std::string &full_attr_name)
+    auto DbConnection::fetchAttributeTraits(const std::string &full_attr_name) -> AttributeTraits
     {
         assert(!full_attr_name.empty());
         assert(_conn != nullptr);

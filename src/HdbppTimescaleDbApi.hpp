@@ -69,7 +69,7 @@ public:
     void insert_history_event(const std::string &fqdn_attr_name, unsigned char event) override;
 
     // Check what hdbpp features this library supports. This library supports: TTL, BATCH_INSERTS
-    bool supported(HdbppFeatures feature) override;
+    auto supported(HdbppFeatures feature) -> bool override;
 
 private:
     void doInsertEvent(Tango::EventData *event_data, const HdbEventDataType &data_type);

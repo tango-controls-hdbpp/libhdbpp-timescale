@@ -47,21 +47,21 @@ public:
     // simple feedback that the transaction was successfull. Most
     // errors are handled with exceptions which are thrown to the
     // tx creator.
-    bool result() const noexcept { return _result; };
+    auto result() const noexcept -> bool { return _result; };
 
     virtual void print(std::ostream &os) const noexcept { os << "HdbppTxBase(_result: " << _result << ")"; }
 
 protected:
     // access functions for the connection the transaction
     // is templated with
-    Conn &connection() { return _conn; }
-    const Conn &connection() const { return _conn; }
+    auto connection() -> Conn & { return _conn; }
+    auto connection() const -> const Conn & { return _conn; }
 
     void setResult(bool state) noexcept { _result = state; }
 
     // small helper to generate the attribute name for the db consistently
     // across all the different tx classes
-    static std::string attrNameForStorage(AttributeName &attr_name)
+    static auto attrNameForStorage(AttributeName &attr_name) -> std::string
     {
         return "tango://" + attr_name.tangoHostWithDomain() + "/" + attr_name.fullAttributeName();
     }

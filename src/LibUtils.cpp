@@ -30,7 +30,7 @@ namespace hdbpp_internal
 {
 //=============================================================================
 //=============================================================================
-string tangoEnumToString(Tango::AttrWriteType write_type)
+auto tangoEnumToString(Tango::AttrWriteType write_type) -> string
 {
     switch (write_type)
     {
@@ -46,7 +46,7 @@ string tangoEnumToString(Tango::AttrWriteType write_type)
 
 //=============================================================================
 //=============================================================================
-string tangoEnumToString(Tango::AttrDataFormat format)
+auto tangoEnumToString(Tango::AttrDataFormat format) -> string
 {
     switch (format)
     {
@@ -61,7 +61,7 @@ string tangoEnumToString(Tango::AttrDataFormat format)
 
 //=============================================================================
 //=============================================================================
-string tangoEnumToString(Tango::CmdArgType type)
+auto tangoEnumToString(Tango::CmdArgType type) -> string
 {
     switch (type)
     {
@@ -87,7 +87,7 @@ string tangoEnumToString(Tango::CmdArgType type)
 
 //=============================================================================
 //=============================================================================
-string tangoEnumToString(Tango::AttrQuality quality)
+auto tangoEnumToString(Tango::AttrQuality quality) -> string
 {
     switch (quality)
     {
@@ -103,7 +103,7 @@ string tangoEnumToString(Tango::AttrQuality quality)
 
 //=============================================================================
 //=============================================================================
-ostream &operator<<(ostream &os, Tango::AttrWriteType write_type)
+auto operator<<(ostream &os, Tango::AttrWriteType write_type) -> ostream &
 {
     os << tangoEnumToString(write_type);
     return os;
@@ -111,7 +111,7 @@ ostream &operator<<(ostream &os, Tango::AttrWriteType write_type)
 
 //=============================================================================
 //=============================================================================
-ostream &operator<<(ostream &os, Tango::AttrDataFormat format)
+auto operator<<(ostream &os, Tango::AttrDataFormat format) -> ostream &
 {
     os << tangoEnumToString(format);
     return os;
@@ -119,7 +119,7 @@ ostream &operator<<(ostream &os, Tango::AttrDataFormat format)
 
 //=============================================================================
 //=============================================================================
-ostream &operator<<(ostream &os, Tango::CmdArgType type)
+auto operator<<(ostream &os, Tango::CmdArgType type) -> ostream &
 {
     os << tangoEnumToString(type);
     return os;
@@ -127,7 +127,7 @@ ostream &operator<<(ostream &os, Tango::CmdArgType type)
 
 //=============================================================================
 //=============================================================================
-ostream &operator<<(ostream &os, Tango::AttrQuality quality)
+auto operator<<(ostream &os, Tango::AttrQuality quality) -> ostream &
 {
     os << tangoEnumToString(quality);
     return os;

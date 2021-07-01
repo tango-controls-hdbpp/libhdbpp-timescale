@@ -47,16 +47,16 @@ auto operator<<(std::ostream &os, const T &t) -> decltype(t.print(os), static_ca
 }
 
 // to_string functions for tango enums
-std::string tangoEnumToString(Tango::AttrWriteType write_type);
-std::string tangoEnumToString(Tango::AttrDataFormat format);
-std::string tangoEnumToString(Tango::CmdArgType type);
-std::string tangoEnumToString(Tango::AttrQuality quality);
+auto tangoEnumToString(Tango::AttrWriteType write_type) -> std::string;
+auto tangoEnumToString(Tango::AttrDataFormat format) -> std::string;
+auto tangoEnumToString(Tango::CmdArgType type) -> std::string;
+auto tangoEnumToString(Tango::AttrQuality quality) -> std::string;
 
 // some output operators for tango enums
-std::ostream &operator<<(std::ostream &os, Tango::AttrWriteType write_type);
-std::ostream &operator<<(std::ostream &os, Tango::AttrDataFormat format);
-std::ostream &operator<<(std::ostream &os, Tango::CmdArgType type);
-std::ostream &operator<<(std::ostream &os, Tango::AttrQuality quality);
+auto operator<<(std::ostream &os, Tango::AttrWriteType write_type) -> std::ostream &;
+auto operator<<(std::ostream &os, Tango::AttrDataFormat format) -> std::ostream &;
+auto operator<<(std::ostream &os, Tango::CmdArgType type) -> std::ostream &;
+auto operator<<(std::ostream &os, Tango::AttrQuality quality) -> std::ostream &;
 
 struct LogConfigurator
 {
@@ -76,7 +76,7 @@ namespace logging_utils
     const std::string SyslogIdent = "hdbpp-timescale-";
 
     // get the file name from the __FILE__ variable for error messages
-    constexpr auto *getFileName(const char *const path)
+    constexpr auto getFileName(const char *const path) -> auto *
     {
         // We silence clang warnings for this funciton, this is a quick and simple
         // way to produce the file name, and yes we use pointer arithmetic, but

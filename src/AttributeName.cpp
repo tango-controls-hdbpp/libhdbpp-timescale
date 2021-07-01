@@ -59,14 +59,14 @@ void AttributeName::clear() noexcept
 
 //=============================================================================
 //=============================================================================
-const string &AttributeName::tangoHost()
+auto AttributeName::tangoHost() -> const std::string &
 {
     validate();
 
     if (_tango_host_cache.empty())
     {
-        // if tango:// exists on the string, strip it off by moving the start in 8 characters
-        auto start = _fqdn_attr_name.find("tango://") == string::npos ? 0 : 8;
+        // if tango:// exists on the std::string, strip it off by moving the start in 8 characters
+        auto start = _fqdn_attr_name.find("tango://") == std::string::npos ? 0 : 8;
         auto end = _fqdn_attr_name.find('/', start);
         _tango_host_cache = _fqdn_attr_name.substr(start, end - start);
     }
@@ -76,17 +76,17 @@ const string &AttributeName::tangoHost()
 
 //=============================================================================
 //=============================================================================
-const string &AttributeName::tangoHostWithDomain()
+auto AttributeName::tangoHostWithDomain() -> const std::string &
 {
     validate();
 
     if (_tango_host_with_domain_cache.empty())
     {
-        string tango_host = tangoHost();
+        std::string tango_host = tangoHost();
 
-        if (tango_host.find('.') == string::npos)
+        if (tango_host.find('.') == std::string::npos)
         {
-            string server_name_with_domain;
+            std::string server_name_with_domain;
             auto server_name = tango_host.substr(0, tango_host.find(':', 0));
 
             struct addrinfo hints = {};
@@ -124,7 +124,7 @@ const string &AttributeName::tangoHostWithDomain()
                 return tangoHost();
             }
 
-            server_name_with_domain = string(result->ai_canonname) + tango_host.substr(tango_host.find(':', 0));
+            server_name_with_domain = std::string(result->ai_canonname) + tango_host.substr(tango_host.find(':', 0));
 
             freeaddrinfo(result); // all done with this structure
             _tango_host_with_domain_cache = server_name_with_domain;
@@ -140,14 +140,14 @@ const string &AttributeName::tangoHostWithDomain()
 
 //=============================================================================
 //=============================================================================
-const string &AttributeName::fullAttributeName()
+auto AttributeName::fullAttributeName() -> const std::string &
 {
     validate();
 
     if (_full_attribute_name_cache.empty())
     {
-        // if tango:// exists on the string, strip it off by moving the start in 8 characters
-        auto start = _fqdn_attr_name.find("tango://") == string::npos ? 0 : 8;
+        // if tango:// exists on the std::string, strip it off by moving the start in 8 characters
+        auto start = _fqdn_attr_name.find("tango://") == std::string::npos ? 0 : 8;
         start = _fqdn_attr_name.find('/', start);
         start++;
         _full_attribute_name_cache = _fqdn_attr_name.substr(start);
@@ -158,7 +158,7 @@ const string &AttributeName::fullAttributeName()
 
 //=============================================================================
 //=============================================================================
-const std::string &AttributeName::domain()
+auto AttributeName::domain() -> const std::string &
 {
     validate();
 
@@ -170,7 +170,7 @@ const std::string &AttributeName::domain()
 
 //=============================================================================
 //=============================================================================
-const std::string &AttributeName::family()
+auto AttributeName::family() -> const std::string &
 {
     validate();
 
@@ -182,7 +182,7 @@ const std::string &AttributeName::family()
 
 //=============================================================================
 //=============================================================================
-const std::string &AttributeName::member()
+auto AttributeName::member() -> const std::string &
 {
     validate();
 
@@ -194,7 +194,7 @@ const std::string &AttributeName::member()
 
 //=============================================================================
 //=============================================================================
-const std::string &AttributeName::name()
+auto AttributeName::name() -> const std::string &
 {
     validate();
 
@@ -206,31 +206,31 @@ const std::string &AttributeName::name()
 
 //=============================================================================
 //=============================================================================
-void AttributeName::setDomainFamilyMemberName(const string &full_attr_name)
+void AttributeName::setDomainFamilyMemberName(const std::string &full_attr_name)
 {
     auto first_slash = full_attr_name.find('/');
 
-    if (first_slash == string::npos)
+    if (first_slash == std::string::npos)
     {
-        string msg {"Invalid attribute name: " + full_attr_name + ". There is no slash in attribute name"};
+        std::string msg {"Invalid attribute name: " + full_attr_name + ". There is no slash in attribute name"};
         spdlog::error("Error: {}", msg);
         Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
 
     auto second_slash = full_attr_name.find('/', first_slash + 1);
 
-    if (second_slash == string::npos)
+    if (second_slash == std::string::npos)
     {
-        string msg {"Invalid attribute name: " + full_attr_name + ". There is only one slash in attribute name"};
+        std::string msg {"Invalid attribute name: " + full_attr_name + ". There is only one slash in attribute name"};
         spdlog::error("Error: {}", msg);
         Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
 
     auto third_slash = full_attr_name.find('/', second_slash + 1);
 
-    if (third_slash == string::npos)
+    if (third_slash == std::string::npos)
     {
-        string msg {"Invalid attribute name: " + full_attr_name + ". There are only two slashes in attribute name"};
+        std::string msg {"Invalid attribute name: " + full_attr_name + ". There are only two slashes in attribute name"};
         spdlog::error("Error: {}", msg);
         Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
@@ -239,35 +239,35 @@ void AttributeName::setDomainFamilyMemberName(const string &full_attr_name)
 
     if (last_slash != third_slash)
     {
-        string msg {"Invalid attribute name: " + full_attr_name + ". Too many slashes provided in attribute name"};
+        std::string msg {"Invalid attribute name: " + full_attr_name + ". Too many slashes provided in attribute name"};
         spdlog::error("Error: {}", msg);
         Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
 
     if (first_slash == 0)
     {
-        string msg {"Invalid attribute name: " + full_attr_name + ". Empty domain"};
+        std::string msg {"Invalid attribute name: " + full_attr_name + ". Empty domain"};
         spdlog::error("Error: {}", msg);
         Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
 
     if (second_slash - first_slash - 1 == 0)
     {
-        string msg {"Invalid attribute name: " + full_attr_name + ". Empty family"};
+        std::string msg {"Invalid attribute name: " + full_attr_name + ". Empty family"};
         spdlog::error("Error: {}", msg);
         Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
 
     if (third_slash - second_slash - 1 == 0)
     {
-        string msg {"Invalid attribute name: " + full_attr_name + ". Empty member"};
+        std::string msg {"Invalid attribute name: " + full_attr_name + ". Empty member"};
         spdlog::error("Error: {}", msg);
         Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
 
     if (third_slash + 1 == full_attr_name.length())
     {
-        string msg {"Invalid attribute name: " + full_attr_name + ". Empty name"};
+        std::string msg {"Invalid attribute name: " + full_attr_name + ". Empty name"};
         spdlog::error("Error: {}", msg);
         Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
@@ -286,7 +286,7 @@ void AttributeName::validate()
     // it means we just tried to execute a complex operation
     if (empty())
     {
-        string msg {"AttributeName is empty."};
+        std::string msg {"AttributeName is empty."};
         spdlog::error("Failed validation for attribute: {}", msg);
         Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
@@ -301,7 +301,7 @@ void AttributeName::print(ostream &os) const
 
 //=============================================================================
 //=============================================================================
-AttributeName &AttributeName::operator=(const AttributeName &other)
+auto AttributeName::operator=(const AttributeName &other) -> AttributeName &
 {
     // clear the cache
     clear();
@@ -313,7 +313,7 @@ AttributeName &AttributeName::operator=(const AttributeName &other)
 
 //=============================================================================
 //=============================================================================
-AttributeName &AttributeName::operator=(AttributeName &&other) noexcept
+auto AttributeName::operator=(AttributeName &&other) noexcept -> AttributeName &
 {
     // clear the cache
     clear();

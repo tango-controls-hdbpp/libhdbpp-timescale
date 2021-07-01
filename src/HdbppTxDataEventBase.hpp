@@ -42,32 +42,32 @@ public:
 
     HdbppTxDataEventBase(Conn &conn) : HdbppTxBase<Conn>(conn) {}
 
-    Derived<Conn> &withName(const std::string &fqdn_attr_name)
+    auto withName(const std::string &fqdn_attr_name) -> Derived<Conn> &
     {
         _attr_name = AttributeName {fqdn_attr_name};
         return static_cast<Derived<Conn> &>(*this);
     }
 
-    Derived<Conn> &withTraits(Tango::AttrWriteType write, Tango::AttrDataFormat format, Tango::CmdArgType type)
+    auto withTraits(Tango::AttrWriteType write, Tango::AttrDataFormat format, Tango::CmdArgType type) -> Derived<Conn> &
     {
         _traits = AttributeTraits(write, format, type);
         return static_cast<Derived<Conn> &>(*this);
     }
 
-    Derived<Conn> &withTraits(AttributeTraits &traits)
+    auto withTraits(AttributeTraits &traits) -> Derived<Conn> &
     {
         _traits = traits;
         return static_cast<Derived<Conn> &>(*this);
     }
 
-    Derived<Conn> &withEventTime(Tango::TimeVal tv)
+    auto withEventTime(Tango::TimeVal tv) -> Derived<Conn> &
     {
         // convert to something more usable
         _event_time = tv.tv_sec + tv.tv_usec / 1.0e6;
         return static_cast<Derived<Conn> &>(*this);
     }
 
-    Derived<Conn> &withQuality(Tango::AttrQuality quality)
+    auto withQuality(Tango::AttrQuality quality) -> Derived<Conn> &
     {
         _quality = quality;
         return static_cast<Derived<Conn> &>(*this);
@@ -78,10 +78,10 @@ public:
 
 protected:
     // release the private data safely for the derived classes
-    AttributeName &attributeName() { return _attr_name; }
-    const AttributeTraits &attributeTraits() const { return _traits; }
-    Tango::AttrQuality quality() const { return _quality; }
-    double eventTime() const { return _event_time; }
+    auto attributeName() -> AttributeName & { return _attr_name; }
+    auto attributeTraits() const -> const AttributeTraits & { return _traits; }
+    auto quality() const -> Tango::AttrQuality { return _quality; }
+    auto eventTime() const -> double { return _event_time; }
 
 private:
     AttributeName _attr_name;

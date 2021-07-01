@@ -39,7 +39,7 @@ namespace data_gen
         for (int i = 0; i < size; i++)
             value->push_back(d(gen));
 
-        return value;
+        return move(value);
     }
 
     //=============================================================================
@@ -78,7 +78,7 @@ namespace data_gen
         for (int i = 0; i < size; i++)
             value->push_back(d(gen));
 
-        return value;
+        return move(value);
     }
 
     //=============================================================================
@@ -93,7 +93,7 @@ namespace data_gen
         for (int i = 0; i < size; i++)
             value->push_back(d(gen));
 
-        return value;
+        return move(value);
     }
 
     //=============================================================================
@@ -108,7 +108,7 @@ namespace data_gen
         for (int i = 0; i < size; i++)
             value->push_back(d(gen));
 
-        return value;
+        return move(value);
     }
 
     //=============================================================================
@@ -216,7 +216,7 @@ namespace data_gen
         for (int i = 0; i < size; i++)
             value->push_back(strings[experimental::randint(0, ((int)strings.size()) - 1)]);
 
-        return value;
+        return move(value);
     }
 
     //=============================================================================
@@ -232,7 +232,15 @@ namespace data_gen
         for (int i = 0; i < size; i++)
             value->push_back(d(gen) ? Tango::ON : Tango::OFF);
 
-        return value;
+        return move(value);
+    }
+
+    //=============================================================================
+    //=============================================================================
+    template<>
+    typename TangoTypeTraits<Tango::DEV_ENUM>::array data<Tango::DEV_ENUM>(int size)
+    {
+        return move(genericData<int16_t>(size));
     }
 } // namespace data_gen
 

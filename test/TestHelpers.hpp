@@ -73,6 +73,7 @@ namespace attr_info
         "Description about attribute, its \"quoted\",  and 'quoted', yet does it work?";
 
     const std::string AttrInfoLabel = "Label";
+    const std::vector<std::string> AttrInfoEnumLabels = {"label1", "label2"};
     const std::string AttrInfoUnit = "Unit %";
     const std::string AttrInfoStandardUnit = "Standard Unit";
     const std::string AttrInfoDisplayUnit = "Display Unit $";
@@ -171,6 +172,14 @@ namespace data_gen
         using type = Tango::DevState;
         using array = std::unique_ptr<std::vector<Tango::DevState>>;
     };
+    
+    template<>
+    struct TangoTypeTraits<Tango::DEV_ENUM>
+    {
+        using type = int16_t;
+        using array = std::unique_ptr<std::vector<int16_t>>;
+    };
+
 
     template<Tango::CmdArgType Type>
     typename TangoTypeTraits<Type>::array data(int size);
@@ -210,6 +219,9 @@ namespace data_gen
 
     template<>
     typename TangoTypeTraits<Tango::DEV_STATE>::array data<Tango::DEV_STATE>(int size);
+    
+    template<>
+    typename TangoTypeTraits<Tango::DEV_ENUM>::array data<Tango::DEV_ENUM>(int size);
 
     template<typename T>
     std::unique_ptr<std::vector<T>> genericData(int size)
@@ -222,7 +234,7 @@ namespace data_gen
         for (int i = 0; i < size; i++)
             value->push_back(d(gen));
 
-        return value;
+        return std::move(value);
     }
 
     template<Tango::CmdArgType Type>

@@ -25,7 +25,7 @@ namespace hdbpp
 {
 //=============================================================================
 //=============================================================================
-AbstractDB *HdbppTimescaleDbFactory::create_db(const string &id, const vector<string> &configuration)
+auto HdbppTimescaleDbFactory::create_db(const string &id, const vector<string> &configuration) -> AbstractDB *
 {
     return new hdbpp::HdbppTimescaleDbApi(id, configuration);
 }
@@ -33,7 +33,7 @@ AbstractDB *HdbppTimescaleDbFactory::create_db(const string &id, const vector<st
 
 //=============================================================================
 //=============================================================================
-hdbpp::DBFactory *getDBFactory()
+auto getDBFactory() -> hdbpp::DBFactory *
 {
     auto *factory = new hdbpp::HdbppTimescaleDbFactory();
     return static_cast<hdbpp::DBFactory *>(factory);

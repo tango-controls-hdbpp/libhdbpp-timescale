@@ -34,79 +34,79 @@ namespace pqxx_conn
         // this is important for the custom types, since the library libpqxx and postgres will
         // not know how to store them.
         template<>
-        std::string postgresCast<double>(bool is_array)
+        auto postgresCast<double>(bool is_array) -> std::string
         {
             return is_array ? "float8[]" : "float8";
         }
 
         template<>
-        std::string postgresCast<float>(bool is_array)
+        auto postgresCast<float>(bool is_array) -> std::string
         {
             return is_array ? "float4[]" : "float4";
         }
 
         template<>
-        std::string postgresCast<string>(bool is_array)
+        auto postgresCast<string>(bool is_array) -> std::string
         {
             return is_array ? "text[]" : "text";
         }
 
         template<>
-        std::string postgresCast<bool>(bool is_array)
+        auto postgresCast<bool>(bool is_array) -> std::string
         {
             return is_array ? "bool[]" : "bool";
         }
 
         template<>
-        std::string postgresCast<int32_t>(bool is_array)
+        auto postgresCast<int32_t>(bool is_array) -> std::string
         {
             return is_array ? "int4[]" : "int4";
         }
 
         template<>
-        std::string postgresCast<uint32_t>(bool is_array)
+        auto postgresCast<uint32_t>(bool is_array) -> std::string
         {
             return is_array ? "ulong[]" : "ulong";
         }
 
         template<>
-        std::string postgresCast<int64_t>(bool is_array)
+        auto postgresCast<int64_t>(bool is_array) -> std::string
         {
             return is_array ? "int8[]" : "int8";
         }
 
         template<>
-        std::string postgresCast<uint64_t>(bool is_array)
+        auto postgresCast<uint64_t>(bool is_array) -> std::string
         {
             return is_array ? "ulong64[]" : "ulong64";
         }
 
         template<>
-        std::string postgresCast<int16_t>(bool is_array)
+        auto postgresCast<int16_t>(bool is_array) -> std::string
         {
             return is_array ? "int2[]" : "int2";
         }
 
         template<>
-        std::string postgresCast<uint16_t>(bool is_array)
+        auto postgresCast<uint16_t>(bool is_array) -> std::string
         {
             return is_array ? "ushort[]" : "ushort";
         }
 
         template<>
-        std::string postgresCast<uint8_t>(bool is_array)
+        auto postgresCast<uint8_t>(bool is_array) -> std::string
         {
             return is_array ? "uchar[]" : "uchar";
         }
 
         template<>
-        std::string postgresCast<vector<uint8_t>>(bool is_array)
+        auto postgresCast<vector<uint8_t>>(bool is_array) -> std::string
         {
             return is_array ? "bytea[]" : "bytea";
         }
 
         template<>
-        std::string postgresCast<Tango::DevState>(bool is_array)
+        auto postgresCast<Tango::DevState>(bool is_array) -> std::string
         {
             return is_array ? "int4[]" : "int4";
         }
@@ -114,7 +114,7 @@ namespace pqxx_conn
 
     //=============================================================================
     //=============================================================================
-    const string &QueryBuilder::storeDataEventName(const AttributeTraits &traits)
+    auto QueryBuilder::storeDataEventName(const AttributeTraits &traits) -> const string &
     {
         // generic check and emplace for new items
         return handleCache(_data_event_query_names, traits, StoreDataEvent);
@@ -122,7 +122,7 @@ namespace pqxx_conn
 
     //=============================================================================
     //=============================================================================
-    const string &QueryBuilder::storeDataEventErrorName(const AttributeTraits &traits)
+    auto QueryBuilder::storeDataEventErrorName(const AttributeTraits &traits) -> const string &
     {
         // generic check and emplace for new items
         return handleCache(_data_event_error_query_names, traits, StoreDataEventError);
@@ -130,7 +130,7 @@ namespace pqxx_conn
 
     //=============================================================================
     //=============================================================================
-    const string &QueryBuilder::storeAttributeStatement()
+    auto QueryBuilder::storeAttributeStatement() -> const string &
     {
         // clang-format off
         static string query =
@@ -168,7 +168,7 @@ namespace pqxx_conn
 
     //=============================================================================
     //=============================================================================
-    const string &QueryBuilder::storeHistoryStringStatement()
+    auto QueryBuilder::storeHistoryStringStatement() -> const string &
     {
         // clang-format off
         static string query = 
@@ -182,7 +182,7 @@ namespace pqxx_conn
 
     //=============================================================================
     //=============================================================================
-    const string &QueryBuilder::storeHistoryEventStatement()
+    auto QueryBuilder::storeHistoryEventStatement() -> const string &
     {
         // clang-format off
         static string query =
@@ -201,7 +201,7 @@ namespace pqxx_conn
 
     //=============================================================================
     //=============================================================================
-    const string &QueryBuilder::storeParameterEventStatement()
+    auto QueryBuilder::storeParameterEventStatement() -> const string &
     {
         // clang-format off
         static string query =
@@ -210,6 +210,7 @@ namespace pqxx_conn
             schema::ParamColId + "," +
             schema::ParamColEvTime + "," +
             schema::ParamColLabel + "," +
+            schema::ParamColEnumLabels + "," +
             schema::ParamColUnit + "," +
             schema::ParamColStandardUnit + "," +
             schema::ParamColDisplayUnit + "," +
@@ -218,7 +219,7 @@ namespace pqxx_conn
             schema::ParamColArchiveAbsChange + "," +
             schema::ParamColArchivePeriod + "," +
             schema::ParamColDescription + ") " +
-            "VALUES ($1, TO_TIMESTAMP($2), $3, $4, $5, $6, $7, $8, $9, $10, $11)";
+            "VALUES ($1, TO_TIMESTAMP($2), $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)";
         // clang-format on
 
         return query;
@@ -226,7 +227,7 @@ namespace pqxx_conn
 
     //=============================================================================
     //=============================================================================
-    const string &QueryBuilder::storeDataEventErrorStatement(const AttributeTraits &traits)
+    auto QueryBuilder::storeDataEventErrorStatement(const AttributeTraits &traits) -> const string &
     {
         // search the cache for a previous entry
         auto result = _data_event_error_queries.find(traits);
@@ -263,11 +264,11 @@ namespace pqxx_conn
 
     //=============================================================================
     //=============================================================================
-    string QueryBuilder::storeDataEventErrorString(const string &id,
+    auto QueryBuilder::storeDataEventErrorString(const string &id,
         const string &event_time,
         const string &quality,
         const string &err_id,
-        const AttributeTraits &traits)
+        const AttributeTraits &traits) -> std::string
     {
         // clang-format off
         auto query = "INSERT INTO " + 
@@ -288,7 +289,7 @@ namespace pqxx_conn
 
     //=============================================================================
     //=============================================================================
-    const string &QueryBuilder::storeErrorStatement()
+    auto QueryBuilder::storeErrorStatement() -> const string &
     {
         // clang-format off
         static string query = 
@@ -304,7 +305,7 @@ namespace pqxx_conn
 
     //=============================================================================
     //=============================================================================
-    const std::string &QueryBuilder::storeTtlStatement()
+    auto QueryBuilder::storeTtlStatement() -> const string &
     {
         // clang-format off
         static string query = 
@@ -317,23 +318,23 @@ namespace pqxx_conn
 
     //=============================================================================
     //=============================================================================
-    const string QueryBuilder::fetchAllValuesStatement(
-        const string &column_name, const string &table_name, const string &reference)
+    auto QueryBuilder::fetchAllValuesStatement(
+        const string &column_name, const string &table_name, const string &reference) -> const string
     {
         return "SELECT " + column_name + ", " + reference + " " + "FROM " + table_name;
     }
 
     //=============================================================================
     //=============================================================================
-    const string QueryBuilder::fetchValueStatement(
-        const string &column_name, const string &table_name, const string &reference)
+    auto QueryBuilder::fetchValueStatement(
+        const string &column_name, const string &table_name, const string &reference) -> const string
     {
         return "SELECT " + column_name + " " + "FROM " + table_name + " WHERE " + reference + "=$1";
     }
 
     //=============================================================================
     //=============================================================================
-    const string &QueryBuilder::fetchLastHistoryEventStatement()
+    auto QueryBuilder::fetchLastHistoryEventStatement() -> const string &
     {
         // clang-format off
         static string query = 
@@ -351,7 +352,7 @@ namespace pqxx_conn
 
     //=============================================================================
     //=============================================================================
-    const std::string &QueryBuilder::fetchAttributeTraitsStatement()
+    auto QueryBuilder::fetchAttributeTraitsStatement() -> const string &
     {
         // clang-format off
         static string query = 
@@ -381,7 +382,7 @@ namespace pqxx_conn
 
     //=============================================================================
     //=============================================================================
-    string QueryBuilder::tableName(const AttributeTraits &traits)
+    auto QueryBuilder::tableName(const AttributeTraits &traits) -> string
     {
         return schema::SchemaTablePrefix +
             [&traits]() {
@@ -419,8 +420,8 @@ namespace pqxx_conn
 
     //=============================================================================
     //=============================================================================
-    const string &QueryBuilder::handleCache(
-        map<AttributeTraits, string> &cache, const AttributeTraits &traits, const string &stub)
+    auto QueryBuilder::handleCache(
+        map<AttributeTraits, string> &cache, const AttributeTraits &traits, const string &stub) -> const string &
     {
         auto result = cache.find(traits);
 
