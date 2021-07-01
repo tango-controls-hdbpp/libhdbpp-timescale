@@ -61,8 +61,8 @@ namespace pqxx_conn
         // connection API
         void connect(const string &connect_string) override;
         void disconnect() override;
-        bool isOpen() const noexcept override { return _connected; }
-        bool isClosed() const noexcept override { return !isOpen(); }
+        auto isOpen() const noexcept -> bool override { return _connected; }
+        auto isClosed() const noexcept -> bool override { return !isOpen(); }
 
         // this API allows the connection to buffer the event data store
         // requests, and send them all at once to the db, this will increase
@@ -89,6 +89,7 @@ namespace pqxx_conn
         void storeParameterEvent(const std::string &full_attr_name,
             double event_time,
             const std::string &label,
+            const std::vector<std::string> &enum_labels,
             const std::string &unit,
             const std::string &standard_unit,
             const std::string &display_unit,
@@ -122,13 +123,13 @@ namespace pqxx_conn
         // fetch API
 
         // get the last history event for the given attribute
-        std::string fetchLastHistoryEvent(const std::string &full_attr_name);
+        auto fetchLastHistoryEvent(const std::string &full_attr_name) -> std::string;
 
         // check if the given attribute is stored in the database
-        bool fetchAttributeArchived(const std::string &full_attr_name);
+        auto fetchAttributeArchived(const std::string &full_attr_name) -> bool;
 
         // get the AttributeTraits of an attribute in the database
-        AttributeTraits fetchAttributeTraits(const std::string &full_attr_name);
+        auto fetchAttributeTraits(const std::string &full_attr_name) -> AttributeTraits;
 
     private:
         void storeEvent(const std::string &full_attr_name, const std::string &event);

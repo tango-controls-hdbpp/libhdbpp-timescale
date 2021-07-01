@@ -38,13 +38,13 @@ namespace hdbpp
 // simple class to gather utility functions
 struct HdbppTimescaleDbApiUtils
 {
-    static string getConfigParam(const map<string, string> &conf, const string &param, bool mandatory);
-    static map<string, string> extractConfig(const vector<string> &config, const string &separator);
+    static auto getConfigParam(const map<string, string> &conf, const string &param, bool mandatory) -> string;
+    static auto extractConfig(const vector<string> &config, const string &separator) -> map<string, string>;
 };
 
 //=============================================================================
 //=============================================================================
-map<string, string> HdbppTimescaleDbApiUtils::extractConfig(const vector<string> &config, const string &separator)
+auto HdbppTimescaleDbApiUtils::extractConfig(const vector<string> &config, const string &separator) -> map<string, string>
 {
     map<string, string> results;
 
@@ -61,7 +61,7 @@ map<string, string> HdbppTimescaleDbApiUtils::extractConfig(const vector<string>
 
 //=============================================================================
 //=============================================================================
-string HdbppTimescaleDbApiUtils::getConfigParam(const map<string, string> &conf, const string &param, bool mandatory)
+auto HdbppTimescaleDbApiUtils::getConfigParam(const map<string, string> &conf, const string &param, bool mandatory) -> string
 {
     auto iter = conf.find(param);
 
@@ -247,7 +247,7 @@ void HdbppTimescaleDbApi::insert_history_event(const std::string &fqdn_attr_name
 
 //=============================================================================
 //=============================================================================
-bool HdbppTimescaleDbApi::supported(HdbppFeatures feature)
+auto HdbppTimescaleDbApi::supported(HdbppFeatures feature) -> bool
 {
     auto supported = false;
 

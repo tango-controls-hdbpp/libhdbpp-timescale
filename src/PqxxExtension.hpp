@@ -144,7 +144,7 @@ template<typename T>
 struct string_traits<std::vector<T>>
 {
 public:
-    static constexpr const char *name() noexcept { return internal::type_name<T>::value; }
+    static constexpr auto name() noexcept -> const char * { return internal::type_name<T>::value; }
 
     // NOLINTNEXTLINE (readability-identifier-naming)
     static constexpr bool has_null() noexcept { return false; }
@@ -152,7 +152,7 @@ public:
     // NOLINTNEXTLINE (readability-identifier-naming)
     static bool is_null(const std::vector<T> & /*unused*/) { return false; }
 
-    [[noreturn]] static std::vector<T> null() { internal::throw_null_conversion(name()); }
+    [[noreturn]] static auto null() -> std::vector<T> { internal::throw_null_conversion(name()); }
 
     // NOLINTNEXTLINE (readability-identifier-naming)
     static void from_string(const char str[], std::vector<T> &value)
@@ -209,7 +209,7 @@ template<>
 struct string_traits<std::vector<std::string>>
 {
 public:
-    static constexpr const char *name() noexcept { return "vector<string>"; }
+    static constexpr auto name() noexcept -> const char * { return "vector<string>"; }
 
     // NOLINTNEXTLINE (readability-identifier-naming)
     static constexpr bool has_null() noexcept { return false; }
@@ -217,7 +217,7 @@ public:
     // NOLINTNEXTLINE (readability-identifier-naming)
     static bool is_null(const std::vector<std::string> & /*unused*/) { return false; }
 
-    [[noreturn]] static std::vector<std::string> null() { internal::throw_null_conversion(name()); }
+    [[noreturn]] static auto null() -> std::vector<std::string> { internal::throw_null_conversion(name()); }
 
     // NOLINTNEXTLINE (readability-identifier-naming)
     static void from_string(const char str[], std::vector<std::string> &value)
@@ -272,7 +272,7 @@ template<>
 struct string_traits<std::vector<bool>>
 {
 public:
-    static constexpr const char *name() noexcept { return "std::vector<bool>"; }
+    static constexpr auto name() noexcept -> const char * { return "std::vector<bool>"; }
 
     // NOLINTNEXTLINE (readability-identifier-naming)
     static constexpr bool has_null() noexcept { return false; }
@@ -280,7 +280,7 @@ public:
     // NOLINTNEXTLINE (readability-identifier-naming)
     static bool is_null(const std::vector<bool> & /*unused*/) { return false; }
 
-    [[noreturn]] static std::vector<bool> null() { internal::throw_null_conversion(name()); }
+    [[noreturn]] static auto null() -> std::vector<bool> { internal::throw_null_conversion(name()); }
 
     // NOLINTNEXTLINE (readability-identifier-naming)
     static void from_string(const char str[], std::vector<bool> &value)
