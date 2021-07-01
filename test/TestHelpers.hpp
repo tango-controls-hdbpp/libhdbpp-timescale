@@ -234,7 +234,7 @@ namespace data_gen
         for (int i = 0; i < size; i++)
             value->push_back(d(gen));
 
-        return std::move(value);
+        return value;
     }
 
     template<Tango::CmdArgType Type>
