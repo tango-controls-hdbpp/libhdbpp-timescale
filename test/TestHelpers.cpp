@@ -39,7 +39,7 @@ namespace data_gen
         for (int i = 0; i < size; i++)
             value->push_back(d(gen));
 
-        return move(value);
+        return value;
     }
 
     //=============================================================================
@@ -78,7 +78,7 @@ namespace data_gen
         for (int i = 0; i < size; i++)
             value->push_back(d(gen));
 
-        return move(value);
+        return value;
     }
 
     //=============================================================================
@@ -93,7 +93,7 @@ namespace data_gen
         for (int i = 0; i < size; i++)
             value->push_back(d(gen));
 
-        return move(value);
+        return value;
     }
 
     //=============================================================================
@@ -108,7 +108,7 @@ namespace data_gen
         for (int i = 0; i < size; i++)
             value->push_back(d(gen));
 
-        return move(value);
+        return value;
     }
 
     //=============================================================================
@@ -216,7 +216,7 @@ namespace data_gen
         for (int i = 0; i < size; i++)
             value->push_back(strings[experimental::randint(0, ((int)strings.size()) - 1)]);
 
-        return move(value);
+        return value;
     }
 
     //=============================================================================
@@ -232,7 +232,7 @@ namespace data_gen
         for (int i = 0; i < size; i++)
             value->push_back(d(gen) ? Tango::ON : Tango::OFF);
 
-        return move(value);
+        return value;
     }
 
     //=============================================================================
