@@ -107,6 +107,8 @@ add_subdirectory(thirdparty/google/googletest/googletest EXCLUDE_FROM_ALL)
 # Include the thirdparty projects
 #add_subdirectory(thirdparty/libpqxx  EXCLUDE_FROM_ALL)
 add_subdirectory(thirdparty/spdlog  EXCLUDE_FROM_ALL)
+set_property(TARGET spdlog PROPERTY POSITION_INDEPENDENT_CODE ON)
+
 add_subdirectory(thirdparty/Catch2  EXCLUDE_FROM_ALL)
 
 # Find the libpqxx package
@@ -185,7 +187,7 @@ add_library(${BACKEND_TARGET_SHARED} SHARED ${SRC_FILES})
 
 target_link_libraries(${BACKEND_TARGET_SHARED} 
     PUBLIC libhdbpp::libhdbpp_headers
-    PRIVATE Threads::Threads pqxx_static spdlog::spdlog_header_only TangoInterfaceLibrary)
+    PRIVATE Threads::Threads pqxx_static spdlog::spdlog TangoInterfaceLibrary)
 
 target_include_directories(${BACKEND_TARGET_SHARED} 
     PUBLIC
@@ -219,7 +221,7 @@ add_library(${BACKEND_TARGET_STATIC} STATIC EXCLUDE_FROM_ALL ${SRC_FILES})
 
 target_link_libraries(${BACKEND_TARGET_STATIC} 
     INTERFACE libhdbpp::libhdbpp_headers
-    PUBLIC pqxx_static spdlog Threads::Threads
+    PUBLIC pqxx_static spdlog::spdlog Threads::Threads
     PRIVATE TangoInterfaceLibrary)
 
 target_include_directories(${BACKEND_TARGET_STATIC} 
