@@ -26,6 +26,8 @@
 #include <pqxx/strconv>
 #include <vector>
 
+#include "TangoValue.hpp"
+
 // why is it OmniORB (via Tango)) and Pqxx define these types in different ways? Perhaps
 // its the autotools used to configure them? Either way, we do not use tango, just need its
 // types, so undef and allow the Pqxx defines to take precedent
@@ -141,7 +143,7 @@ namespace internal
 // handle vectors. This allows us to convert the value from Tango directly
 // into a postgres array string ready for storage
 template<typename T>
-struct string_traits<std::vector<T>>
+struct string_traits<hdbpp_internal::TangoValue<T>>
 {
 public:
     static constexpr auto name() noexcept -> const char * { return internal::type_name<T>::value; }
@@ -150,12 +152,12 @@ public:
     static constexpr bool has_null() noexcept { return false; }
 
     // NOLINTNEXTLINE (readability-identifier-naming)
-    static bool is_null(const std::vector<T> & /*unused*/) { return false; }
+    static bool is_null(const hdbpp_internal::TangoValue<T> & /*unused*/) { return false; }
 
-    [[noreturn]] static auto null() -> std::vector<T> { internal::throw_null_conversion(name()); }
+    [[noreturn]] static auto null() -> hdbpp_internal::TangoValue<T> { internal::throw_null_conversion(name()); }
 
     // NOLINTNEXTLINE (readability-identifier-naming)
-    static void from_string(const char str[], std::vector<T> &value)
+    static void from_string(const char str[], hdbpp_internal::TangoValue<T> &value)
     {
         if (str == nullptr)
             internal::throw_null_conversion(name());
@@ -192,21 +194,38 @@ public:
     }
 
     // NOLINTNEXTLINE (readability-identifier-naming)
-    static std::string to_string(const std::vector<T> &value)
+    static std::string to_string(const hdbpp_internal::TangoValue<T> &value)
     {
         if (value.empty())
             return {};
 
         // simply use the pqxx utilities for this, rather than reinvent the wheel...
-        return "{" + separated_list(",", value.begin(), value.end()) + "}";
+        if(value.dim_y < 2)
+        {
+            return "{" + separated_list(",", value.begin(), value.end()) + "}";
+        }
+
+        // In case of image, unwrap the vector. 
+
+        assert(value.dim_x != 0);
+
+        std::stringstream result;
+        result << "{";
+        for(std::size_t i = 0; i != value.size() % value.dim_x; ++i)
+        {
+            result << "{" << separated_list(",", std::next(value.begin(), i * value.dim_x), std::next(value.begin(), (i+1) * value.dim_x)) << "}";
+        }
+        result << "}";
+        return result.str();
     }
+    
 };
 
 // This specialisation is for string types. Unlike other types the string type requires
 // the use of the ARRAY notation and dollar quoting to ensure the strings are stored
 // without escape characters.
 template<>
-struct string_traits<std::vector<std::string>>
+struct string_traits<hdbpp_internal::TangoValue<std::string>>
 {
 public:
     static constexpr auto name() noexcept -> const char * { return "vector<string>"; }
@@ -215,12 +234,12 @@ public:
     static constexpr bool has_null() noexcept { return false; }
 
     // NOLINTNEXTLINE (readability-identifier-naming)
-    static bool is_null(const std::vector<std::string> & /*unused*/) { return false; }
+    static bool is_null(const hdbpp_internal::TangoValue<std::string> & /*unused*/) { return false; }
 
-    [[noreturn]] static auto null() -> std::vector<std::string> { internal::throw_null_conversion(name()); }
+    [[noreturn]] static auto null() -> hdbpp_internal::TangoValue<std::string> { internal::throw_null_conversion(name()); }
 
     // NOLINTNEXTLINE (readability-identifier-naming)
-    static void from_string(const char str[], std::vector<std::string> &value)
+    static void from_string(const char str[], hdbpp_internal::TangoValue<std::string> &value)
     {
         if (str == nullptr)
             internal::throw_null_conversion(name());
@@ -257,10 +276,73 @@ public:
     }
 
     // NOLINTNEXTLINE (readability-identifier-naming)
-    static std::string to_string(const std::vector<std::string> &value)
+    static std::string to_string(const hdbpp_internal::TangoValue<std::string> &value)
     {
         // This function should not be used, so we do a simple basic conversion
         // for testing only
+        return "{" + separated_list(",", value.begin(), value.end()) + "}";
+    }
+};
+
+// This specialisation is for bool, since it is not a normal container class, but
+// rather some kind of alien bitfield. We have to adjust the from_string to take into
+// account we can not use container element access
+template<>
+struct string_traits<hdbpp_internal::TangoValue<bool>>
+{
+public:
+    static constexpr auto name() noexcept -> const char * { return "std::vector<bool>"; }
+
+    // NOLINTNEXTLINE (readability-identifier-naming)
+    static constexpr bool has_null() noexcept { return false; }
+
+    // NOLINTNEXTLINE (readability-identifier-naming)
+    static bool is_null(const hdbpp_internal::TangoValue<bool> & /*unused*/) { return false; }
+
+    [[noreturn]] static auto null() -> hdbpp_internal::TangoValue<bool> { internal::throw_null_conversion(name()); }
+
+    // NOLINTNEXTLINE (readability-identifier-naming)
+    static void from_string(const char str[], hdbpp_internal::TangoValue<bool> &value)
+    {
+        if (str == nullptr)
+            internal::throw_null_conversion(name());
+
+        // NOLINTNEXTLINE (cppcoreguidelines-pro-bounds-pointer-arithmetic)
+        if (str[0] != '{' || str[strlen(str) - 1] != '}')
+            throw pqxx::conversion_error("Invalid array format");
+
+        value.clear();
+
+        // not the best solution right now, but we are using this for
+        // testing only. Copy the str into a std::string so we can work
+        // with it more easily.
+        std::string in(str + 1, str + (strlen(str) - 1));
+        std::string::size_type comma = 0;
+
+        // loop and copy out each value from between the separators
+        while ((comma = in.find_first_not_of(',', comma)) != std::string::npos)
+        {
+            auto next_comma = in.find_first_of(',', comma);
+
+            // we can not pass an element of the vector, since vector<bool> is not
+            // in fact a container, but some kind of bit field. In this case, we
+            // have to create a local variable to read the value into, then push this
+            // back onto the vector
+            bool field;
+            string_traits<bool>::from_string(in.substr(comma, next_comma - comma).c_str(), field);
+            value.push_back(field);
+
+            comma = next_comma;
+        }
+    }
+
+    // NOLINTNEXTLINE (readability-identifier-naming)
+    static std::string to_string(const hdbpp_internal::TangoValue<bool> &value)
+    {
+        if (value.empty())
+            return {};
+
+        // simply use the pqxx utilities for this, rather than reinvent the wheel
         return "{" + separated_list(",", value.begin(), value.end()) + "}";
     }
 };
@@ -324,6 +406,69 @@ public:
             return {};
 
         // simply use the pqxx utilities for this, rather than reinvent the wheel
+        return "{" + separated_list(",", value.begin(), value.end()) + "}";
+    }
+};
+
+// This specialisation is for string types. Unlike other types the string type requires
+// the use of the ARRAY notation and dollar quoting to ensure the strings are stored
+// without escape characters.
+template<>
+struct string_traits<std::vector<std::string>>
+{
+public:
+    static constexpr auto name() noexcept -> const char * { return "vector<string>"; }
+
+    // NOLINTNEXTLINE (readability-identifier-naming)
+    static constexpr bool has_null() noexcept { return false; }
+
+    // NOLINTNEXTLINE (readability-identifier-naming)
+    static bool is_null(const std::vector<std::string> & /*unused*/) { return false; }
+
+    [[noreturn]] static auto null() -> std::vector<std::string> { internal::throw_null_conversion(name()); }
+
+    // NOLINTNEXTLINE (readability-identifier-naming)
+    static void from_string(const char str[], std::vector<std::string> &value)
+    {
+        if (str == nullptr)
+            internal::throw_null_conversion(name());
+
+        // NOLINTNEXTLINE (cppcoreguidelines-pro-bounds-pointer-arithmetic)
+        if (str[0] != '{' || str[strlen(str) - 1] != '}')
+            throw pqxx::conversion_error("Invalid array format");
+
+        value.clear();
+
+        std::pair<array_parser::juncture, std::string> output;
+
+        // use pqxx array parser features to get each element from the array
+        array_parser parser(str);
+        output = parser.get_next();
+
+        if (output.first == array_parser::juncture::row_start)
+        {
+            output = parser.get_next();
+
+            // loop and extract each string in turn
+            while (output.first == array_parser::juncture::string_value)
+            {
+                value.push_back(output.second);
+                output = parser.get_next();
+
+                if (output.first == array_parser::juncture::row_end)
+                    break;
+
+                if (output.first == array_parser::juncture::done)
+                    break;
+            }
+        }
+    }
+
+    // NOLINTNEXTLINE (readability-identifier-naming)
+    static std::string to_string(const std::vector<std::string> &value)
+    {
+        // This function should not be used, so we do a simple basic conversion
+        // for testing only
         return "{" + separated_list(",", value.begin(), value.end()) + "}";
     }
 };

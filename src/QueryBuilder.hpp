@@ -24,6 +24,7 @@
 #include "HdbppDefines.hpp"
 #include "PqxxExtension.hpp"
 #include "TimescaleSchema.hpp"
+#include "TangoValue.hpp"
 #include "spdlog/spdlog.h"
 
 #include <iostream>
@@ -59,7 +60,7 @@ namespace pqxx_conn
         // This function generates the postgres cast for the event data insert
         // queries, it is specialized for all possible tango types
         template<typename T>
-        auto postgresCast(bool is_array) -> std::string;
+        auto postgresCast(Tango::AttrDataFormat format) -> std::string;
 
         // Convert the given data into a string suitable for storing in the database. These calls
         // are used to build the string version of the insert command, they are required since we
@@ -68,7 +69,7 @@ namespace pqxx_conn
         template<typename T>
         struct DataToString
         {
-            static auto run(const std::unique_ptr<std::vector<T>> &value, const AttributeTraits &traits) -> std::string
+            static auto run(const std::unique_ptr<TangoValue<T>> &value, const AttributeTraits &traits) -> std::string
             {
                 if (traits.isScalar())
                     return pqxx::to_string((*value)[0]);
@@ -81,7 +82,7 @@ namespace pqxx_conn
         template<>
         struct DataToString<bool>
         {
-            static auto run(const std::unique_ptr<std::vector<bool>> &value, const AttributeTraits &traits) -> std::string
+            static auto run(const std::unique_ptr<TangoValue<bool>> &value, const AttributeTraits &traits) -> std::string
             {
                 // a vector<bool> is not actually a vector<bool>, rather its some kind of bitfield. When
                 // trying to return an element, we appear to get some kind of bitfield reference,
@@ -104,7 +105,7 @@ namespace pqxx_conn
         struct DataToString<std::string>
         {
             static auto run(
-                const std::unique_ptr<std::vector<std::string>> &value, const AttributeTraits &traits) -> std::string
+                const std::unique_ptr<TangoValue<std::string>> &value, const AttributeTraits &traits) -> std::string
             {
                 // arrays of strings need both the ARRAY keywords and dollar escaping, this is so we
                 // do not have to rely on the postgres escape functions that double and then store
@@ -116,18 +117,45 @@ namespace pqxx_conn
                 }
 
                 auto iter = value->begin();
-                std::string result = "ARRAY[";
+                std::stringstream result;
+                result << "ARRAY[";
 
-                result = result + "$$" + pqxx::to_string((*iter)) + "$$";
-
-                for (++iter; iter != value->end(); ++iter)
+                if(traits.isImage())
                 {
-                    result += ",";
-                    result += "$$" + pqxx::to_string((*iter)) + "$$";
+                    assert(value->dim_x != 0);
+
+                    std::size_t idx = 1;
+                    result << "ARRAY[";
+                    result << "$$" << pqxx::to_string((*iter)) << "$$";
+
+                    for (++iter; iter != value->end(); ++iter, ++idx)
+                    {
+                        if(idx % value->dim_x == 0)
+                        {
+                            result << "],ARRAY[";
+                        }
+                        else
+                        {
+                            result << ",";
+                        }
+                        result << "$$" << pqxx::to_string((*iter)) << "$$";
+                    }
+                    result << "]";
+                }
+                else
+                {
+                    result << "$$" << pqxx::to_string((*iter)) << "$$";
+
+                    for (++iter; iter != value->end(); ++iter)
+                    {
+                        result << ",";
+                        result << "$$" << pqxx::to_string((*iter)) << "$$";
+                    }
+
                 }
 
-                result += "]";
-                return result;
+                result << "]";
+                return result.str();
             }
         };
     }; // namespace query_utils
@@ -194,8 +222,8 @@ namespace pqxx_conn
         static auto storeDataEventString(const std::string &id,
             const std::string &event_time,
             const std::string &quality,
-            const std::unique_ptr<vector<T>> &value_r,
-            const std::unique_ptr<vector<T>> &value_w,
+            const std::unique_ptr<TangoValue<T>> &value_r,
+            const std::unique_ptr<TangoValue<T>> &value_w,
             const AttributeTraits &traits) -> std::string;
 
         // Builds a prepared statement for data event errors
@@ -256,12 +284,12 @@ namespace pqxx_conn
             // add the read parameter with cast
             if (traits.hasReadData())
                 query = query + "," + "$" + to_string(++param_number) +
-                    "::" + query_utils::postgresCast<T>(traits.isArray());
+                    "::" + query_utils::postgresCast<T>(traits.formatType());
 
             // add the write parameter with cast
             if (traits.hasWriteData())
                 query = query + "," + "$" + to_string(++param_number) +
-                    "::" + query_utils::postgresCast<T>(traits.isArray());
+                    "::" + query_utils::postgresCast<T>(traits.formatType());
 
             query = query + "," + "$" + to_string(++param_number) + ")";
 
@@ -283,8 +311,8 @@ namespace pqxx_conn
     auto QueryBuilder::storeDataEventString(const std::string &id,
         const std::string &event_time,
         const std::string &quality,
-        const std::unique_ptr<vector<T>> &value_r,
-        const std::unique_ptr<vector<T>> &value_w,
+        const std::unique_ptr<TangoValue<T>> &value_r,
+        const std::unique_ptr<TangoValue<T>> &value_w,
         const AttributeTraits &traits) -> std::string
     {
         auto query = "INSERT INTO " + QueryBuilder::tableName(traits) + " (" + schema::DatColId + "," +
@@ -310,7 +338,7 @@ namespace pqxx_conn
             else
             {
                 query = query + "," + query_utils::DataToString<T>::run(value_r, traits) +
-                    "::" + query_utils::postgresCast<T>(traits.isArray());
+                    "::" + query_utils::postgresCast<T>(traits.formatType());
             }
         }
 
@@ -324,7 +352,7 @@ namespace pqxx_conn
             else
             {
                 query = query + "," + query_utils::DataToString<T>::run(value_w, traits) +
-                    "::" + query_utils::postgresCast<T>(traits.isArray());
+                    "::" + query_utils::postgresCast<T>(traits.formatType());
             }
         }
 

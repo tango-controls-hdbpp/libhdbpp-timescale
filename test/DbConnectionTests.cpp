@@ -142,16 +142,16 @@ protected:
     string storeAttributeByTraits(const AttributeTraits &traits, unsigned int ttl = 0);
 
     template<Tango::CmdArgType Type>
-    tuple<vector<typename TangoTypeTraits<Type>::type>, vector<typename TangoTypeTraits<Type>::type>>
+    tuple<TangoValue<typename TangoTypeTraits<Type>::type>, TangoValue<typename TangoTypeTraits<Type>::type>>
         storeTestEventData(const string &att_name, const AttributeTraits &traits, int quality = Tango::ATTR_VALID);
     
     template<Tango::CmdArgType Type>
-    tuple<vector<typename TangoTypeTraits<Type>::type>, vector<typename TangoTypeTraits<Type>::type>>
+    tuple<TangoValue<typename TangoTypeTraits<Type>::type>, TangoValue<typename TangoTypeTraits<Type>::type>>
         store2EventDataSameTime(const string &att_name, const AttributeTraits &traits, int quality = Tango::ATTR_VALID);
 
     template<typename T>
     void checkStoreTestEventData(
-        const string &att_name, const AttributeTraits &traits, const tuple<vector<T>, vector<T>> &data);
+        const string &att_name, const AttributeTraits &traits, const tuple<TangoValue<T>, TangoValue<T>> &data);
 
     QueryBuilder &queryBuilder() { return _query_builder; }
 
@@ -248,7 +248,7 @@ string DbConnectionTestsFixture::storeAttributeByTraits(const AttributeTraits &t
 //=============================================================================
 //=============================================================================
 template<Tango::CmdArgType Type>
-tuple<vector<typename TangoTypeTraits<Type>::type>, vector<typename TangoTypeTraits<Type>::type>>
+tuple<TangoValue<typename TangoTypeTraits<Type>::type>, TangoValue<typename TangoTypeTraits<Type>::type>>
     DbConnectionTestsFixture::store2EventDataSameTime(const string &att_name, const AttributeTraits &traits, int quality)
 {
     struct timeval tv
@@ -274,7 +274,7 @@ tuple<vector<typename TangoTypeTraits<Type>::type>, vector<typename TangoTypeTra
 //=============================================================================
 //=============================================================================
 template<Tango::CmdArgType Type>
-tuple<vector<typename TangoTypeTraits<Type>::type>, vector<typename TangoTypeTraits<Type>::type>>
+tuple<TangoValue<typename TangoTypeTraits<Type>::type>, TangoValue<typename TangoTypeTraits<Type>::type>>
     DbConnectionTestsFixture::storeTestEventData(const string &att_name, const AttributeTraits &traits, int quality)
 {
     struct timeval tv
@@ -297,7 +297,7 @@ tuple<vector<typename TangoTypeTraits<Type>::type>, vector<typename TangoTypeTra
 //=============================================================================
 template<typename T>
 void DbConnectionTestsFixture::checkStoreTestEventData(
-    const string &att_name, const AttributeTraits &traits, const tuple<vector<T>, vector<T>> &data)
+    const string &att_name, const AttributeTraits &traits, const tuple<TangoValue<T>, TangoValue<T>> &data)
 {
     pqxx::work tx {verifyConn()};
 
@@ -323,7 +323,7 @@ void DbConnectionTestsFixture::checkStoreTestEventData(
     if (traits.isArray() && traits.hasReadData())
     {
         REQUIRE(data_row.at(schema::DatColValueR).size() > 0);
-        REQUIRE(compareVector(data_row.at(schema::DatColValueR).as<vector<T>>(), get<0>(data)) == true);
+        REQUIRE(compareVector(data_row.at(schema::DatColValueR).as<TangoValue<T>>(), get<0>(data)) == true);
     }
 
     if (traits.isScalar() && traits.hasWriteData())
@@ -335,7 +335,7 @@ void DbConnectionTestsFixture::checkStoreTestEventData(
     if (traits.isArray() && traits.hasWriteData())
     {
         REQUIRE(data_row.at(schema::DatColValueW).size() > 0);
-        REQUIRE(compareVector(data_row.at(schema::DatColValueW).as<vector<T>>(), get<1>(data)) == true);
+        REQUIRE(compareVector(data_row.at(schema::DatColValueW).as<TangoValue<T>>(), get<1>(data)) == true);
     }
 }
 }; // namespace pqxx_conn_test
@@ -358,8 +358,8 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
 {
     DbConnection conn(DbConnection::DbStoreMethod::PreparedStatement);
     REQUIRE_THROWS_AS(conn.connect("user=postgres password=password host=unknown"), Tango::DevFailed);
-    REQUIRE_THROWS_AS(conn.connect("user=invalid password=password host=hdb1"), Tango::DevFailed);
-    REQUIRE_THROWS_AS(conn.connect("user=postgres password=invalid host=hdb1"), Tango::DevFailed);
+    REQUIRE_THROWS_AS(conn.connect("user=invalid password=password host=localhost"), Tango::DevFailed);
+    REQUIRE_THROWS_AS(conn.connect("user=postgres password=invalid host=localhost"), Tango::DevFailed);
     SUCCEED("Passed");
 }
 
@@ -742,8 +742,8 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
             REQUIRE_NOTHROW(testConn().storeDataEvent(att_name,
                 event_time,
                 Tango::ATTR_VALID,
-                move(make_unique<std::vector<double>>()),
-                move(make_unique<std::vector<double>>()),
+                move(make_unique<TangoValue<double>>()),
+                move(make_unique<TangoValue<double>>()),
                 traits));
 
             {
@@ -1098,13 +1098,13 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
     string s3 = R"(test two slash \ test four slash \\)";
     string s4 = "line feed \n and return \r";
 
-    auto value_r = std::make_unique<std::vector<std::string>>();
+    auto value_r = std::make_unique<TangoValue<std::string>>();
     value_r->push_back(s1);
     value_r->push_back(s2);
     value_r->push_back(s3);
     value_r->push_back(s4);
 
-    auto value_w = std::make_unique<std::vector<std::string>>();
+    auto value_w = std::make_unique<TangoValue<std::string>>();
     value_w->push_back(s1);
     value_w->push_back(s2);
     value_w->push_back(s3);
@@ -1154,10 +1154,10 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
             gettimeofday(&tv, nullptr);
             double event_time = tv.tv_sec + tv.tv_usec / 1.0e6;
 
-            auto value_r = std::make_unique<std::vector<std::string>>();
+            auto value_r = std::make_unique<TangoValue<std::string>>();
             value_r->push_back(str);
 
-            auto value_w = std::make_unique<std::vector<std::string>>();
+            auto value_w = std::make_unique<TangoValue<std::string>>();
             value_w->push_back(str);
 
             auto original_values = make_tuple((*value_r), (*value_w));
@@ -1191,8 +1191,8 @@ TEST_CASE_METHOD(pqxx_conn_test::DbConnectionTestsFixture,
     REQUIRE_THROWS_AS(testConn().storeDataEvent(name,
                           event_time,
                           Tango::ATTR_VALID,
-                          move(make_unique<std::vector<double>>()),
-                          move(make_unique<std::vector<double>>()),
+                          move(make_unique<TangoValue<double>>()),
+                          move(make_unique<TangoValue<double>>()),
                           traits),
         Tango::DevFailed);
 

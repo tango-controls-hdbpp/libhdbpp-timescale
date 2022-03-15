@@ -21,6 +21,7 @@
 #define _HDBPP_TX_DATA_EVENT_HPP
 
 #include "HdbppTxDataEventBase.hpp"
+#include "TangoValue.hpp"
 
 namespace hdbpp_internal
 {
@@ -167,9 +168,9 @@ void HdbppTxDataEvent<Conn>::doStore(ReadFunctor extract_read, WriteFunctor extr
 {
     // this is the general extractor algorithm, it is primed for a means to do the
     // actual extraction, the split allows some variation in types to be dealt with.
-    auto value = [this](auto extractor, bool has_data, const std::string &write_type) {
+    auto value = [this](auto extractor, bool has_data, const std::string &write_type, std::size_t dim_x, std::size_t dim_y) {
         // this is the return, a unique ptr potentially with a vector in
-        auto value = make_unique<std::vector<T>>();
+        auto value = make_unique<TangoValue<T>>();
 
         // its possible in some cases to get events that are empty or invalid,
         // we still store the event, but with no event data, so filter them
@@ -206,6 +207,9 @@ void HdbppTxDataEvent<Conn>::doStore(ReadFunctor extract_read, WriteFunctor extr
                 write_type);
         }
 
+        value->dim_x = dim_x;
+        value->dim_y = dim_y;
+
         // release ownership of the unique_ptr back to the caller
         return value;
     };
@@ -216,8 +220,8 @@ void HdbppTxDataEvent<Conn>::doStore(ReadFunctor extract_read, WriteFunctor extr
         HdbppTxBase<Conn>::attrNameForStorage(Base::attributeName()),
         Base::eventTime(),
         Base::quality(),
-        std::move(value(extract_read, Base::attributeTraits().hasReadData(), "read")),
-        std::move(value(extract_write, Base::attributeTraits().hasWriteData(), "set")),
+        std::move(value(extract_read, Base::attributeTraits().hasReadData(), "read", _dev_attr->get_dim_x(), _dev_attr->get_dim_y())),
+        std::move(value(extract_write, Base::attributeTraits().hasWriteData(), "set", _dev_attr->get_written_dim_x(), _dev_attr->get_written_dim_y())),
         Base::attributeTraits());
 }
 

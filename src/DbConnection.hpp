@@ -26,6 +26,7 @@
 #include "HdbppTxFactory.hpp"
 #include "QueryBuilder.hpp"
 #include "TimescaleSchema.hpp"
+#include "TangoValue.hpp"
 #include "spdlog/spdlog.h"
 
 #include <iostream>
@@ -106,8 +107,8 @@ namespace pqxx_conn
         void storeDataEvent(const std::string &full_attr_name,
             double event_time,
             int quality,
-            std::unique_ptr<std::vector<T>> value_r,
-            std::unique_ptr<std::vector<T>> value_w,
+            std::unique_ptr<TangoValue<T>> value_r,
+            std::unique_ptr<TangoValue<T>> value_w,
             const AttributeTraits &traits);
 
         // store a data error event in the data tables

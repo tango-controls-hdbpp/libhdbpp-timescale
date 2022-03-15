@@ -29,9 +29,9 @@ namespace data_gen
     //=============================================================================
     //=============================================================================
     template<>
-    typename TangoTypeTraits<Tango::DEV_BOOLEAN>::array data<Tango::DEV_BOOLEAN>(int size)
+    typename TangoTypeTraits<Tango::DEV_BOOLEAN>::array data<Tango::DEV_BOOLEAN>(int size, int dim_x, int dim_y)
     {
-        auto value = make_unique<vector<typename TangoTypeTraits<Tango::DEV_BOOLEAN>::type>>();
+        auto value = make_unique<TangoValue<typename TangoTypeTraits<Tango::DEV_BOOLEAN>::type>>();
         random_device rd;
         mt19937 gen(rd());
         bernoulli_distribution d(0.5);
@@ -39,106 +39,118 @@ namespace data_gen
         for (int i = 0; i < size; i++)
             value->push_back(d(gen));
 
+	value->dim_x = dim_x;
+	value->dim_y = dim_y;
+
         return value;
     }
 
     //=============================================================================
     //=============================================================================
     template<>
-    typename TangoTypeTraits<Tango::DEV_SHORT>::array data<Tango::DEV_SHORT>(int size)
+    typename TangoTypeTraits<Tango::DEV_SHORT>::array data<Tango::DEV_SHORT>(int size, int dim_x, int dim_y)
     {
-        return move(genericData<int16_t>(size));
+        return move(genericData<int16_t>(size, dim_x, dim_y));
     }
 
     //=============================================================================
     //=============================================================================
     template<>
-    typename TangoTypeTraits<Tango::DEV_LONG>::array data<Tango::DEV_LONG>(int size)
+    typename TangoTypeTraits<Tango::DEV_LONG>::array data<Tango::DEV_LONG>(int size, int dim_x, int dim_y)
     {
-        return move(genericData<int32_t>(size));
+        return move(genericData<int32_t>(size, dim_x, dim_y));
     }
 
     //=============================================================================
     //=============================================================================
     template<>
-    typename TangoTypeTraits<Tango::DEV_LONG64>::array data<Tango::DEV_LONG64>(int size)
+    typename TangoTypeTraits<Tango::DEV_LONG64>::array data<Tango::DEV_LONG64>(int size, int dim_x, int dim_y)
     {
-        return move(genericData<int64_t>(size));
+        return move(genericData<int64_t>(size, dim_x, dim_y));
     }
 
     //=============================================================================
     //=============================================================================
     template<>
-    typename TangoTypeTraits<Tango::DEV_DOUBLE>::array data<Tango::DEV_DOUBLE>(int size)
+    typename TangoTypeTraits<Tango::DEV_DOUBLE>::array data<Tango::DEV_DOUBLE>(int size, int dim_x, int dim_y)
     {
-        auto value = make_unique<vector<typename TangoTypeTraits<Tango::DEV_DOUBLE>::type>>();
+        auto value = make_unique<TangoValue<typename TangoTypeTraits<Tango::DEV_DOUBLE>::type>>();
         random_device rd;
         mt19937 gen(rd());
         uniform_real_distribution<typename TangoTypeTraits<Tango::DEV_DOUBLE>::type> d;
         for (int i = 0; i < size; i++)
             value->push_back(d(gen));
 
+	value->dim_x = dim_x;
+	value->dim_y = dim_y;
+
         return value;
     }
 
     //=============================================================================
     //=============================================================================
     template<>
-    typename TangoTypeTraits<Tango::DEV_FLOAT>::array data<Tango::DEV_FLOAT>(int size)
+    typename TangoTypeTraits<Tango::DEV_FLOAT>::array data<Tango::DEV_FLOAT>(int size, int dim_x, int dim_y)
     {
-        auto value = make_unique<vector<typename TangoTypeTraits<Tango::DEV_FLOAT>::type>>();
+        auto value = make_unique<TangoValue<typename TangoTypeTraits<Tango::DEV_FLOAT>::type>>();
         random_device rd;
         mt19937 gen(rd());
         uniform_real_distribution<typename TangoTypeTraits<Tango::DEV_FLOAT>::type> d;
         for (int i = 0; i < size; i++)
             value->push_back(d(gen));
 
+	value->dim_x = dim_x;
+	value->dim_y = dim_y;
+
         return value;
     }
 
     //=============================================================================
     //=============================================================================
     template<>
-    typename TangoTypeTraits<Tango::DEV_UCHAR>::array data<Tango::DEV_UCHAR>(int size)
+    typename TangoTypeTraits<Tango::DEV_UCHAR>::array data<Tango::DEV_UCHAR>(int size, int dim_x, int dim_y)
     {
-        auto value = make_unique<vector<typename TangoTypeTraits<Tango::DEV_UCHAR>::type>>();
+        auto value = make_unique<TangoValue<typename TangoTypeTraits<Tango::DEV_UCHAR>::type>>();
         random_device rd;
         mt19937 gen(rd());
         uniform_int_distribution<int> d(0, 255);
         for (int i = 0; i < size; i++)
             value->push_back(d(gen));
 
+	value->dim_x = dim_x;
+	value->dim_y = dim_y;
+
         return value;
     }
 
     //=============================================================================
     //=============================================================================
     template<>
-    typename TangoTypeTraits<Tango::DEV_USHORT>::array data<Tango::DEV_USHORT>(int size)
+    typename TangoTypeTraits<Tango::DEV_USHORT>::array data<Tango::DEV_USHORT>(int size, int dim_x, int dim_y)
     {
-        return move(genericData<uint16_t>(size));
+        return move(genericData<uint16_t>(size, dim_x, dim_y));
     }
 
     //=============================================================================
     //=============================================================================
     template<>
-    typename TangoTypeTraits<Tango::DEV_ULONG>::array data<Tango::DEV_ULONG>(int size)
+    typename TangoTypeTraits<Tango::DEV_ULONG>::array data<Tango::DEV_ULONG>(int size, int dim_x, int dim_y)
     {
-        return move(genericData<uint32_t>(size));
+        return move(genericData<uint32_t>(size, dim_x, dim_y));
     }
 
     //=============================================================================
     //=============================================================================
     template<>
-    typename TangoTypeTraits<Tango::DEV_ULONG64>::array data<Tango::DEV_ULONG64>(int size)
+    typename TangoTypeTraits<Tango::DEV_ULONG64>::array data<Tango::DEV_ULONG64>(int size, int dim_x, int dim_y)
     {
-        return move(genericData<uint64_t>(size));
+        return move(genericData<uint64_t>(size, dim_x, dim_y));
     }
 
     //=============================================================================
     //=============================================================================
     template<>
-    typename TangoTypeTraits<Tango::DEV_STRING>::array data<Tango::DEV_STRING>(int size)
+    typename TangoTypeTraits<Tango::DEV_STRING>::array data<Tango::DEV_STRING>(int size, int dim_x, int dim_y)
     {
         static vector<string> strings = {"this",
             "is",
@@ -211,10 +223,13 @@ namespace data_gen
             "test '' quotes",
             "test \a escape"};
 
-        auto value = make_unique<vector<typename TangoTypeTraits<Tango::DEV_STRING>::type>>();
+        auto value = make_unique<TangoValue<typename TangoTypeTraits<Tango::DEV_STRING>::type>>();
 
         for (int i = 0; i < size; i++)
             value->push_back(strings[experimental::randint(0, ((int)strings.size()) - 1)]);
+
+	value->dim_x = dim_x;
+	value->dim_y = dim_y;
 
         return value;
     }
@@ -222,9 +237,9 @@ namespace data_gen
     //=============================================================================
     //=============================================================================
     template<>
-    typename TangoTypeTraits<Tango::DEV_STATE>::array data<Tango::DEV_STATE>(int size)
+    typename TangoTypeTraits<Tango::DEV_STATE>::array data<Tango::DEV_STATE>(int size, int dim_x, int dim_y)
     {
-        auto value = make_unique<vector<typename TangoTypeTraits<Tango::DEV_STATE>::type>>();
+        auto value = make_unique<TangoValue<typename TangoTypeTraits<Tango::DEV_STATE>::type>>();
         random_device rd;
         mt19937 gen(rd());
         bernoulli_distribution d(0.25);
@@ -232,15 +247,18 @@ namespace data_gen
         for (int i = 0; i < size; i++)
             value->push_back(d(gen) ? Tango::ON : Tango::OFF);
 
+	value->dim_x = dim_x;
+	value->dim_y = dim_y;
+
         return value;
     }
 
     //=============================================================================
     //=============================================================================
     template<>
-    typename TangoTypeTraits<Tango::DEV_ENUM>::array data<Tango::DEV_ENUM>(int size)
+    typename TangoTypeTraits<Tango::DEV_ENUM>::array data<Tango::DEV_ENUM>(int size, int dim_x, int dim_y)
     {
-        return move(genericData<int16_t>(size));
+        return move(genericData<int16_t>(size, dim_x, dim_y));
     }
 } // namespace data_gen
 
@@ -268,7 +286,7 @@ namespace utils
             Tango::DEV_ENUM};
 
         vector<Tango::AttrWriteType> write_types {Tango::READ, Tango::WRITE, Tango::READ_WRITE, Tango::READ_WITH_WRITE};
-        vector<Tango::AttrDataFormat> format_types {Tango::SCALAR, Tango::SPECTRUM};
+        vector<Tango::AttrDataFormat> format_types {Tango::SCALAR, Tango::SPECTRUM, Tango::IMAGE};
 
         // loop for every combination of type in Tango
         for (auto &type : types)
@@ -299,7 +317,7 @@ namespace utils
             Tango::DEV_STATE};
 
         vector<Tango::AttrWriteType> write_types {Tango::READ, Tango::WRITE, Tango::READ_WRITE, Tango::READ_WITH_WRITE};
-        vector<Tango::AttrDataFormat> format_types {Tango::SCALAR, Tango::SPECTRUM};
+        vector<Tango::AttrDataFormat> format_types {Tango::SCALAR, Tango::SPECTRUM, Tango::IMAGE};
 
         // loop for every combination of type in Tango
         for (auto &type : types)

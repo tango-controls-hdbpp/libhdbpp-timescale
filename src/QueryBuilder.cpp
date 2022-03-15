@@ -30,85 +30,107 @@ namespace pqxx_conn
 {
     namespace query_utils
     {
+
+        namespace
+        {
+            auto expandCast(Tango::AttrDataFormat format, const std::string& name) -> std::string
+            {
+                switch(format)
+                {
+                    case Tango::SPECTRUM:
+                    {
+                        return std::string(name + "[]");
+                    }
+                    case Tango::IMAGE:
+                    {
+                        return std::string(name + "[][]");
+                    }
+                    default:
+                    {
+                        return std::string(name);
+                    }
+                }
+            }
+        }
         // these specializations just return the correct postgres cast for the insert queries,
         // this is important for the custom types, since the library libpqxx and postgres will
         // not know how to store them.
         template<>
-        auto postgresCast<double>(bool is_array) -> std::string
+        auto postgresCast<double>(Tango::AttrDataFormat format) -> std::string
         {
-            return is_array ? "float8[]" : "float8";
+            return expandCast(format, "float8");
         }
 
         template<>
-        auto postgresCast<float>(bool is_array) -> std::string
+        auto postgresCast<float>(Tango::AttrDataFormat format) -> std::string
         {
-            return is_array ? "float4[]" : "float4";
+            return expandCast(format, "float4");
         }
 
         template<>
-        auto postgresCast<string>(bool is_array) -> std::string
+        auto postgresCast<string>(Tango::AttrDataFormat format) -> std::string
         {
-            return is_array ? "text[]" : "text";
+            return expandCast(format, "text");
         }
 
         template<>
-        auto postgresCast<bool>(bool is_array) -> std::string
+        auto postgresCast<bool>(Tango::AttrDataFormat format) -> std::string
         {
-            return is_array ? "bool[]" : "bool";
+            return expandCast(format, "bool");
         }
 
         template<>
-        auto postgresCast<int32_t>(bool is_array) -> std::string
+        auto postgresCast<int32_t>(Tango::AttrDataFormat format) -> std::string
         {
-            return is_array ? "int4[]" : "int4";
+            return expandCast(format, "int4");
         }
 
         template<>
-        auto postgresCast<uint32_t>(bool is_array) -> std::string
+        auto postgresCast<uint32_t>(Tango::AttrDataFormat format) -> std::string
         {
-            return is_array ? "ulong[]" : "ulong";
+            return expandCast(format, "ulong");
         }
 
         template<>
-        auto postgresCast<int64_t>(bool is_array) -> std::string
+        auto postgresCast<int64_t>(Tango::AttrDataFormat format) -> std::string
         {
-            return is_array ? "int8[]" : "int8";
+            return expandCast(format, "int8");
         }
 
         template<>
-        auto postgresCast<uint64_t>(bool is_array) -> std::string
+        auto postgresCast<uint64_t>(Tango::AttrDataFormat format) -> std::string
         {
-            return is_array ? "ulong64[]" : "ulong64";
+            return expandCast(format, "ulong64");
         }
 
         template<>
-        auto postgresCast<int16_t>(bool is_array) -> std::string
+        auto postgresCast<int16_t>(Tango::AttrDataFormat format) -> std::string
         {
-            return is_array ? "int2[]" : "int2";
+            return expandCast(format, "int2");
         }
 
         template<>
-        auto postgresCast<uint16_t>(bool is_array) -> std::string
+        auto postgresCast<uint16_t>(Tango::AttrDataFormat format) -> std::string
         {
-            return is_array ? "ushort[]" : "ushort";
+            return expandCast(format, "ushort");
         }
 
         template<>
-        auto postgresCast<uint8_t>(bool is_array) -> std::string
+        auto postgresCast<uint8_t>(Tango::AttrDataFormat format) -> std::string
         {
-            return is_array ? "uchar[]" : "uchar";
+            return expandCast(format, "uchar");
         }
 
         template<>
-        auto postgresCast<vector<uint8_t>>(bool is_array) -> std::string
+        auto postgresCast<vector<uint8_t>>(Tango::AttrDataFormat format) -> std::string
         {
-            return is_array ? "bytea[]" : "bytea";
+            return expandCast(format, "bytea");
         }
 
         template<>
-        auto postgresCast<Tango::DevState>(bool is_array) -> std::string
+        auto postgresCast<Tango::DevState>(Tango::AttrDataFormat format) -> std::string
         {
-            return is_array ? "int4[]" : "int4";
+            return expandCast(format, "int4");
         }
     } // namespace query_utils
 

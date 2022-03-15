@@ -96,16 +96,6 @@ auto HdbppTxNewAttribute<Conn>::store() -> HdbppTxNewAttribute<Conn> &
         Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
     }
 
-    // for now image types are not supported
-    if (_traits.isImage())
-    {
-        std::string msg {
-            "Image type attributes are currently not supported. For attribute: " + _attr_name.fqdnAttributeName()};
-
-        spdlog::error("Error: {}", msg);
-        Tango::Except::throw_exception("Invalid Argument", msg, LOCATION_INFO);
-    }
-
     // unsupported types
     if (_traits.type() == Tango::DEV_ENCODED)
     {

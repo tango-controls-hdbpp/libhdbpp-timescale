@@ -20,6 +20,7 @@
 #include "QueryBuilder.hpp"
 #include "TestHelpers.hpp"
 #include "TimescaleSchema.hpp"
+#include "TangoValue.hpp"
 #include "catch2/catch.hpp"
 
 using namespace std;
@@ -32,10 +33,14 @@ SCENARIO("storeDataEventString() returns the correct Value fields for the given 
 {
     GIVEN("A query builder object with nothing cached")
     {
-        auto value_r = make_unique<vector<double>>(1.1, 2.2);
-        auto value_r_empty = make_unique<vector<double>>();
-        auto value_w = make_unique<vector<double>>(3.3, 4.4);
-        auto value_w_empty = make_unique<vector<double>>();
+        auto value_r = make_unique<TangoValue<double>>();
+        value_r->push_back(1.1);
+        value_r->push_back(2.2);
+        auto value_r_empty = make_unique<TangoValue<double>>();
+        auto value_w = make_unique<TangoValue<double>>();
+        value_w->push_back(3.3);
+        value_w->push_back(4.4);
+        auto value_w_empty = make_unique<TangoValue<double>>();
 
         WHEN("Requesting a query string for traits configured for Tango::READ")
         {
@@ -102,10 +107,14 @@ SCENARIO("storeDataEventString() adds a null when value is size zero", "[query-s
 {
     GIVEN("A query builder object with nothing cached")
     {
-        auto value_r = make_unique<vector<double>>(1.1, 2.2);
-        auto value_r_empty = make_unique<vector<double>>();
-        auto value_w = make_unique<vector<double>>(3.3, 4.4);
-        auto value_w_empty = make_unique<vector<double>>();
+        auto value_r = make_unique<TangoValue<double>>();
+        value_r->push_back(1.1);
+        value_r->push_back(2.2);
+        auto value_r_empty = make_unique<TangoValue<double>>();
+        auto value_w = make_unique<TangoValue<double>>();
+        value_w->push_back(3.3);
+        value_w->push_back(4.4);
+        auto value_w_empty = make_unique<TangoValue<double>>();
 
         WHEN("Requesting a query string with a size zero read value")
         {

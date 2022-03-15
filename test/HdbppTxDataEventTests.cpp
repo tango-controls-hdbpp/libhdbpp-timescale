@@ -20,6 +20,7 @@
 #include "ConnectionBase.hpp"
 #include "HdbppTxDataEvent.hpp"
 #include "HdbppTxFactory.hpp"
+#include "TangoValue.hpp"
 #include "TestHelpers.hpp"
 #include "catch2/catch.hpp"
 
@@ -34,60 +35,61 @@ Tango::DeviceAttribute createDeviceAttribute(const AttributeTraits &traits)
 {
     // this is all one messy hack as Tango is not easy to use in a unit test, in this case, we can not
     // set up and create a DeviceAttribute easy. Instead we use the publicly (!!) available variables
+    // size_x is the number of read elements, and size_y the number of writable ones.
     auto attr_gen = [&traits](int size_x, int size_y) {
         switch (traits.type())
         {
             case Tango::DEV_BOOLEAN:
                 return Tango::DeviceAttribute(
-                    TestAttrFQDName.c_str(), *generateSpectrumData<Tango::DEV_BOOLEAN>(false, size_x + size_y));
+                    TestAttrFQDName.c_str(), static_cast<TangoTypeTraits<Tango::DEV_BOOLEAN>::vector&>(*generateSpectrumData<Tango::DEV_BOOLEAN>(false, size_x + size_y)));
 
             case Tango::DEV_SHORT:
                 return Tango::DeviceAttribute(
-                    TestAttrFQDName.c_str(), *generateSpectrumData<Tango::DEV_SHORT>(false, size_x + size_y));
+                    TestAttrFQDName.c_str(), static_cast<TangoTypeTraits<Tango::DEV_SHORT>::vector&>(*generateSpectrumData<Tango::DEV_SHORT>(false, size_x + size_y)));
 
             case Tango::DEV_LONG:
                 return Tango::DeviceAttribute(
-                    TestAttrFQDName.c_str(), *generateSpectrumData<Tango::DEV_LONG>(false, size_x + size_y));
+                    TestAttrFQDName.c_str(), static_cast<TangoTypeTraits<Tango::DEV_LONG>::vector&>(*generateSpectrumData<Tango::DEV_LONG>(false, size_x + size_y)));
 
             case Tango::DEV_LONG64:
                 return Tango::DeviceAttribute(
-                    TestAttrFQDName.c_str(), *generateSpectrumData<Tango::DEV_LONG64>(false, size_x + size_y));
+                    TestAttrFQDName.c_str(), static_cast<TangoTypeTraits<Tango::DEV_LONG64>::vector&>(*generateSpectrumData<Tango::DEV_LONG64>(false, size_x + size_y)));
 
             case Tango::DEV_FLOAT:
                 return Tango::DeviceAttribute(
-                    TestAttrFQDName.c_str(), *generateSpectrumData<Tango::DEV_FLOAT>(false, size_x + size_y));
+                    TestAttrFQDName.c_str(), static_cast<TangoTypeTraits<Tango::DEV_FLOAT>::vector&>(*generateSpectrumData<Tango::DEV_FLOAT>(false, size_x + size_y)));
 
             case Tango::DEV_DOUBLE:
                 return Tango::DeviceAttribute(
-                    TestAttrFQDName.c_str(), *generateSpectrumData<Tango::DEV_DOUBLE>(false, size_x + size_y));
+                    TestAttrFQDName.c_str(), static_cast<TangoTypeTraits<Tango::DEV_DOUBLE>::vector&>(*generateSpectrumData<Tango::DEV_DOUBLE>(false, size_x + size_y)));
 
             case Tango::DEV_UCHAR:
                 return Tango::DeviceAttribute(
-                    TestAttrFQDName.c_str(), *generateSpectrumData<Tango::DEV_UCHAR>(false, size_x + size_y));
+                    TestAttrFQDName.c_str(), static_cast<TangoTypeTraits<Tango::DEV_UCHAR>::vector&>(*generateSpectrumData<Tango::DEV_UCHAR>(false, size_x + size_y)));
 
             case Tango::DEV_USHORT:
                 return Tango::DeviceAttribute(
-                    TestAttrFQDName.c_str(), *generateSpectrumData<Tango::DEV_USHORT>(false, size_x + size_y));
+                    TestAttrFQDName.c_str(), static_cast<TangoTypeTraits<Tango::DEV_USHORT>::vector&>(*generateSpectrumData<Tango::DEV_USHORT>(false, size_x + size_y)));
 
             case Tango::DEV_ULONG:
                 return Tango::DeviceAttribute(
-                    TestAttrFQDName.c_str(), *generateSpectrumData<Tango::DEV_ULONG>(false, size_x + size_y));
+                    TestAttrFQDName.c_str(), static_cast<TangoTypeTraits<Tango::DEV_ULONG>::vector&>(*generateSpectrumData<Tango::DEV_ULONG>(false, size_x + size_y)));
 
             case Tango::DEV_ULONG64:
                 return Tango::DeviceAttribute(
-                    TestAttrFQDName.c_str(), *generateSpectrumData<Tango::DEV_ULONG64>(false, size_x + size_y));
+                    TestAttrFQDName.c_str(), static_cast<TangoTypeTraits<Tango::DEV_ULONG64>::vector&>(*generateSpectrumData<Tango::DEV_ULONG64>(false, size_x + size_y)));
 
             case Tango::DEV_STRING:
                 return Tango::DeviceAttribute(
-                    TestAttrFQDName.c_str(), *generateSpectrumData<Tango::DEV_STRING>(false, size_x + size_y));
+                    TestAttrFQDName.c_str(), static_cast<TangoTypeTraits<Tango::DEV_STRING>::vector&>(*generateSpectrumData<Tango::DEV_STRING>(false, size_x + size_y)));
 
             case Tango::DEV_STATE:
                 return Tango::DeviceAttribute(
-                    TestAttrFQDName.c_str(), *generateSpectrumData<Tango::DEV_STATE>(false, size_x + size_y));
+                    TestAttrFQDName.c_str(), static_cast<TangoTypeTraits<Tango::DEV_STATE>::vector&>(*generateSpectrumData<Tango::DEV_STATE>(false, size_x + size_y)));
 
             case Tango::DEV_ENUM:
                 return Tango::DeviceAttribute(
-                    TestAttrFQDName.c_str(), *generateSpectrumData<Tango::DEV_ENUM>(false, size_x + size_y));
+                    TestAttrFQDName.c_str(), static_cast<TangoTypeTraits<Tango::DEV_ENUM>::vector&>(*generateSpectrumData<Tango::DEV_ENUM>(false, size_x + size_y)));
 
                 //case Tango::DEV_ENCODED:
                 //return Tango::DeviceAttribute(TestAttrFQDName.c_str(), *generateSpectrumData<Tango::DEV_ENCODED>(false, size_x + size_y));
@@ -106,14 +108,53 @@ Tango::DeviceAttribute createDeviceAttribute(const AttributeTraits &traits)
         return 1;
     };
 
+    auto data_size = [&traits]() {
+        switch(traits.formatType())
+        {
+            case Tango::SCALAR:
+                return 1;
+            case Tango::SPECTRUM:
+                return 10;
+            case Tango::IMAGE:
+                return 10;
+            default:
+                return 1;
+        }
+    };
+
+    auto set_dimension = [&traits, &select_size](Tango::DeviceAttribute& attr)
+    {
+        switch(traits.formatType())
+        {
+            case Tango::SCALAR:
+                attr.dim_x = select_size(traits.hasReadData(), 1);
+                attr.dim_y = select_size(traits.hasReadData(), 1);
+                attr.w_dim_x = select_size(traits.hasWriteData(), 1);
+                attr.w_dim_y = select_size(traits.hasWriteData(), 1);
+                break;
+            case Tango::SPECTRUM:
+                attr.dim_x = select_size(traits.hasReadData(), 10);
+                attr.dim_y = select_size(traits.hasReadData(), 1);
+                attr.w_dim_x = select_size(traits.hasWriteData(), 10);
+                attr.w_dim_y = select_size(traits.hasWriteData(), 1);
+                break;
+            case Tango::IMAGE:
+                attr.dim_x = select_size(traits.hasReadData(), 5);
+                attr.dim_y = select_size(traits.hasReadData(), 2);
+                attr.w_dim_x = select_size(traits.hasWriteData(), 5);
+                attr.w_dim_y = select_size(traits.hasWriteData(), 2);
+                break;
+            default:
+                break;
+        }
+    };
+
+    auto data_length = data_size();
     // hack hack hack.... this mess of forced public (!) variable setting actually
     // sets up the conditions for valid extracts inside the HdbppTxDataEvent class.
     // Should the Tango API ever be improved then this hack is doomed.
-    auto attr = attr_gen(select_size(traits.hasReadData(), 1), select_size(traits.hasWriteData(), 1));
-    attr.dim_x = select_size(traits.hasReadData(), 1);
-    attr.dim_y = select_size(traits.hasWriteData(), 1);
-    attr.w_dim_x = select_size(traits.hasReadData(), 1);
-    attr.w_dim_y = select_size(traits.hasWriteData(), 1);
+    auto attr = attr_gen(select_size(traits.hasReadData(), data_length), select_size(traits.hasWriteData(), data_length));
+    set_dimension(attr);
     return attr;
 }
 
@@ -132,8 +173,8 @@ public:
     void storeDataEvent(const string &full_attr_name,
         double event_time,
         int quality,
-        unique_ptr<vector<T>> value_r,
-        unique_ptr<vector<T>> value_w,
+        unique_ptr<TangoValue<T>> value_r,
+        unique_ptr<TangoValue<T>> value_w,
         const AttributeTraits &traits)
     {
         if (store_attribute_triggers_ex)
@@ -444,7 +485,7 @@ TEST_CASE("Creating HdbppTxDataEvents for each tango type and storing them", "[d
         Tango::DEV_ENUM};
 
     vector<Tango::AttrWriteType> write_types {Tango::READ, Tango::WRITE, Tango::READ_WRITE, Tango::READ_WITH_WRITE};
-    vector<Tango::AttrDataFormat> format_types {Tango::SCALAR, Tango::SPECTRUM};
+    vector<Tango::AttrDataFormat> format_types {Tango::SCALAR, Tango::SPECTRUM, Tango::IMAGE};
 
     // loop for every combination of type in Tango
     for (auto &type : types)

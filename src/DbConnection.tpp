@@ -35,7 +35,7 @@ namespace pqxx_conn
         template<typename T>
         struct Store
         {
-            static void run(const std::unique_ptr<std::vector<T>> &value,
+            static void run(const std::unique_ptr<TangoValue<T>> &value,
                 const AttributeTraits &traits,
                 pqxx::prepare::invocation &inv,
                 pqxx::work & /*unused*/)
@@ -53,7 +53,7 @@ namespace pqxx_conn
         template<>
         struct Store<std::string>
         {
-            static void run(const std::unique_ptr<std::vector<std::string>> &value,
+            static void run(const std::unique_ptr<TangoValue<std::string>> &value,
                 const AttributeTraits &traits,
                 pqxx::prepare::invocation &inv,
                 pqxx::work &tx)
@@ -77,7 +77,7 @@ namespace pqxx_conn
         template<>
         struct Store<bool>
         {
-            static void run(const std::unique_ptr<std::vector<bool>> &value,
+            static void run(const std::unique_ptr<TangoValue<bool>> &value,
                 const AttributeTraits &traits,
                 pqxx::prepare::invocation &inv,
                 pqxx::work & /*unused*/)
@@ -103,8 +103,8 @@ namespace pqxx_conn
     void DbConnection::storeDataEvent(const std::string &full_attr_name,
         double event_time,
         int quality,
-        std::unique_ptr<vector<T>> value_r,
-        std::unique_ptr<vector<T>> value_w,
+        std::unique_ptr<TangoValue<T>> value_r,
+        std::unique_ptr<TangoValue<T>> value_w,
         const AttributeTraits &traits)
     {
         assert(!full_attr_name.empty());
@@ -143,7 +143,7 @@ namespace pqxx_conn
                     // there is a single special case here, arrays of strings need a different syntax to store,
                     // to avoid the quoting. Its likely we will need more for DevEncoded and DevEnum
                     if (_db_store_method == DbStoreMethod::InsertString ||
-                        (traits.isArray() && traits.type() == Tango::DEV_STRING) || _enable_buffering)
+                        (!traits.isScalar() && traits.type() == Tango::DEV_STRING) || _enable_buffering)
                     {
                         auto query = QueryBuilder::storeDataEventString<T>(
                             pqxx::to_string(_conf_id_cache->value(full_attr_name)),
