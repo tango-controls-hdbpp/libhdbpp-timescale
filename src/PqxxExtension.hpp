@@ -208,11 +208,17 @@ public:
         // In case of image, unwrap the vector. 
 
         assert(value.dim_x != 0);
+        assert(value.dim_x * value.dim_y <= value.size());
 
         std::stringstream result;
         result << "{";
-        for(std::size_t i = 0; i != value.size() % value.dim_x; ++i)
+        for(std::size_t i = 0; i != value.dim_y; ++i)
         {
+            if (i > 0)
+            {
+                result << ",";
+            }
+
             result << "{" << separated_list(",", std::next(value.begin(), i * value.dim_x), std::next(value.begin(), (i+1) * value.dim_x)) << "}";
         }
         result << "}";
