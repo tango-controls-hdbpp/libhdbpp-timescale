@@ -325,6 +325,12 @@ void DbConnectionTestsFixture::checkStoreTestEventData(
         REQUIRE(data_row.at(schema::DatColValueR).size() > 0);
         REQUIRE(compareVector(data_row.at(schema::DatColValueR).as<TangoValue<T>>(), get<0>(data)) == true);
     }
+    
+    if (traits.isImage() && traits.hasReadData())
+    {
+        REQUIRE(data_row.at(schema::DatColValueR).size() > 0);
+        REQUIRE(compareVector(data_row.at(schema::DatColValueR).as<TangoValue<T>>(), get<0>(data)) == true);
+    }
 
     if (traits.isScalar() && traits.hasWriteData())
     {
@@ -333,6 +339,12 @@ void DbConnectionTestsFixture::checkStoreTestEventData(
     }
 
     if (traits.isArray() && traits.hasWriteData())
+    {
+        REQUIRE(data_row.at(schema::DatColValueW).size() > 0);
+        REQUIRE(compareVector(data_row.at(schema::DatColValueW).as<TangoValue<T>>(), get<1>(data)) == true);
+    }
+    
+    if (traits.isImage() && traits.hasWriteData())
     {
         REQUIRE(data_row.at(schema::DatColValueW).size() > 0);
         REQUIRE(compareVector(data_row.at(schema::DatColValueW).as<TangoValue<T>>(), get<1>(data)) == true);

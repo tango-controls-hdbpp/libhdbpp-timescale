@@ -172,24 +172,54 @@ public:
         // currently. Copy the str into a std::string so we can work with it more easily.
         std::string in(str + 1, str + (strlen(str) - 1));
 
-        // count commas and add one to deduce elements in the string,
+        // count opening brackets and add one to deduce elements in the string,
         // note we reduce string size to remove the brace at each end
-        auto items = std::count(in.begin(), in.end(), ',');
-        value.clear();
+        auto dim_y = std::count(in.begin(), in.end(), '{');
 
-        // preallocate all the items in the vector, we can then
-        // simply set each in turn
-        value.resize(items + 1);
-
-        auto element = 0;
-        std::string::size_type comma = 0;
-
-        // loop and copy out each value from between the separators
-        while ((comma = in.find_first_not_of(',', comma)) != std::string::npos)
+        if(dim_y == 0)
         {
-            auto next_comma = in.find_first_of(',', comma);
-            string_traits<T>::from_string(in.substr(comma, next_comma - comma).c_str(), value[element++]);
-            comma = next_comma;
+            // Regular array
+            auto items = std::count(in.begin(), in.end(), ',');
+            value.dim_y = dim_y;
+            value.dim_x = items + 1;
+
+            // preallocate all the items in the vector, we can then
+            // simply set each in turn
+            value.resize(value.dim_x);
+
+            auto element = 0;
+            std::string::size_type comma = 0;
+
+            // loop and copy out each value from between the separators
+            while ((comma = in.find_first_not_of(',', comma)) != std::string::npos)
+            {
+                auto next_comma = in.find_first_of(',', comma);
+                string_traits<T>::from_string(in.substr(comma, next_comma - comma).c_str(), value[element++]);
+                comma = next_comma;
+            }
+        }
+        else
+        {
+            // 2D array, or image
+            auto items = std::count(in.begin(), in.end(), ',');
+            value.dim_y = dim_y;
+            value.dim_x = (items + 1) / dim_y;
+
+            // Look for enclosing brackets to extract rows 
+            std::string::size_type bracket = 0;
+            std::string::size_type close_bracket = 0;
+
+            // loop and copy out each value from between the separators
+            while ((bracket = in.find_first_of('{', close_bracket)) != std::string::npos)
+            {
+                close_bracket = in.find_first_of('}', bracket);
+
+                // We clear the value so we need to extract in another vector
+                hdbpp_internal::TangoValue<T> row;
+                string_traits<hdbpp_internal::TangoValue<T>>::from_string(in.substr(bracket, close_bracket - bracket + 1).c_str(), row);
+
+                value.insert(value.end(), row.begin(), row.end());
+            }
         }
     }
 
@@ -212,19 +242,16 @@ public:
 
         std::stringstream result;
         result << "{";
-        for(std::size_t i = 0; i != value.dim_y; ++i)
+        
+	result << "{" << separated_list(",", value.begin(), std::next(value.begin(), value.dim_x)) << "}";
+        for(std::size_t i = 1; i != value.dim_y; ++i)
         {
-            if (i > 0)
-            {
-                result << ",";
-            }
-
-            result << "{" << separated_list(",", std::next(value.begin(), i * value.dim_x), std::next(value.begin(), (i+1) * value.dim_x)) << "}";
+            result << ", {" << separated_list(",", std::next(value.begin(), i * value.dim_x), std::next(value.begin(), (i+1) * value.dim_x)) << "}";
         }
         result << "}";
         return result.str();
     }
-    
+
 };
 
 // This specialisation is for string types. Unlike other types the string type requires
@@ -256,29 +283,30 @@ public:
 
         value.clear();
 
+        value.dim_x = 0;
+        value.dim_y = 0;
+
         std::pair<array_parser::juncture, std::string> output;
 
         // use pqxx array parser features to get each element from the array
         array_parser parser(str);
         output = parser.get_next();
 
-        if (output.first == array_parser::juncture::row_start)
+        while (output.first != array_parser::juncture::done)
         {
             output = parser.get_next();
-
-            // loop and extract each string in turn
-            while (output.first == array_parser::juncture::string_value)
+            if (output.first == array_parser::juncture::string_value)
             {
                 value.push_back(output.second);
-                output = parser.get_next();
-
-                if (output.first == array_parser::juncture::row_end)
-                    break;
-
-                if (output.first == array_parser::juncture::done)
-                    break;
+                continue;
+            }
+            if(output.first == array_parser::juncture::row_start)
+            {
+                ++(value.dim_y);
+                continue;
             }
         }
+        value.dim_x = value.dim_y == 0 ? value.size() : (value.size() / value.dim_y);
     }
 
     // NOLINTNEXTLINE (readability-identifier-naming)
@@ -323,22 +351,56 @@ public:
         // testing only. Copy the str into a std::string so we can work
         // with it more easily.
         std::string in(str + 1, str + (strlen(str) - 1));
-        std::string::size_type comma = 0;
+        
+        // count opening brackets and add one to deduce elements in the string,
+        // note we reduce string size to remove the brace at each end
+        auto dim_y = std::count(in.begin(), in.end(), '{');
 
-        // loop and copy out each value from between the separators
-        while ((comma = in.find_first_not_of(',', comma)) != std::string::npos)
+        if(dim_y == 0)
         {
-            auto next_comma = in.find_first_of(',', comma);
+            // Regular array
+            auto items = std::count(in.begin(), in.end(), ',');
+            value.dim_y = dim_y;
+            value.dim_x = items + 1;
 
-            // we can not pass an element of the vector, since vector<bool> is not
-            // in fact a container, but some kind of bit field. In this case, we
-            // have to create a local variable to read the value into, then push this
-            // back onto the vector
-            bool field;
-            string_traits<bool>::from_string(in.substr(comma, next_comma - comma).c_str(), field);
-            value.push_back(field);
+            std::string::size_type comma = 0;
 
-            comma = next_comma;
+            // loop and copy out each value from between the separators
+            while ((comma = in.find_first_not_of(',', comma)) != std::string::npos)
+            {
+                auto next_comma = in.find_first_of(',', comma);
+                // we can not pass an element of the vector, since vector<bool> is not
+                // in fact a container, but some kind of bit field. In this case, we
+                // have to create a local variable to read the value into, then push this
+                // back onto the vector
+                bool field;
+                string_traits<bool>::from_string(in.substr(comma, next_comma - comma).c_str(), field);
+                value.push_back(field);
+                comma = next_comma;
+            }
+        }
+        else
+        {
+            // 2D array, or image
+            auto items = std::count(in.begin(), in.end(), ',');
+            value.dim_y = dim_y;
+            value.dim_x = (items + 1) / dim_y;
+
+            // Look for enclosing brackets to extract rows 
+            std::string::size_type bracket = 0;
+            std::string::size_type close_bracket = 0;
+
+            // loop and copy out each value from between the separators
+            while ((bracket = in.find_first_of('{', close_bracket)) != std::string::npos)
+            {
+                close_bracket = in.find_first_of('}', bracket);
+
+                // We clear the value so we need to extract in another vector
+                hdbpp_internal::TangoValue<bool> row;
+                string_traits<hdbpp_internal::TangoValue<bool>>::from_string(in.substr(bracket, close_bracket - bracket + 1).c_str(), row);
+
+                value.insert(value.end(), row.begin(), row.end());
+            }
         }
     }
 
@@ -348,8 +410,27 @@ public:
         if (value.empty())
             return {};
 
-        // simply use the pqxx utilities for this, rather than reinvent the wheel
-        return "{" + separated_list(",", value.begin(), value.end()) + "}";
+        if(value.dim_y < 2)
+        {
+            // simply use the pqxx utilities for this, rather than reinvent the wheel
+            return "{" + separated_list(",", value.begin(), value.end()) + "}";
+        }
+
+        // In case of image, unwrap the vector. 
+
+        assert(value.dim_x != 0);
+        assert(value.dim_y * value.dim_x != value.size());
+
+        std::stringstream result;
+        result << "{";
+        
+	result << "{" << separated_list(",", value.begin(), std::next(value.begin(), value.dim_x)) << "}";
+        for(std::size_t i = 1; i != value.dim_y; ++i)
+        {
+            result << ", {" << separated_list(",", std::next(value.begin(), i * value.dim_x), std::next(value.begin(), (i+1) * value.dim_x)) << "}";
+        }
+        result << "}";
+        return result.str();
     }
 };
 
