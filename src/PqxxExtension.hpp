@@ -323,6 +323,17 @@ public:
         // testing only. Copy the str into a std::string so we can work
         // with it more easily.
         std::string in(str + 1, str + (strlen(str) - 1));
+
+        // count commas and add one to deduce elements in the string,
+        // note we reduce string size to remove the brace at each end
+        auto items = std::count(in.begin(), in.end(), ',');
+        value.clear();
+
+        // preallocate all the items in the vector, we can then
+        // simply set each in turn
+        value.resize(items + 1);
+
+        auto element = 0;
         std::string::size_type comma = 0;
 
         // loop and copy out each value from between the separators
@@ -349,7 +360,29 @@ public:
             return {};
 
         // simply use the pqxx utilities for this, rather than reinvent the wheel
+        if(value.dim_y < 2)
+        {
         return "{" + separated_list(",", value.begin(), value.end()) + "}";
+        }
+
+        // In case of image, unwrap the vector. 
+
+        assert(value.dim_x != 0);
+        assert(value.dim_x * value.dim_y <= value.size());
+
+        std::stringstream result;
+        result << "{";
+        for(std::size_t i = 0; i != value.dim_y; ++i)
+        {
+            if (i > 0)
+            {
+                result << ",";
+            }
+
+            result << "{" << separated_list(",", std::next(value.begin(), i * value.dim_x), std::next(value.begin(), (i+1) * value.dim_x)) << "}";
+        }
+        result << "}";
+        return result.str();
     }
 };
 
