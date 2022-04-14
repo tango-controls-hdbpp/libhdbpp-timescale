@@ -362,7 +362,7 @@ public:
         // simply use the pqxx utilities for this, rather than reinvent the wheel
         if(value.dim_y < 2)
         {
-        return "{" + separated_list(",", value.begin(), value.end()) + "}";
+            return "{" + separated_list(",", value.begin(), value.end()) + "}";
         }
 
         // In case of image, unwrap the vector. 
